@@ -180,7 +180,7 @@ function LoginPageContent() {
         <div
           className="relative hidden w-1/2 md:block"
           style={{
-            backgroundImage: "url(/images/nuofan.webp)",
+            backgroundImage: "url(/images/vera.webp)",
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
@@ -200,7 +200,7 @@ function LoginPageContent() {
       <div
         className="relative hidden w-1/2 md:block"
         style={{
-          backgroundImage: "url(/images/nuofan.webp)",
+          backgroundImage: "url(/images/vera.webp)",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}

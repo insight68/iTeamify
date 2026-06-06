@@ -1,0 +1,13 @@
+node_modules
+.turbo
+.env
+.env.local
+.env*.local
+.DS_Store
+*.log
+.next
+out
+dist
+/plan
+apps/desktop/out
+apps/desktop/.turbo

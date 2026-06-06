@@ -1,0 +1,109 @@
+{
+  "page": {
+    "title": "Projects",
+    "new_project": "New project",
+    "empty": "No projects yet",
+    "create_first": "Create your first project"
+  },
+  "table": {
+    "name": "Name",
+    "priority": "Priority",
+    "status": "Status",
+    "progress": "Progress",
+    "lead": "Lead",
+    "created": "Created"
+  },
+  "status": {
+    "planned": "Planned",
+    "in_progress": "In Progress",
+    "paused": "Paused",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "priority": {
+    "urgent": "Urgent",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "none": "No priority"
+  },
+  "lead": {
+    "no_lead": "No lead",
+    "assign_placeholder": "Assign lead...",
+    "members_group": "Members",
+    "agents_group": "Agents",
+    "no_results": "No results"
+  },
+  "relative_date": {
+    "today": "Today",
+    "one_day_ago": "1d ago",
+    "days_ago": "{{count}}d ago",
+    "months_ago": "{{count}}mo ago"
+  },
+  "detail": {
+    "not_found": "Project not found",
+    "breadcrumb_fallback": "Projects",
+    "title_placeholder": "Project title",
+    "icon_tooltip": "Change icon",
+    "pin_tooltip": "Pin to sidebar",
+    "unpin_tooltip": "Unpin from sidebar",
+    "sidebar_tooltip": "Toggle sidebar",
+    "copy_link": "Copy link",
+    "delete_action": "Delete project",
+    "section_properties": "Properties",
+    "section_progress": "Progress",
+    "section_description": "Description",
+    "description_placeholder": "Add description...",
+    "empty_issues_title": "暂无关联事项",
+    "empty_issues_hint": "创建一个新事项或将现有事项分配给此项目。",
+    "empty_issues_new_button": "新建事项",
+    "toast_link_copied": "Link copied",
+    "toast_project_deleted": "Project deleted",
+    "toast_move_issue_failed": "移动事项失败"
+  },
+  "resources": {
+    "section_header": "Resources",
+    "empty": "No resources attached.",
+    "add_button": "Add resource",
+    "popover_title": "Add resource",
+    "tab_repo": "Repo",
+    "tab_link": "Link",
+    "tab_file": "File",
+    "tab_text": "Text",
+    "attached_badge": "attached",
+    "remove_tooltip": "Remove",
+    "url_placeholder": "https://github.com/owner/repo",
+    "url_submit": "Add",
+    "link_url_placeholder": "Enter a URL...",
+    "link_title_placeholder": "Display name (optional)",
+    "link_submit": "Add link",
+    "text_placeholder": "Enter text content...",
+    "text_filename_placeholder": "Filename (optional, e.g. notes.md)",
+    "text_submit": "Add text",
+    "file_upload_label": "Upload file",
+    "file_uploading": "Uploading...",
+    "toast_attached": "Resource attached",
+    "toast_attach_failed": "Failed to attach",
+    "toast_removed": "Resource removed",
+    "toast_remove_failed": "Failed to remove resource",
+    "toast_file_too_large": "File exceeds 10MB limit",
+    "toast_upload_failed": "Failed to upload file",
+    "type_url": "Link",
+    "type_file": "File",
+    "type_text": "Text"
+  },
+  "delete_dialog": {
+    "title": "Delete project",
+    "description": "这将删除项目。事项不会被删除，但将取消关联。",
+    "confirm": "Delete",
+    "cancel": "Cancel"
+  },
+  "picker": {
+    "no_project": "No project",
+    "remove": "Remove from project",
+    "empty": "No projects yet"
+  },
+  "chip": {
+    "fallback_label": "Project"
+  }
+}

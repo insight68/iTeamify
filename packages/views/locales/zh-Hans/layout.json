@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "inbox": "重要事项",
+    "my_issues": "我的事项",
+    "issues": "事项",
+    "projects": "项目",
+    "autopilots": "自动化",
+    "org": "组织架构",
+    "datasources": "数据源",
+    "agents": "智能体",
+    "runtimes": "运行时",
+    "tokens": "令牌",
+    "skills": "Skill",
+    "settings": "我的信息",
+    "workspace": "团队工作区",
+    "members": "团队成员",
+    "repositories": "代码仓库",
+    "daemon": "守护进程"
+  },
+  "help": {
+    "trigger": "帮助",
+    "docs": "文档",
+    "changelog": "更新日志",
+    "feedback": "反馈"
+  },
+  "workspace_loader": {
+    "loading_workspace": "正在加载工作区...",
+    "loading_named_prefix": "正在加载"
+  },
+  "sidebar": {
+    "unpin_tooltip": "取消固定",
+    "workspaces_label": "工作区",
+    "create_workspace": "创建工作区",
+    "pending_invitations_label": "待处理的邀请",
+    "invitation_workspace_fallback": "工作区",
+    "invitation_join": "加入",
+    "invitation_decline": "拒绝",
+    "log_out": "退出登录",
+    "new_issue": "新建事项",
+    "search": "搜索",
+    "new_issue_shortcut": "C",
+    "pinned_label": "固定",
+    "workspace_group": "工作区",
+    "digital_employee_group": "智能体管理",
+    "configure_group": "设置",
+    "unread_overflow": "99+",
+    "chats_group_label": "与助手对话",
+    "chats_empty": "暂无智能体"
+  }
+}

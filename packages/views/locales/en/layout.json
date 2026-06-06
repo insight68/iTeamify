@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "inbox": "Inbox",
+    "my_issues": "My Issues",
+    "issues": "Issues",
+    "projects": "Projects",
+    "autopilots": "Autopilot",
+    "org": "Org",
+    "datasources": "Data Sources",
+    "agents": "Agents",
+    "runtimes": "Runtimes",
+    "tokens": "Tokens",
+    "skills": "Skills",
+    "settings": "My Information",
+    "workspace": "Team Workspace",
+    "members": "Team Members",
+    "repositories": "Repositories",
+    "daemon": "Daemon"
+  },
+  "help": {
+    "trigger": "Help",
+    "docs": "Docs",
+    "changelog": "Change log",
+    "feedback": "Feedback"
+  },
+  "workspace_loader": {
+    "loading_workspace": "Loading workspace…",
+    "loading_named_prefix": "Loading"
+  },
+  "sidebar": {
+    "unpin_tooltip": "Unpin",
+    "workspaces_label": "Workspaces",
+    "create_workspace": "Create workspace",
+    "pending_invitations_label": "Pending invitations",
+    "invitation_workspace_fallback": "Workspace",
+    "invitation_join": "Join",
+    "invitation_decline": "Decline",
+    "log_out": "Log out",
+    "new_issue": "New Issue",
+    "search": "Search",
+    "new_issue_shortcut": "C",
+    "pinned_label": "Pinned",
+    "workspace_group": "Workspace",
+    "digital_employee_group": "Digital Employees",
+    "configure_group": "Settings",
+    "unread_overflow": "99+",
+    "chats_group_label": "Chats",
+    "chats_empty": "No agents yet"
+  }
+}

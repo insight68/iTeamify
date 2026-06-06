@@ -1,0 +1,27 @@
+{
+  "tree": {
+    "empty": "No organization nodes yet"
+  },
+  "permissions": {
+    "columns": {
+      "permission": "Permission",
+      "source": "Data source",
+      "table": "Data table"
+    },
+    "editor_description": "Choose whether this organization node can read or write each table.",
+    "editor_title": "Data table permissions",
+    "empty_permissions": "No table permissions are configured for this node yet.",
+    "empty_sources": "Create a data source before configuring table permissions.",
+    "empty_tables": "Create at least one data table before configuring permissions.",
+    "levels": {
+      "none": "None",
+      "read": "Read",
+      "write": "Write"
+    },
+    "permission_select_label": "Permission for {{table}}",
+    "save": "Save",
+    "saving": "Saving...",
+    "toast_save_failed": "Failed to save table permissions",
+    "toast_saved": "Table permissions saved"
+  }
+}

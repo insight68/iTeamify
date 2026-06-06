@@ -1,0 +1,29 @@
+import { createStore } from "zustand/vanilla";
+import { useStore } from "zustand";
+
+interface ConfigState {
+  cdnDomain: string;
+  allowedEmbedDomains: string[];
+  allowSignup: boolean;
+  googleClientId: string;
+  setCdnDomain: (domain: string) => void;
+  setAllowedEmbedDomains: (domains: string[]) => void;
+  setAuthConfig: (config: { allowSignup: boolean; googleClientId?: string }) => void;
+}
+
+export const configStore = createStore<ConfigState>((set) => ({
+  cdnDomain: "",
+  allowedEmbedDomains: [],
+  allowSignup: true,
+  googleClientId: "",
+  setCdnDomain: (domain) => set({ cdnDomain: domain }),
+  setAllowedEmbedDomains: (domains) => set({ allowedEmbedDomains: domains }),
+  setAuthConfig: ({ allowSignup, googleClientId = "" }) =>
+    set({ allowSignup, googleClientId }),
+}));
+
+export function useConfigStore(): ConfigState;
+export function useConfigStore<T>(selector: (state: ConfigState) => T): T;
+export function useConfigStore<T>(selector?: (state: ConfigState) => T) {
+  return useStore(configStore, selector as (state: ConfigState) => T);
+}

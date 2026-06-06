@@ -1,0 +1,40 @@
+{
+  "name": "Teamify",
+  "version": "1.11.0-rc2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:web": "turbo dev --filter=@teamify/web",
+    "dev:desktop": "turbo dev --filter=@teamify/desktop",
+    "dev:desktop:staging": "turbo dev:staging --filter=@teamify/desktop",
+    "dev:mobile": "turbo dev --filter=@teamify/mobile",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "check": "turbo typecheck && turbo test && turbo lint",
+    "clean": "turbo clean && rm -rf node_modules",
+    "ui:add": "cd packages/ui && npx shadcn@latest add",
+    "generate:reserved-slugs": "echo 'Reserved slugs are now hand-maintained in packages/core/paths/reserved-slugs.ts. No generator needed in the frontend-only repo.'"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "electron"
+    ],
+    "overrides": {
+      "@types/react": "catalog:",
+      "@types/react-dom": "catalog:"
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "catalog:",
+    "turbo": "^2.9.16",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "sharp": "^0.34.5"
+  }
+}

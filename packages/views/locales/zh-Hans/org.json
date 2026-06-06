@@ -1,0 +1,27 @@
+{
+  "tree": {
+    "empty": "暂无组织节点"
+  },
+  "permissions": {
+    "columns": {
+      "permission": "权限",
+      "source": "数据源",
+      "table": "数据表"
+    },
+    "editor_description": "选择这个组织节点是否可以读取或写入每张数据表。",
+    "editor_title": "数据表权限",
+    "empty_permissions": "当前节点暂未配置数据表权限。",
+    "empty_sources": "请先创建数据源，再配置数据表权限。",
+    "empty_tables": "请先在数据源下创建至少一张数据表，再配置权限。",
+    "levels": {
+      "none": "无",
+      "read": "只读",
+      "write": "读写"
+    },
+    "permission_select_label": "{{table}} 的权限",
+    "save": "保存",
+    "saving": "保存中...",
+    "toast_save_failed": "保存数据表权限失败",
+    "toast_saved": "已保存数据表权限"
+  }
+}

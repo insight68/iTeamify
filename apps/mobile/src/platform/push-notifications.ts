@@ -11,14 +11,23 @@ export function initPushNotifications(): () => void {
   if (!Capacitor.isNativePlatform()) return () => {};
 
   const listeners: Promise<{ remove: () => void }>[] = [];
+  let disposed = false;
 
   const init = async () => {
     const permResult = await PushNotifications.checkPermissions();
+
+    // Short-circuit if permissions are permanently denied
+    if (permResult.receive === "denied") return;
+    if (disposed) return;
+
     if (permResult.receive === "prompt") {
       await PushNotifications.requestPermissions();
     }
 
+    if (disposed) return;
     await PushNotifications.register();
+
+    if (disposed) return;
 
     listeners.push(
       PushNotifications.addListener("registration", (token) => {
@@ -50,7 +59,6 @@ export function initPushNotifications(): () => void {
           // Navigate to the relevant issue/chat from notification data
           const data = action.notification.data;
           if (data?.path) {
-            // Navigation is handled by app router
             window.dispatchEvent(
               new CustomEvent("teamify:navigate", {
                 detail: { path: data.path },
@@ -65,6 +73,7 @@ export function initPushNotifications(): () => void {
   init().catch(console.error);
 
   return () => {
+    disposed = true;
     listeners.forEach((l) => l.then((h) => h.remove()).catch(() => {}));
   };
 }

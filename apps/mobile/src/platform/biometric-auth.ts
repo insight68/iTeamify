@@ -1,6 +1,8 @@
 import { NativeBiometric } from "@capgo/capacitor-native-biometric";
 import { Capacitor } from "@capacitor/core";
 
+const BIOMETRIC_SERVER = "world.teamify.mobile";
+
 /**
  * Check if biometric authentication is available on this device.
  */
@@ -22,7 +24,7 @@ export async function saveBiometricToken(token: string): Promise<void> {
   await NativeBiometric.setCredentials({
     username: "teamify-user",
     password: token,
-    server: "world.teamify.mobile",
+    server: BIOMETRIC_SERVER,
   });
 }
 
@@ -43,7 +45,7 @@ export async function getBiometricToken(): Promise<string | null> {
     });
 
     const creds = await NativeBiometric.getCredentials({
-      server: "world.teamify.mobile",
+      server: BIOMETRIC_SERVER,
     });
     return creds.password;
   } catch {
@@ -58,7 +60,7 @@ export async function deleteBiometricToken(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
     await NativeBiometric.deleteCredentials({
-      server: "world.teamify.mobile",
+      server: BIOMETRIC_SERVER,
     });
   } catch {
     // Best-effort

@@ -1,0 +1,5 @@
+{
+  "buildCommand": "pnpm build --filter=@teamify/web",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "pnpm install"
+}

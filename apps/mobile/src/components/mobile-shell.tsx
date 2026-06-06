@@ -45,10 +45,12 @@ function ShellContent({
   useEffect(() => {
     if (!workspaceListFetched || wsCount > 0) return;
 
+    let cancelled = false;
     const doNavigate = async () => {
       if (!hasOnboarded) {
         try {
           const invites = await api.listMyInvitations();
+          if (cancelled) return;
           if (invites.length > 0) {
             qc.setQueryData(workspaceKeys.myInvitations(), invites);
             navigate("/invitations");
@@ -56,14 +58,16 @@ function ShellContent({
             navigate("/onboarding");
           }
         } catch {
+          if (cancelled) return;
           navigate("/onboarding");
         }
       } else {
-        navigate("/onboarding");
+        if (!cancelled) navigate("/onboarding");
       }
     };
 
     doNavigate();
+    return () => { cancelled = true; };
   }, [workspaceListFetched, wsCount, hasOnboarded, qc, navigate]);
 
   return (

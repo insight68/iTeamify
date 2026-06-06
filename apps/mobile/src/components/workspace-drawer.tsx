@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { LogOut, Settings, Check } from "lucide-react";
 import {
   Sheet,
@@ -23,10 +23,14 @@ export function WorkspaceDrawer({ open, onOpenChange }: WorkspaceDrawerProps) {
   const navigation = useNavigation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const { data: workspaces = [] } = useQuery(workspaceListOptions());
+  const { data: workspaces = [] } = useQuery({
+    ...workspaceListOptions(),
+    enabled: open,
+  });
 
-  // Determine current slug from URL
-  const currentSlug = window.location.pathname.split("/")[1] ?? "";
+  // Determine current slug from URL via react-router
+  const location = useLocation();
+  const currentSlug = location.pathname.split("/")[1] ?? "";
 
   const handleWorkspaceSwitch = (slug: string) => {
     navigation.push(`/${slug}/issues`);

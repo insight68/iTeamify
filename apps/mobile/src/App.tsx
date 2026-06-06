@@ -71,7 +71,7 @@ export default function App() {
     () => createMobileLocaleAdapter(navigator.language),
     [],
   );
-  const [locale, setLocale] = useState(() => pickLocale(localeAdapter));
+  const locale = useMemo(() => pickLocale(localeAdapter), [localeAdapter]);
   const resources = useMemo(
     () => ({ [locale]: RESOURCES[locale] }),
     [locale],
@@ -86,24 +86,16 @@ export default function App() {
     [],
   );
 
-  // Resolve locale async on first mount (Capacitor Device API is async)
-  useEffect(() => {
-    (async () => {
-      const adapter = createMobileLocaleAdapter(navigator.language);
-      const resolved = pickLocale(adapter);
-      if (resolved !== locale) {
-        setLocale(resolved);
-      }
-    })();
-  }, [locale]);
-
   return (
     <ThemeProvider>
       <CoreProvider
         apiBaseUrl={import.meta.env.VITE_API_URL}
         wsUrl={import.meta.env.VITE_WS_URL}
         onLogout={() => {
-          // Clear mobile-specific state on logout
+          // Clear biometric token on logout
+          import("./platform/biometric-auth").then(({ deleteBiometricToken }) =>
+            deleteBiometricToken(),
+          );
         }}
         identity={identity}
         locale={locale}

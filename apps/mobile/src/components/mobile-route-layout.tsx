@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { WorkspaceSlugProvider } from "@teamify/core/paths";
+import { WorkspaceSlugProvider, paths } from "@teamify/core/paths";
 import {
   workspaceBySlugOptions,
   workspaceListOptions,
@@ -23,7 +23,7 @@ export function MobileRouteLayout() {
 
   // Bounce to login if unauthenticated
   useEffect(() => {
-    if (!isAuthLoading && !user) navigate("/login", { replace: true });
+    if (!isAuthLoading && !user) navigate(paths.login(), { replace: true });
   }, [isAuthLoading, user, navigate]);
 
   const { data: workspace, isFetched: listFetched } = useQuery({
@@ -36,10 +36,12 @@ export function MobileRouteLayout() {
     enabled: !!user,
   });
 
-  // Feed slug into platform singleton
-  if (workspace && workspaceSlug) {
-    setCurrentWorkspace(workspaceSlug, workspace.id);
-  }
+  // Feed slug into platform singleton — must be in an effect, not during render
+  useEffect(() => {
+    if (workspace && workspaceSlug) {
+      setCurrentWorkspace(workspaceSlug, workspace.id);
+    }
+  }, [workspace, workspaceSlug]);
 
   const hasBeenSeen = useWorkspaceSeen(workspaceSlug, !!workspace);
 

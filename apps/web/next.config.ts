@@ -6,7 +6,7 @@ import { resolve } from "path";
 config({ path: resolve(__dirname, "../../.env") });
 
 const remoteApiUrl =
-  process.env.REMOTE_API_URL || process.env.API_URL || "http://localhost:8080";
+  process.env.REMOTE_API_URL || process.env.API_URL || "https://pub.niuwoai.com";
 
 // Parse hostnames from CORS_ALLOWED_ORIGINS so that Next.js dev server
 // allows cross-origin HMR / webpack requests (e.g. from Tailscale IPs).
@@ -33,31 +33,31 @@ const nextConfig: NextConfig = {
     qualities: [75, 80, 85],
   },
   async rewrites() {
-    return {
-      afterFiles: [
-        {
-          source: "/api/:path*",
-          destination: `${remoteApiUrl}/api/:path*`,
-        },
-        // In dev the WS client connects directly to the backend, bypassing
-        // this rewrite proxy (Next.js HTTP rewrites are unreliable for
-        // long-lived WebSocket connections).  Production deployments typically
-        // have nginx/caddy in front so this rule is kept as a fallback.
-        {
-          source: "/ws",
-          destination: `${remoteApiUrl}/ws`,
-        },
-        {
-          source: "/auth/:path*",
-          destination: `${remoteApiUrl}/auth/:path*`,
-        },
-        {
-          source: "/uploads/:path*",
-          destination: `${remoteApiUrl}/uploads/:path*`,
-        },
-      ],
-      fallback: [],
-    };
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${remoteApiUrl}/api/:path*`,
+      },
+      // In dev the WS client connects directly to the backend, bypassing
+      // this rewrite proxy (Next.js HTTP rewrites are unreliable for
+      // long-lived WebSocket connections).  Production deployments typically
+      // have nginx/caddy in front so this rule is kept as a fallback.
+      {
+        source: "/ws",
+        destination: `${remoteApiUrl}/ws`,
+      },
+      // Exclude /auth/callback (Next.js OAuth page) — only proxy API auth
+      // paths to the backend.  Top-level rewrites run before filesystem
+      // checks so Vercel's staticRoute for /auth/callback cannot interfere.
+      {
+        source: "/auth/:path((?!callback).*)",
+        destination: `${remoteApiUrl}/auth/:path*`,
+      },
+      {
+        source: "/uploads/:path*",
+        destination: `${remoteApiUrl}/uploads/:path*`,
+      },
+    ];
   },
 };
 

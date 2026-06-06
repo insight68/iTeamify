@@ -9,6 +9,9 @@
     "dev:desktop:staging": "turbo dev:staging --filter=@teamify/desktop",
     "dev:mobile": "turbo dev --filter=@teamify/mobile",
     "build": "turbo build",
+    "build:web": "turbo build --filter=@teamify/web",
+    "build:desktop": "turbo build --filter=@teamify/desktop",
+    "build:mobile": "turbo build --filter=@teamify/mobile",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "lint": "turbo lint",
@@ -31,6 +34,7 @@
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "@types/node": "catalog:",
+    "next": "^16.2.3",
     "turbo": "^2.9.16",
     "typescript": "catalog:"
   },

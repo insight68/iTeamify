@@ -1,5 +1,5 @@
 {
-  "name": "Teamify",
+  "name": "iTeamify",
   "version": "1.11.0-rc2",
   "private": true,
   "type": "module",
@@ -35,10 +35,8 @@
     "@playwright/test": "^1.60.0",
     "@types/node": "catalog:",
     "next": "^16.2.3",
+    "sharp": "^0.34.5",
     "turbo": "^2.9.16",
     "typescript": "catalog:"
-  },
-  "dependencies": {
-    "sharp": "^0.34.5"
   }
 }

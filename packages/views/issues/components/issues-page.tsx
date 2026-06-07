@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, lazy, Suspense } from "react";
 import { toast } from "sonner";
 import { ChevronRight, ListTodo } from "lucide-react";
 import type { IssueStatus } from "@teamify/core/types";
@@ -19,8 +19,9 @@ import { useUpdateIssue } from "@teamify/core/issues/mutations";
 import { useIssueSelectionStore } from "@teamify/core/issues/stores/selection-store";
 import { PageHeader } from "../../layout/page-header";
 import { IssuesHeader } from "./issues-header";
-import { BoardView } from "./board-view";
-import { ListView } from "./list-view";
+const BoardView = lazy(() =>
+  import("./board-view").then((m) => ({ default: m.BoardView })),
+);
 import { BatchActionToolbar } from "./batch-action-toolbar";
 import { useT } from "../../i18n";
 

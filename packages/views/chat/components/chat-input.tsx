@@ -1,10 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, lazy } from "react";
 import type { UploadResult } from "@teamify/core/hooks/use-file-upload";
 import { cn } from "@teamify/ui/lib/utils";
-import { ContentEditor, type ContentEditorRef } from "../../editor";
+import { type ContentEditorRef } from "../../editor";
+const ContentEditor = lazy(() =>
+  import("../../editor/content-editor").then((m) => ({ default: m.ContentEditor })),
+);
 import { SubmitButton } from "@teamify/ui/components/common/submit-button";
 import { FileUploadButton } from "@teamify/ui/components/common/file-upload-button";
 import { useChatStore, DRAFT_NEW_SESSION } from "@teamify/core/chat";

@@ -1,11 +1,14 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, lazy, Suspense } from "react";
 import { ArrowUp, Loader2, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@teamify/ui/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@teamify/ui/components/ui/tooltip";
 import { cn } from "@teamify/ui/lib/utils";
-import { ContentEditor, type ContentEditorRef, useFileDropZone, FileDropOverlay } from "../../editor";
+import { type ContentEditorRef, useFileDropZone, FileDropOverlay } from "../../editor";
+const ContentEditor = lazy(() =>
+  import("../../editor/content-editor").then((m) => ({ default: m.ContentEditor })),
+);
 import { FileUploadButton } from "@teamify/ui/components/common/file-upload-button";
 import { useFileUpload } from "@teamify/core/hooks/use-file-upload";
 import { api } from "@teamify/core/api";

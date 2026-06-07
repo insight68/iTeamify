@@ -1,7 +1,7 @@
 .PHONY: help \
   dev dev-web dev-desktop dev-mobile \
   build build-web build-desktop build-mobile \
-  deploy-web deploy-web-preview deploy-desktop deploy-desktop-all \
+  deploy_web deploy_web_preview deploy_desktop deploy_desktop_all \
   check typecheck test lint \
   setup start stop \
   clean clean-web clean-desktop clean-mobile
@@ -54,16 +54,16 @@ build-mobile: ## Build mobile only
 # ══════════════════════════════════════════════════════════════════════════════
 ##@ Deploy & Package
 
-deploy-web: ## Deploy web to Vercel (production)
+deploy_web: ## Deploy web to Vercel (production)
 	@bash scripts/deploy-web.sh
 
-deploy-web-preview: ## Deploy web to Vercel (preview)
+deploy_web_preview: ## Deploy web to Vercel (preview)
 	@bash scripts/deploy-web.sh --preview
 
-deploy-desktop: ## Package desktop app (current platform)
+deploy_desktop: ## Package desktop app (current platform)
 	pnpm --filter @teamify/desktop package
 
-deploy-desktop-all: ## Package desktop app (all platforms)
+deploy_desktop_all: ## Package desktop app (all platforms)
 	pnpm --filter @teamify/desktop package:all
 
 # ══════════════════════════════════════════════════════════════════════════════

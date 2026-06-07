@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, lazy } from "react";
 import { useDefaultLayout, usePanelRef } from "react-resizable-panels";
 import { AppLink } from "../../navigation";
 import { useNavigation } from "../../navigation";
@@ -24,7 +24,10 @@ import { Button } from "@teamify/ui/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@teamify/ui/components/ui/resizable";
 import { Sheet, SheetContent } from "@teamify/ui/components/ui/sheet";
 import { useIsMobile } from "@teamify/ui/hooks/use-mobile";
-import { ContentEditor, type ContentEditorRef, TitleEditor, useFileDropZone, FileDropOverlay } from "../../editor";
+import { type ContentEditorRef, TitleEditor, useFileDropZone, FileDropOverlay } from "../../editor";
+const ContentEditor = lazy(() =>
+  import("../../editor/content-editor").then((m) => ({ default: m.ContentEditor })),
+);
 import { FileUploadButton } from "@teamify/ui/components/common/file-upload-button";
 import {
   Tooltip,

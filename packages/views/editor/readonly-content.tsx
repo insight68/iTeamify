@@ -16,7 +16,7 @@
  * - Rendering mentions with the same IssueMentionCard component and .mention class
  */
 
-import { isValidElement, memo, useEffect, useId, useMemo, useRef, useState } from "react";
+import { isValidElement, lazy, memo, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown, {
   defaultUrlTransform,
@@ -42,7 +42,14 @@ import { ImageLightbox } from "./extensions/image-view";
 import { useLinkHover, LinkHoverCard } from "./link-hover-card";
 import { openLink, isMentionHref } from "./utils/link-handler";
 import { preprocessMarkdown } from "./utils/preprocess";
-import { ChartCard, EmbedCard, preprocessChartCards } from "@teamify/ui/markdown/chart-cards";
+import { preprocessChartCards } from "@teamify/ui/markdown/chart-cards";
+
+const ChartCard = lazy(() =>
+  import("@teamify/ui/markdown/chart-cards").then((m) => ({ default: m.ChartCard })),
+);
+const EmbedCard = lazy(() =>
+  import("@teamify/ui/markdown/chart-cards").then((m) => ({ default: m.EmbedCard })),
+);
 import { configStore } from "@teamify/core/config";
 import "katex/dist/katex.min.css";
 import "./content-editor.css";
@@ -517,13 +524,21 @@ const components: Partial<Components> = {
     if (dataType === "chartCard") {
       const title = (node?.properties?.dataTitle as string) || "";
       const spec = (node?.properties?.dataSpec as string) || "";
-      return <ChartCard title={title} spec={spec} />;
+      return (
+        <Suspense fallback={<div className="h-48 rounded-md bg-muted animate-pulse" />}>
+          <ChartCard title={title} spec={spec} />
+        </Suspense>
+      );
     }
     if (dataType === "embedCard") {
       const title = (node?.properties?.dataTitle as string) || "";
       const spec = (node?.properties?.dataSpec as string) || "";
       const allowedDomains = configStore.getState().allowedEmbedDomains;
-      return <EmbedCard title={title} spec={spec} allowedDomains={allowedDomains} />;
+      return (
+        <Suspense fallback={<div className="h-48 rounded-md bg-muted animate-pulse" />}>
+          <EmbedCard title={title} spec={spec} allowedDomains={allowedDomains} />
+        </Suspense>
+      );
     }
     return <div {...props}>{children}</div>;
   },

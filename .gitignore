@@ -11,3 +11,4 @@ dist
 /plan
 apps/desktop/out
 apps/desktop/.turbo
+.gstack/

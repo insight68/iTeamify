@@ -14,8 +14,8 @@
 
 **Your next 10 hires won't be human.**
 
-The open-source managed agents platform.<br/>
-Turn coding agents into real teammates — assign tasks, track progress, compound skills.
+The open-source intelligent collaboration platform for human-AI teams.<br/>
+Turn coding agents into real teammates — assign tasks, collaborate in real-time, compound skills.
 
 [![CI](https://github.com/teamify-ai/teamify/actions/workflows/ci.yml/badge.svg)](https://github.com/teamify-ai/teamify/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/teamify-ai/teamify?style=flat)](https://github.com/teamify-ai/teamify/stargazers)

@@ -12,10 +12,10 @@
 
 # teamify
 
-**均朴智慧组织**
+**企业级的AI团队**
 
-的 Managed Agents 平台。`<br/>`
-将编码 Agent 变成真正的队友——分配任务、跟踪进度、积累技能。
+智能协作平台，人与 AI 协同工作。<br/>
+将 Agent 变成真正的队友——分配任务、实时协作、积累技能。
 
 [官网](https://teamify.world) · [云服务](https://teamify.world/app) · [X](https://x.com/teamifyAI) · [自部署指南](SELF_HOSTING.md) · [参与贡献](CONTRIBUTING.md)
 

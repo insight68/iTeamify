@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, lazy } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -46,7 +46,10 @@ import type {
   AutopilotExecutionMode,
   AutopilotTrigger,
 } from "@teamify/core/types";
-import { TitleEditor, ContentEditor } from "../../editor";
+import { TitleEditor } from "../../editor";
+const ContentEditor = lazy(() =>
+  import("../../editor/content-editor").then((m) => ({ default: m.ContentEditor })),
+);
 import { ActorAvatar } from "../../common/actor-avatar";
 import { AgentPicker } from "./pickers/agent-picker";
 import {

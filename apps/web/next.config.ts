@@ -26,7 +26,19 @@ const nextConfig: NextConfig = {
   ...(process.env.STANDALONE === "true" ? { output: "standalone" as const } : {}),
   transpilePackages: ["@teamify/core", "@teamify/ui", "@teamify/views"],
   experimental: {
-    optimizePackageImports: ["lucide-react"],
+    optimizePackageImports: [
+      "lucide-react",
+      "recharts",
+      "@dnd-kit/core",
+      "@dnd-kit/sortable",
+      "@dnd-kit/utilities",
+      "@tiptap/starter-kit",
+      "cmdk",
+      "@base-ui/react",
+      "date-fns",
+      "emoji-mart",
+      "@emoji-mart/data",
+    ],
   },
   ...(allowedDevOrigins && allowedDevOrigins.length > 0
     ? { allowedDevOrigins }

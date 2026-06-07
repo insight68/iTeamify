@@ -6,14 +6,11 @@ import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
 import type { AnimateLayoutChanges } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
-import type { Issue, UpdateIssueRequest } from "@teamify/core/types";
+import type { Issue, Project, UpdateIssueRequest } from "@teamify/core/types";
 import { CalendarDays } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { useUpdateIssue } from "@teamify/core/issues/mutations";
 import { useWorkspacePaths } from "@teamify/core/paths";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { projectListOptions } from "@teamify/core/projects/queries";
 import { ProjectIcon } from "../../projects/components/project-icon";
 import { PriorityIcon } from "./priority-icon";
 import { PriorityPicker, AssigneePicker, DueDatePicker } from "./pickers";
@@ -49,20 +46,17 @@ export const BoardCardContent = memo(function BoardCardContent({
   issue,
   editable = false,
   childProgress,
+  projects,
 }: {
   issue: Issue;
   editable?: boolean;
   childProgress?: ChildProgress;
+  projects?: Project[];
 }) {
   const { t } = useT("issues");
   const storeProperties = useViewStore((s) => s.cardProperties);
   const priorityCfg = PRIORITY_CONFIG[issue.priority];
-  const wsId = useWorkspaceId();
-  const { data: projects = [] } = useQuery({
-    ...projectListOptions(wsId),
-    enabled: storeProperties.project && !!issue.project_id,
-  });
-  const project = issue.project_id ? projects.find((p) => p.id === issue.project_id) : undefined;
+  const project = issue.project_id ? projects?.find((p) => p.id === issue.project_id) : undefined;
   const labels = issue.labels ?? [];
 
   const updateIssueMutation = useUpdateIssue();
@@ -219,7 +213,7 @@ const animateLayoutChanges: AnimateLayoutChanges = (args) => {
   return defaultAnimateLayoutChanges(args);
 };
 
-export const DraggableBoardCard = memo(function DraggableBoardCard({ issue, childProgress }: { issue: Issue; childProgress?: ChildProgress }) {
+export const DraggableBoardCard = memo(function DraggableBoardCard({ issue, childProgress, projects }: { issue: Issue; childProgress?: ChildProgress; projects?: Project[] }) {
   const p = useWorkspacePaths();
   const {
     attributes,
@@ -252,7 +246,7 @@ export const DraggableBoardCard = memo(function DraggableBoardCard({ issue, chil
           href={p.issueDetail(issue.id)}
           className={`group block transition-colors ${isDragging ? "pointer-events-none" : ""}`}
         >
-          <BoardCardContent issue={issue} editable childProgress={childProgress} />
+          <BoardCardContent issue={issue} editable childProgress={childProgress} projects={projects} />
         </AppLink>
       </div>
     </IssueActionsContextMenu>

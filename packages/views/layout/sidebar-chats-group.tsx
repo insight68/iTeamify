@@ -37,6 +37,7 @@ const AVAILABILITY_ORDER: Record<string, number> = {
 export function SidebarChatsGroup({ wsId, userId }: SidebarChatsGroupProps) {
   const { t } = useT("layout");
 
+  // Always fetch agents first — the other queries only matter if agents exist
   const { data: agents } = useQuery({
     ...agentListOptions(wsId ?? ""),
     enabled: !!wsId,
@@ -45,11 +46,6 @@ export function SidebarChatsGroup({ wsId, userId }: SidebarChatsGroupProps) {
     ...memberListOptions(wsId ?? ""),
     enabled: !!wsId,
   });
-  const { data: sessions } = useQuery({
-    ...chatSessionsOptions(wsId ?? ""),
-    enabled: !!wsId,
-  });
-  const { byAgent: presenceMap } = useWorkspacePresenceMap(wsId);
 
   const rawRole = members?.find((m) => m.user_id === userId)?.role;
   const memberRole =
@@ -68,6 +64,14 @@ export function SidebarChatsGroup({ wsId, userId }: SidebarChatsGroupProps) {
       ),
     [agents, userId, memberRole],
   );
+
+  // Only fetch sessions + presence when there are visible agents
+  const hasAgents = availableAgents.length > 0;
+  const { data: sessions } = useQuery({
+    ...chatSessionsOptions(wsId ?? ""),
+    enabled: !!wsId && hasAgents,
+  });
+  const { byAgent: presenceMap } = useWorkspacePresenceMap(hasAgents ? wsId : undefined);
 
   // Build unread set: agent IDs that have at least one unread session
   const unreadAgentIds = useMemo(() => {

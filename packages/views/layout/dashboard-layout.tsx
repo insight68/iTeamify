@@ -1,11 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { SidebarProvider, SidebarInset } from "@teamify/ui/components/ui/sidebar";
-import { ModalRegistry } from "../modals/registry";
 import { AppSidebar } from "./app-sidebar";
 import { DashboardGuard } from "./dashboard-guard";
 import { WorkspacePresencePrefetch } from "./workspace-presence-prefetch";
+
+const ModalRegistry = lazy(() => import("../modals/registry").then((m) => ({ default: m.ModalRegistry })));
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -33,7 +34,9 @@ export function DashboardLayout({
         <AppSidebar />
         <SidebarInset className="relative overflow-hidden">
           {children}
-          <ModalRegistry />
+          <Suspense fallback={null}>
+            <ModalRegistry />
+          </Suspense>
           {extra}
         </SidebarInset>
       </SidebarProvider>

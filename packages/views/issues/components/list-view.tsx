@@ -1,16 +1,20 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { ChevronRight, Plus } from "lucide-react";
 import { Accordion } from "@base-ui/react/accordion";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useQuery } from "@tanstack/react-query";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@teamify/ui/components/ui/tooltip";
 import { Button } from "@teamify/ui/components/ui/button";
 import type { Issue, IssueStatus } from "@teamify/core/types";
+import { useWorkspaceId } from "@teamify/core/hooks";
 import { useLoadMoreByStatus } from "@teamify/core/issues/mutations";
 import type { MyIssuesFilter } from "@teamify/core/issues/queries";
 import { useModalStore } from "@teamify/core/modals";
 import { useViewStore } from "@teamify/core/issues/stores/view-store-context";
 import { useIssueSelectionStore } from "@teamify/core/issues/stores/selection-store";
+import { projectListOptions } from "@teamify/core/projects/queries";
 import { sortIssues } from "../utils/sort";
 import { StatusHeading } from "./status-heading";
 import { ListRow, type ChildProgress } from "./list-row";
@@ -18,6 +22,9 @@ import { InfiniteScrollSentinel } from "./infinite-scroll-sentinel";
 import { useT } from "../../i18n";
 
 const EMPTY_PROGRESS_MAP = new Map<string, ChildProgress>();
+const ROW_HEIGHT = 36;
+const VIRTUALIZE_THRESHOLD = 20;
+const MAX_LIST_HEIGHT = 600;
 
 export function ListView({
   issues,
@@ -114,6 +121,12 @@ function StatusAccordionItem({
   const selectedIds = useIssueSelectionStore((s) => s.selectedIds);
   const select = useIssueSelectionStore((s) => s.select);
   const deselect = useIssueSelectionStore((s) => s.deselect);
+  const wsId = useWorkspaceId();
+  const storeProperties = useViewStore((s) => s.cardProperties);
+  const { data: projects = [] } = useQuery({
+    ...projectListOptions(wsId),
+    enabled: storeProperties.project && issues.some((i) => !!i.project_id),
+  });
   const { loadMore, hasMore, isLoading, total } = useLoadMoreByStatus(
     status,
     myIssuesOpts,
@@ -123,6 +136,53 @@ function StatusAccordionItem({
   const selectedCount = issueIds.filter((id) => selectedIds.has(id)).length;
   const allSelected = issues.length > 0 && selectedCount === issues.length;
   const someSelected = selectedCount > 0;
+
+  const shouldVirtualize = issues.length > VIRTUALIZE_THRESHOLD;
+  const listRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: issues.length,
+    getScrollElement: () => listRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 5,
+  });
+
+  const listBody = shouldVirtualize ? (
+    <div ref={listRef} className="overflow-y-auto" style={{ maxHeight: `${Math.min(issues.length * ROW_HEIGHT, MAX_LIST_HEIGHT)}px` }}>
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: "100%",
+          position: "relative",
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualItem) => {
+          const issue = issues[virtualItem.index];
+          if (!issue) return null;
+          return (
+            <div
+              key={issue.id}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: `${virtualItem.size}px`,
+                transform: `translateY(${virtualItem.start}px)`,
+              }}
+            >
+              <ListRow issue={issue} childProgress={childProgressMap.get(issue.id)} projects={projects} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  ) : (
+    <div>
+      {issues.map((issue) => (
+        <ListRow key={issue.id} issue={issue} childProgress={childProgressMap.get(issue.id)} projects={projects} />
+      ))}
+    </div>
+  );
 
   return (
     <Accordion.Item value={status}>
@@ -173,9 +233,7 @@ function StatusAccordionItem({
       <Accordion.Panel className="pt-1">
         {issues.length > 0 ? (
           <>
-            {issues.map((issue) => (
-              <ListRow key={issue.id} issue={issue} childProgress={childProgressMap.get(issue.id)} />
-            ))}
+            {listBody}
             {hasMore && (
               <InfiniteScrollSentinel onVisible={loadMore} loading={isLoading} />
             )}

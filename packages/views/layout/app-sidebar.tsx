@@ -1,19 +1,11 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { cn } from "@teamify/ui/lib/utils";
 import { AppLink, useNavigation } from "../navigation";
 import { HelpLauncher } from "./help-launcher";
-import {
-  DndContext,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCenter,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+
+const SortablePins = lazy(() => import("./sortable-pins").then((m) => ({ default: m.SortablePins })));
 import {
   Inbox,
   ListTodo,
@@ -29,7 +21,6 @@ import {
   SquarePen,
   CircleUser,
   FolderKanban,
-  X,
   Zap,
   Search,
   Building2,
@@ -41,9 +32,7 @@ import {
 } from "lucide-react";
 import { WorkspaceAvatar } from "../workspace/workspace-avatar";
 import { ActorAvatar } from "@teamify/ui/components/common/actor-avatar";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@teamify/ui/components/ui/tooltip";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@teamify/ui/components/ui/collapsible";
-import { StatusIcon } from "../issues/components/status-icon";
 import { useCreateModeStore } from "@teamify/core/issues/stores/create-mode-store";
 import { useSearchStore } from "../search/search-store";
 import {
@@ -73,17 +62,14 @@ import { useCurrentWorkspace, useWorkspacePaths, paths } from "@teamify/core/pat
 import { workspaceListOptions, myInvitationListOptions, workspaceKeys } from "@teamify/core/workspace/queries";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inboxKeys, deduplicateInboxItems } from "@teamify/core/inbox/queries";
-import { api, ApiError } from "@teamify/core/api";
+import { api } from "@teamify/core/api";
 import { useModalStore } from "@teamify/core/modals";
 import { useMyRuntimesNeedUpdate } from "@teamify/core/runtimes/hooks";
 import { useIsOwner } from "@teamify/core/permissions";
 import { pinListOptions } from "@teamify/core/pins/queries";
-import { useDeletePin, useReorderPins } from "@teamify/core/pins/mutations";
-import { issueDetailOptions } from "@teamify/core/issues/queries";
-import { projectDetailOptions } from "@teamify/core/projects/queries";
+import { useDeletePin } from "@teamify/core/pins/mutations";
 import type { PinnedItem } from "@teamify/core/types";
 import { useLogout } from "../auth";
-import { ProjectIcon } from "../projects/components/project-icon";
 import { useT } from "../i18n";
 import { SidebarChatsGroup } from "./sidebar-chats-group";
 
@@ -190,179 +176,6 @@ const digitalEmployeeNav: DigitalEmployeeNavItem[] = [
   { key: "daemon", labelKey: "daemon", icon: Server, desktopOnly: true },
 ];
 
-/**
- * Presentational pin row. The `label` and `iconNode` are computed by the
- * parent `PinRow` from cached issue / project detail queries — keeping
- * this component dumb means the dnd-kit / navigation wiring lives in
- * one place and the data flow is explicit.
- */
-function SortablePinItem({
-  pin,
-  href,
-  pathname,
-  onUnpin,
-  label,
-  iconNode,
-}: {
-  pin: PinnedItem;
-  href: string;
-  pathname: string;
-  onUnpin: () => void;
-  label: string;
-  iconNode: React.ReactNode;
-}) {
-  const { t } = useT("layout");
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: pin.id });
-  const wasDragged = useRef(false);
-
-  useEffect(() => {
-    if (isDragging) wasDragged.current = true;
-  }, [isDragging]);
-
-  const style = { transform: CSS.Transform.toString(transform), transition };
-  const isActive = pathname === href;
-
-  return (
-    <SidebarMenuItem
-      ref={setNodeRef}
-      style={style}
-      className={cn("group/pin", isDragging && "opacity-30")}
-      {...attributes}
-      {...listeners}
-    >
-      <SidebarMenuButton
-        size="sm"
-        isActive={isActive}
-        render={<AppLink href={href} draggable={false} />}
-        onClick={(event) => {
-          if (wasDragged.current) {
-            wasDragged.current = false;
-            event.preventDefault();
-            return;
-          }
-        }}
-        className={cn(
-          "text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground",
-          isDragging && "pointer-events-none",
-        )}
-      >
-        {iconNode}
-        <span
-          className="min-w-0 flex-1 overflow-hidden whitespace-nowrap"
-          style={{
-            maskImage: "linear-gradient(to right, black calc(100% - 12px), transparent)",
-            WebkitMaskImage: "linear-gradient(to right, black calc(100% - 12px), transparent)",
-          }}
-        >{label}</span>
-        <Tooltip>
-          <TooltipTrigger
-            render={<span role="button" />}
-            className="hidden size-2.5 shrink-0 items-center justify-center rounded-sm text-muted-foreground group-hover/pin:flex hover:text-foreground"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onUnpin();
-            }}
-          >
-            <X className="size-1" />
-          </TooltipTrigger>
-          <TooltipContent side="top" sideOffset={4}>{t(($) => $.sidebar.unpin_tooltip)}</TooltipContent>
-        </Tooltip>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
-}
-
-/**
- * Smart wrapper that resolves a pin's display data (label + status/icon)
- * from the issue / project detail query cache. Both queries are declared
- * unconditionally with `enabled` gates so the hook order stays stable
- * regardless of `pin.item_type`.
- *
- * Loading: render a flat skeleton so the sidebar height doesn't jump.
- * Missing (deleted item / 404): render nothing — the row hides itself
- * until the user unpins manually or a server-side cascade catches up.
- */
-function PinRow({
-  pin,
-  href,
-  pathname,
-  onUnpin,
-  wsId,
-}: {
-  pin: PinnedItem;
-  href: string;
-  pathname: string;
-  onUnpin: () => void;
-  wsId: string;
-}) {
-  const isIssue = pin.item_type === "issue";
-  const issueQuery = useQuery({
-    ...issueDetailOptions(wsId, pin.item_id),
-    enabled: isIssue,
-  });
-  const projectQuery = useQuery({
-    ...projectDetailOptions(wsId, pin.item_id),
-    enabled: !isIssue,
-  });
-
-  const triggeredRef = useRef(false);
-  useEffect(() => {
-    const err = isIssue ? issueQuery.error : projectQuery.error;
-    if (err instanceof ApiError && err.status === 404 && !triggeredRef.current) {
-      triggeredRef.current = true;
-      onUnpin();
-    }
-  }, [isIssue, issueQuery.error, onUnpin, projectQuery.error]);
-
-  if (isIssue) {
-    if (issueQuery.isPending) return <PinSkeleton />;
-    if (issueQuery.isError || !issueQuery.data) return null;
-    const issue = issueQuery.data;
-    const label = issue.identifier ? `${issue.identifier} ${issue.title}` : issue.title;
-    const iconNode = (
-      /* Override parent [&_svg]:size-4 — pinned items need smaller icons to match sm size */
-      <StatusIcon status={issue.status} className="!size-3.5 shrink-0" />
-    );
-    return (
-      <SortablePinItem
-        pin={pin}
-        href={href}
-        pathname={pathname}
-        onUnpin={onUnpin}
-        label={label}
-        iconNode={iconNode}
-      />
-    );
-  }
-
-  if (projectQuery.isPending) return <PinSkeleton />;
-  if (projectQuery.isError || !projectQuery.data) return null;
-  const project = projectQuery.data;
-  const iconNode = <ProjectIcon project={project} size="sm" />;
-  return (
-    <SortablePinItem
-      pin={pin}
-      href={href}
-      pathname={pathname}
-      onUnpin={onUnpin}
-      label={project.title}
-      iconNode={iconNode}
-    />
-  );
-}
-
-function PinSkeleton() {
-  return (
-    <SidebarMenuItem>
-      <div className="flex h-7 w-full items-center gap-2 px-2">
-        <div className="size-3.5 shrink-0 rounded-sm bg-sidebar-accent/40" />
-        <div className="h-3 w-24 rounded bg-sidebar-accent/40" />
-      </div>
-    </SidebarMenuItem>
-  );
-}
-
 interface AppSidebarProps {
   /** Rendered above SidebarHeader (e.g. desktop traffic light spacer) */
   topSlot?: React.ReactNode;
@@ -400,38 +213,6 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
     enabled: !!wsId && !!userId,
   });
   const deletePin = useDeletePin();
-  const reorderPins = useReorderPins();
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-
-  // Local presentational copy of pinnedItems for drop-animation stability.
-  // Follows TQ at rest; frozen during a drag gesture so a mid-drag cache
-  // write (our own optimistic update, or a WS refetch) cannot reorder the
-  // DOM under dnd-kit while its drop animation is still interpolating.
-  const [localPinned, setLocalPinned] = useState<PinnedItem[]>(pinnedItems);
-  const isDraggingRef = useRef(false);
-  useEffect(() => {
-    if (!isDraggingRef.current) {
-      setLocalPinned(pinnedItems);
-    }
-  }, [pinnedItems]);
-
-  const handleDragStart = useCallback(() => {
-    isDraggingRef.current = true;
-  }, []);
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      isDraggingRef.current = false;
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-      const oldIndex = localPinned.findIndex((p) => p.id === active.id);
-      const newIndex = localPinned.findIndex((p) => p.id === over.id);
-      if (oldIndex === -1 || newIndex === -1) return;
-      const reordered = arrayMove(localPinned, oldIndex, newIndex);
-      setLocalPinned(reordered);
-      reorderPins.mutate(reordered);
-    },
-    [localPinned, reorderPins],
-  );
 
   const queryClient = useQueryClient();
   const acceptInvitationMut = useMutation({
@@ -679,7 +460,7 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
 
           <SidebarChatsGroup wsId={wsId} userId={user?.id} />
 
-          {localPinned.length > 0 && (
+          {pinnedItems.length > 0 && (
             <Collapsible defaultOpen>
               <SidebarGroup className="group/pinned">
                 <SidebarGroupLabel
@@ -688,26 +469,18 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
                 >
                   <span>{t(($) => $.sidebar.pinned_label)}</span>
                   <ChevronRight className="!size-3 ml-1 stroke-[2.5] transition-transform duration-200 group-data-[panel-open]/trigger:rotate-90" />
-                  <span className="ml-auto text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover/pinned:opacity-100">{localPinned.length}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover/pinned:opacity-100">{pinnedItems.length}</span>
                 </SidebarGroupLabel>
                 <CollapsibleContent>
                   <SidebarGroupContent>
-                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                      <SortableContext items={localPinned.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-                        <SidebarMenu className="gap-0.5">
-                          {localPinned.map((pin: PinnedItem) => (
-                            <PinRow
-                              key={pin.id}
-                              pin={pin}
-                              href={pin.item_type === "issue" ? p.issueDetail(pin.item_id) : p.projectDetail(pin.item_id)}
-                              pathname={pathname}
-                              onUnpin={() => deletePin.mutate({ itemType: pin.item_type, itemId: pin.item_id })}
-                              wsId={wsId ?? ""}
-                            />
-                          ))}
-                        </SidebarMenu>
-                      </SortableContext>
-                    </DndContext>
+                    <Suspense fallback={null}>
+                      <SortablePins
+                        pinnedItems={pinnedItems}
+                        wsId={wsId}
+                        pathname={pathname}
+                        deletePin={deletePin}
+                      />
+                    </Suspense>
                   </SidebarGroupContent>
                 </CollapsibleContent>
               </SidebarGroup>

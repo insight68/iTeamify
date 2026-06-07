@@ -1,15 +1,12 @@
 "use client";
 
 import { memo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { AppLink } from "../../navigation";
-import type { Issue } from "@teamify/core/types";
+import type { Issue, Project } from "@teamify/core/types";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { useIssueSelectionStore } from "@teamify/core/issues/stores/selection-store";
 import { useWorkspacePaths } from "@teamify/core/paths";
-import { useWorkspaceId } from "@teamify/core/hooks";
 import { useViewStore } from "@teamify/core/issues/stores/view-store-context";
-import { projectListOptions } from "@teamify/core/projects/queries";
 import { ProjectIcon } from "../../projects/components/project-icon";
 import { PriorityIcon } from "./priority-icon";
 import { ProgressRing } from "./progress-ring";
@@ -31,20 +28,17 @@ function formatDate(date: string): string {
 export const ListRow = memo(function ListRow({
   issue,
   childProgress,
+  projects,
 }: {
   issue: Issue;
   childProgress?: ChildProgress;
+  projects?: Project[];
 }) {
   const selected = useIssueSelectionStore((s) => s.selectedIds.has(issue.id));
   const toggle = useIssueSelectionStore((s) => s.toggle);
   const p = useWorkspacePaths();
   const storeProperties = useViewStore((s) => s.cardProperties);
-  const wsId = useWorkspaceId();
-  const { data: projects = [] } = useQuery({
-    ...projectListOptions(wsId),
-    enabled: storeProperties.project && !!issue.project_id,
-  });
-  const project = issue.project_id ? projects.find((pr) => pr.id === issue.project_id) : undefined;
+  const project = issue.project_id ? projects?.find((pr) => pr.id === issue.project_id) : undefined;
   const labels = issue.labels ?? [];
 
   const showProject = storeProperties.project && project;

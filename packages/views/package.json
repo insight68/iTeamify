@@ -44,6 +44,7 @@
     "./invite": "./invite/index.ts",
     "./invitations": "./invitations/index.ts",
     "./onboarding": "./onboarding/index.ts",
+    "./marketing": "./marketing/index.ts",
     "./platform": "./platform/index.ts",
     "./i18n": "./i18n/index.ts",
     "./locales": "./locales/index.ts",

@@ -302,7 +302,9 @@ export class ApiClient {
       let logLevel: "error" | "warn" | "info" = "error";
       if (res.status === 404) {
         logLevel = "warn";
-      } else if (res.status === 401 && path === "/me") {
+      } else if (res.status === 401) {
+        // 401s are expected for unauthenticated or expired sessions and are
+        // handled gracefully by handleUnauthorized() + onAuthFailure().
         logLevel = "warn";
       }
       this.logger[logLevel](`← ${res.status} ${path}`, { rid, duration: `${Date.now() - start}ms`, error: message });

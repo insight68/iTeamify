@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, lazy, Suspense } from "react";
+import { useRef, useState, useCallback, lazy } from "react";
 import { ArrowUp, Loader2, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@teamify/ui/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@teamify/ui/components/ui/tooltip";

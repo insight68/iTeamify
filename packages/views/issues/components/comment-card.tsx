@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useRef, useState, lazy, Suspense } from "react";
+import { memo, useCallback, useRef, useState, lazy } from "react";
 import { CheckCircle2, ChevronRight, Copy, Download, FileText, MoreHorizontal, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@teamify/ui/components/ui/card";

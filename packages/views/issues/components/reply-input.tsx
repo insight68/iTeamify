@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, lazy, Suspense } from "react";
+import { useRef, useState, useCallback, lazy } from "react";
 import { ArrowUp, Loader2, Maximize2, Minimize2 } from "lucide-react";
 import { type ContentEditorRef, useFileDropZone, FileDropOverlay } from "../../editor";
 const ContentEditor = lazy(() =>

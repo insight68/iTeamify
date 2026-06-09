@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, lazy, Suspense } from "react";
+import { useCallback, useEffect, useMemo, lazy } from "react";
 import { toast } from "sonner";
 import { ChevronRight, ListTodo } from "lucide-react";
 import type { IssueStatus } from "@teamify/core/types";
@@ -23,6 +23,7 @@ const BoardView = lazy(() =>
   import("./board-view").then((m) => ({ default: m.BoardView })),
 );
 import { BatchActionToolbar } from "./batch-action-toolbar";
+import { ListView } from "./list-view";
 import { useT } from "../../i18n";
 
 export function IssuesPage() {

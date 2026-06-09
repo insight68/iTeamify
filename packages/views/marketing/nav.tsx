@@ -26,10 +26,16 @@ export function LandingNav() {
         </AppLink>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <a
-            href="#features"
+            href="#agents"
             className="transition-colors hover:text-foreground"
           >
-            {t(($) => $.nav.features)}
+            {t(($) => $.nav.agents)}
+          </a>
+          <a
+            href="#integrations"
+            className="transition-colors hover:text-foreground"
+          >
+            {t(($) => $.nav.integrations)}
           </a>
           <a
             href="#how-it-works"

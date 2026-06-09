@@ -1,35 +1,32 @@
 "use client";
 
-import { useMemo } from "react";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { useT } from "../i18n";
 import { AppLink } from "../navigation";
-import { HeroMockup } from "./hero-mockup";
-import { AttributePills } from "./attribute-pills";
-
-/** Deterministic pseudo-random for SSR consistency. */
-function seededRandom(seed: number) {
-  const x = Math.sin(seed * 9301 + 49297) * 233280;
-  return x - Math.floor(x);
-}
-
-const STAR_COUNT = 80;
 
 /**
- * Hero section with star-dust particle background, subtle grid texture,
- * gradient headline, CTAs, agent mockup, and attribute pills. Star
- * positions are deterministic via seeded random to avoid hydration
- * mismatches between server and client.
+ * Hero section with dot-grid background, soft gradient wash,
+ * gradient headline, CTAs, email-input mockup, and stat badges.
+ * Light-tech theme — no animated star particles.
  */
 export function HeroSection() {
   const { t } = useT("marketing");
 
   return (
     <section className="relative overflow-hidden">
-      <StarDustBackground />
+      {/* Dot-grid pattern */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--brand)_18%,transparent),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{
+          backgroundImage: `radial-gradient(circle, color-mix(in oklab, var(--brand) 12%, transparent) 1px, transparent 1px)`,
+          backgroundSize: "32px 32px",
+        }}
+      />
+      {/* Soft gradient wash */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--brand)_12%,transparent),transparent_60%)]"
       />
       <div className="relative z-10 mx-auto max-w-6xl px-4 pb-8 pt-16 md:px-6 md:pt-24 lg:pb-12 lg:pt-32">
         <div className="flex flex-col items-center text-center">
@@ -62,59 +59,39 @@ export function HeroSection() {
             </AppLink>
           </div>
         </div>
+        {/* Email-input mockup */}
         <div className="mt-12 md:mt-16">
-          <HeroMockup />
+          <div className="mx-auto max-w-md">
+            <div className="rounded-xl border border-border/60 bg-card p-4 shadow-lg ring-1 ring-foreground/5">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-muted-foreground">
+                  Enter your work email
+                </div>
+                <button
+                  type="button"
+                  className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  Get started
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <AttributePills />
+        {/* Stat badges */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <StatBadge label={t(($) => $.hero.stats.agents)} />
+          <StatBadge label={t(($) => $.hero.stats.availability)} />
+          <StatBadge label={t(($) => $.hero.stats.price)} />
+        </div>
       </div>
     </section>
   );
 }
 
-/** Star-dust particles + subtle grid texture for the deep-space hero. */
-function StarDustBackground() {
-  const stars = useMemo(() => {
-    const result: { x: number; y: number; size: number; delay: number; duration: number }[] = [];
-    for (let i = 0; i < STAR_COUNT; i++) {
-      result.push({
-        x: seededRandom(i * 3 + 1) * 100,
-        y: seededRandom(i * 3 + 2) * 100,
-        size: seededRandom(i * 3 + 3) * 1.5 + 1,
-        delay: seededRandom(i * 7 + 11) * 5,
-        duration: seededRandom(i * 13 + 23) * 3 + 2,
-      });
-    }
-    return result;
-  }, []);
-
+function StatBadge({ label }: { label: string }) {
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
-    >
-      {/* Star particles */}
-      {stars.map((star, i) => (
-        <span
-          key={i}
-          className="absolute rounded-full bg-brand animate-star-twinkle"
-          style={{
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
-            animationDelay: `${star.delay}s`,
-            animationDuration: `${star.duration}s`,
-          }}
-        />
-      ))}
-      {/* Subtle grid texture */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `linear-gradient(to right, var(--brand) 1px, transparent 1px), linear-gradient(to bottom, var(--brand) 1px, transparent 1px)`,
-          backgroundSize: "60px 60px",
-        }}
-      />
-    </div>
+    <span className="inline-flex items-center rounded-full border border-border/60 bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm">
+      {label}
+    </span>
   );
 }

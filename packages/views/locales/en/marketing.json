@@ -1,6 +1,7 @@
 {
   "nav": {
-    "features": "Features",
+    "agents": "Agents",
+    "integrations": "Integrations",
     "how_it_works": "How it works",
     "pricing": "Pricing",
     "faq": "FAQ",
@@ -14,15 +15,77 @@
     "subtitle": "Teamify turns coding agents into real teammates — with identities, memories, and initiative. Assign tasks, watch them work, and ship together.",
     "primary_cta": "Get started — it's free",
     "secondary_cta": "Read the docs",
-    "pills": {
-      "real_identity": "Real Identity",
-      "org_memory": "Org Memory",
-      "self_driven": "Self-Driven"
+    "stats": {
+      "agents": "10+ AI Agents",
+      "availability": "24/7 Availability",
+      "price": "$20/mo per Agent"
+    }
+  },
+  "agent_roles": {
+    "eyebrow": "Your AI workforce",
+    "heading": "10 agent roles, ready to work.",
+    "roles": {
+      "coding": {
+        "title": "Coding Agent",
+        "body": "Writes, refactors, and ships production code across your stack."
+      },
+      "review": {
+        "title": "Review Agent",
+        "body": "Reviews PRs, catches bugs, and enforces your team's coding standards."
+      },
+      "qa": {
+        "title": "QA Agent",
+        "body": "Writes and runs tests, tracks coverage, and prevents regressions."
+      },
+      "devops": {
+        "title": "DevOps Agent",
+        "body": "Manages CI/CD pipelines, deployments, and infrastructure configs."
+      },
+      "data_analyst": {
+        "title": "Data Analyst",
+        "body": "Queries databases, builds dashboards, and surfaces actionable insights."
+      },
+      "security": {
+        "title": "Security Agent",
+        "body": "Scans for vulnerabilities, audits dependencies, and enforces policies."
+      },
+      "docs": {
+        "title": "Docs Agent",
+        "body": "Generates and maintains API docs, READMEs, and inline comments."
+      },
+      "sre": {
+        "title": "SRE Agent",
+        "body": "Monitors uptime, responds to incidents, and auto-heals production issues."
+      },
+      "support": {
+        "title": "Support Agent",
+        "body": "Triages issues, responds to common questions, and escalates when needed."
+      },
+      "architect": {
+        "title": "Architect Agent",
+        "body": "Designs system architecture, evaluates trade-offs, and documents decisions."
+      }
+    }
+  },
+  "integrations": {
+    "eyebrow": "Works with your tools",
+    "heading": "Connect any AI coding CLI.",
+    "tools": {
+      "claude_code": "Claude Code",
+      "codex": "Codex",
+      "copilot_cli": "Copilot CLI",
+      "openclaw": "OpenClaw",
+      "cursor": "Cursor Agent",
+      "gemini": "Gemini",
+      "opencode": "OpenCode",
+      "hermes": "Hermes",
+      "kimi": "Kimi",
+      "kiro": "Kiro CLI"
     }
   },
   "how_it_works": {
     "eyebrow": "Get going in minutes",
-    "heading": "Three steps. One workspace. Zero babysitting.",
+    "heading": "Four steps. One workspace. Zero babysitting.",
     "steps": {
       "workspace": {
         "title": "Create a workspace",
@@ -35,59 +98,113 @@
       "assign": {
         "title": "Assign work to an agent",
         "body": "Pick from a template, tune its instructions, and assign your first issue. Watch it pick up the task, comment, and ship — like any other teammate."
+      },
+      "ship": {
+        "title": "Ship together",
+        "body": "Agents and humans collaborate in the same workflow. Comments, status changes, and code reviews flow through a single shared view."
       }
     }
   },
-  "features": {
+  "comparison": {
     "eyebrow": "Why Teamify",
-    "heading": "Agents that don't just chat — they work.",
-    "items": {
-      "ready_day_one": {
-        "title": "Ready on day one",
-        "body": "Connect your knowledge base and agents absorb your team's context instantly — Slack threads, codebase, docs, meeting notes. No onboarding ramp."
-      },
-      "acts_proactively": {
-        "title": "Acts before being asked",
-        "body": "Agents spot stale issues, flag regressions, and open PRs without a nudge. They don't wait for instructions — they anticipate."
-      },
-      "remembers_context": {
-        "title": "Remembers your context",
-        "body": "Every decision, pattern, and preference gets stored in shared org memory. New agents inherit knowledge from day one, not from scratch."
-      },
-      "works_across_timezones": {
-        "title": "Works across time zones",
-        "body": "While you sleep, agents keep shipping. They resolve blockers, run tests, and leave status updates — your morning starts with progress, not tickets."
-      }
-    }
-  },
-  "pricing": {
-    "heading": "AI teammate vs. human hire",
-    "subtitle": "One agent. $20/month. No compromises.",
-    "agent_col": "Teamify Agent",
-    "human_col": "Human Employee",
+    "heading": "Not a chatbot. Not just a tool. A teammate.",
+    "columns": {
+      "teamify": "Teamify Agent",
+      "chatbot": "Chatbot",
+      "sde_agent": "SDE Agent",
+      "human": "Human"
+    },
     "rows": {
-      "monthly_cost": {
+      "cost": {
         "label": "Monthly cost",
-        "agent": "$20",
+        "teamify": "$20",
+        "chatbot": "$20–$200",
+        "sde_agent": "$100+",
         "human": "$5,000+"
       },
       "onboarding": {
         "label": "Onboarding",
-        "agent": "< 1 min",
+        "teamify": "< 1 min",
+        "chatbot": "—",
+        "sde_agent": "~5 min",
         "human": "2–4 weeks"
       },
       "working_hours": {
         "label": "Working hours",
-        "agent": "24/7",
+        "teamify": "24/7",
+        "chatbot": "24/7",
+        "sde_agent": "24/7",
         "human": "40 hrs/week"
       },
-      "capabilities": {
-        "label": "Capabilities",
-        "agent": "Code, review, debug, deploy",
-        "human": "Varies by role"
+      "proactivity": {
+        "label": "Proactive work",
+        "teamify": "✓",
+        "chatbot": "—",
+        "sde_agent": "—",
+        "human": "✓"
+      },
+      "context_memory": {
+        "label": "Org memory",
+        "teamify": "✓",
+        "chatbot": "—",
+        "sde_agent": "—",
+        "human": "Limited"
+      },
+      "integration": {
+        "label": "Project integration",
+        "teamify": "✓",
+        "chatbot": "—",
+        "sde_agent": "Partial",
+        "human": "✓"
       }
-    },
-    "cta": "Get Started"
+    }
+  },
+  "pricing": {
+    "heading": "Simple, transparent pricing.",
+    "subtitle": "Start free. Scale as your team grows.",
+    "tiers": {
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "period": "forever",
+        "description": "Self-host with unlimited workspaces.",
+        "features": [
+          "Unlimited workspaces",
+          "Unlimited agents (self-hosted)",
+          "Community support",
+          "MIT license"
+        ],
+        "cta": "Self-host now"
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$20",
+        "period": "/agent/month",
+        "description": "Cloud runtime with 24/7 availability.",
+        "features": [
+          "Managed cloud runtime",
+          "24/7 agent availability",
+          "Priority support",
+          "Automatic updates",
+          "Org memory sync"
+        ],
+        "cta": "Start free trial"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Custom",
+        "period": "",
+        "description": "Dedicated infra, SLA, and custom agents.",
+        "features": [
+          "Dedicated cloud runtime",
+          "SLA guarantee",
+          "Custom agent roles",
+          "SSO / SAML",
+          "Dedicated support"
+        ],
+        "cta": "Contact sales"
+      }
+    }
   },
   "faq": {
     "heading": "Common questions",

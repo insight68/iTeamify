@@ -6,9 +6,7 @@ import { LandingPage } from "./landing-page";
 
 // Mock navigation — LandingPage uses AppLink for in-app routes, which
 // expects a NavigationProvider. The test never exercises navigation, so
-// we no-op the provider entirely (same pattern as issue-detail.test.tsx
-// and issues-page.test.tsx). renderWithI18n from the shared test helper
-// supplies the i18n wrapper.
+// we no-op the provider entirely.
 vi.mock("../navigation", () => ({
   AppLink: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
     <a href={href} {...props}>
@@ -38,45 +36,65 @@ describe("LandingPage", () => {
     ).toHaveTextContent(/agents as teammates/i);
   });
 
-  it("renders the three attribute pills", () => {
+  it("renders the hero stat badges", () => {
     renderPage(<LandingPage />);
-    for (const label of ["Real Identity", "Org Memory", "Self-Driven"]) {
-      expect(screen.getAllByText(label).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("10+ AI Agents").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("24/7 Availability").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("$20/mo per Agent").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders the 10 agent role cards", () => {
+    renderPage(<LandingPage />);
+    const section = screen.getByRole("region", { name: /10 agent roles/i });
+    for (const title of [
+      "Coding Agent",
+      "Review Agent",
+      "QA Agent",
+      "DevOps Agent",
+      "Data Analyst",
+      "Security Agent",
+      "Docs Agent",
+      "SRE Agent",
+      "Support Agent",
+      "Architect Agent",
+    ]) {
+      expect(within(section).getByText(title)).toBeInTheDocument();
     }
   });
 
-  it("renders the three how-it-works steps", () => {
+  it("renders the integrations marquee", () => {
     renderPage(<LandingPage />);
-    const section = screen.getByRole("region", { name: /three steps/i });
+    expect(screen.getAllByText("Claude Code").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Codex").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders the four how-it-works steps", () => {
+    renderPage(<LandingPage />);
+    const section = screen.getByRole("region", { name: /four steps/i });
     for (const title of [
       "Create a workspace",
       "Connect a runtime",
       "Assign work to an agent",
+      "Ship together",
     ]) {
       expect(within(section).getByText(title)).toBeInTheDocument();
     }
   });
 
-  it("renders the four feature showcase blocks", () => {
+  it("renders the comparison table", () => {
     renderPage(<LandingPage />);
-    const section = screen.getByRole("region", { name: /agents that don't just chat/i });
-    for (const title of [
-      "Ready on day one",
-      "Acts before being asked",
-      "Remembers your context",
-      "Works across time zones",
-    ]) {
-      expect(within(section).getByText(title)).toBeInTheDocument();
-    }
-  });
-
-  it("renders the pricing comparison table", () => {
-    renderPage(<LandingPage />);
-    const section = screen.getByRole("region", { name: /ai teammate vs\. human hire/i });
+    const section = screen.getByRole("region", { name: /not a chatbot/i });
     expect(within(section).getByText("Teamify Agent")).toBeInTheDocument();
-    expect(within(section).getByText("Human Employee")).toBeInTheDocument();
-    expect(within(section).getByText("$20")).toBeInTheDocument();
-    expect(within(section).getByText("$5,000+")).toBeInTheDocument();
+    expect(within(section).getByText("Chatbot")).toBeInTheDocument();
+    expect(within(section).getByText("Human")).toBeInTheDocument();
+  });
+
+  it("renders the three-tier pricing cards", () => {
+    renderPage(<LandingPage />);
+    const section = screen.getByRole("region", { name: /simple, transparent pricing/i });
+    expect(within(section).getByText("Free")).toBeInTheDocument();
+    expect(within(section).getByText("Pro")).toBeInTheDocument();
+    expect(within(section).getByText("Enterprise")).toBeInTheDocument();
   });
 
   it("renders all 8 FAQ accordion triggers", () => {
@@ -114,10 +132,5 @@ describe("LandingPage", () => {
     for (const column of ["Product", "Resources", "Company", "Legal"]) {
       expect(screen.getByText(column)).toBeInTheDocument();
     }
-  });
-
-  it("renders the hero mockup with agent identity Atlas", () => {
-    renderPage(<LandingPage />);
-    expect(screen.getAllByText("Atlas").length).toBeGreaterThanOrEqual(1);
   });
 });

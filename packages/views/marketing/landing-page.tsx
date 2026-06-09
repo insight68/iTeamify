@@ -2,19 +2,18 @@
 
 import { LandingNav } from "./nav";
 import { HeroSection } from "./hero-section";
+import { AgentRoleCards } from "./agent-role-cards";
+import { IntegrationsSection } from "./integrations-section";
 import { HowItWorksSection } from "./how-it-works-section";
-import { FeatureShowcase } from "./feature-showcase";
+import { ComparisonSection } from "./comparison-section";
 import { PricingSection } from "./pricing-section";
 import { FaqSection } from "./faq-section";
 import { CtaSection } from "./cta-section";
 import { LandingFooter } from "./footer";
 
 /**
- * Composed marketing page. Web-only — the desktop app never routes here
- * (logged-in desktop users always have a workspace to land on, and the
- * marketing surface is meaningless without a browser context). The
- * `.landing-light` token lock is applied at the route layout, not here,
- * so it covers anything else that might be rendered on `/` in the future.
+ * Composed marketing page matching junior.so's section structure.
+ * The `.landing-light-tech` token lock is applied at the route layout.
  */
 export function LandingPage() {
   return (
@@ -22,8 +21,10 @@ export function LandingPage() {
       <LandingNav />
       <main>
         <HeroSection />
+        <AgentRoleCards />
+        <IntegrationsSection />
         <HowItWorksSection />
-        <FeatureShowcase />
+        <ComparisonSection />
         <PricingSection />
         <FaqSection />
         <CtaSection />

@@ -4,18 +4,18 @@ import { Check } from "lucide-react";
 import { useT } from "../i18n";
 import { AppLink } from "../navigation";
 
-const ROW_KEYS = [
-  "monthly_cost",
-  "onboarding",
-  "working_hours",
-  "capabilities",
-] as const;
+const TIER_KEYS = ["free", "pro", "enterprise"] as const;
+const FEATURE_INDICES = [0, 1, 2, 3, 4] as const;
+
+/** Feature list key paths per tier per index. */
+function featureKey(tier: string, idx: number): string {
+  return `pricing.tiers.${tier}.features.${idx}`;
+}
 
 /**
- * Comparison table: Teamify Agent vs Human Employee. Uses semantic
- * `<table>` with `<caption>` and `<th scope>` for accessibility.
- * Agent column uses brand color and checkmarks; human column uses
- * muted styling. Bottom CTA button drives signups.
+ * Three-tier pricing cards. Pro tier is highlighted as recommended.
+ * Each card shows name, price, period, description, feature list,
+ * and CTA button. Uses semantic tokens for light-tech theme.
  */
 export function PricingSection() {
   const { t } = useT("marketing");
@@ -25,7 +25,7 @@ export function PricingSection() {
       aria-labelledby="pricing-heading"
       className="py-20 md:py-28"
     >
-      <div className="mx-auto max-w-4xl px-4 md:px-6">
+      <div className="mx-auto max-w-6xl px-4 md:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-medium uppercase tracking-wider text-brand">
             {t(($) => $.pricing.subtitle)}
@@ -37,51 +37,71 @@ export function PricingSection() {
             {t(($) => $.pricing.heading)}
           </h2>
         </div>
-        <div className="mt-14 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xl ring-1 ring-foreground/5">
-          <table className="w-full">
-            <caption className="sr-only">
-              {t(($) => $.pricing.heading)}
-            </caption>
-            <thead>
-              <tr className="border-b border-border/60 bg-muted/50">
-                <th scope="col" className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                  &nbsp;
-                </th>
-                <th scope="col" className="px-6 py-4 text-center text-sm font-semibold text-brand">
-                  {t(($) => $.pricing.agent_col)}
-                </th>
-                <th scope="col" className="px-6 py-4 text-center text-sm font-medium text-muted-foreground">
-                  {t(($) => $.pricing.human_col)}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {ROW_KEYS.map((key) => (
-                <tr key={key} className="border-b border-border/40 last:border-b-0">
-                  <th scope="row" className="px-6 py-4 text-left text-sm font-medium text-foreground">
-                    {t(($) => $.pricing.rows[key].label)}
-                  </th>
-                  <td className="px-6 py-4 text-center text-sm font-semibold text-brand">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Check className="size-3.5" aria-hidden />
-                      {t(($) => $.pricing.rows[key].agent)}
+        <div className="mt-14 grid gap-6 md:grid-cols-3">
+          {TIER_KEYS.map((tier) => {
+            const isPro = tier === "pro";
+            return (
+              <div
+                key={tier}
+                className={`relative flex flex-col rounded-2xl border p-6 shadow-sm md:p-8 ${
+                  isPro
+                    ? "border-brand/40 bg-card shadow-[0_0_30px_color-mix(in_oklab,var(--brand)_10%,transparent)]"
+                    : "border-border/60 bg-card"
+                }`}
+              >
+                {isPro && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground">
+                    Recommended
+                  </span>
+                )}
+                <h3 className="font-heading text-lg font-semibold text-foreground">
+                  {t(($) => $.pricing.tiers[tier].name)}
+                </h3>
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="font-heading text-4xl font-bold text-foreground">
+                    {t(($) => $.pricing.tiers[tier].price)}
+                  </span>
+                  {t(($) => $.pricing.tiers[tier].period) && (
+                    <span className="text-sm text-muted-foreground">
+                      {t(($) => $.pricing.tiers[tier].period)}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-center text-sm text-muted-foreground">
-                    {t(($) => $.pricing.rows[key].human)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="mt-8 text-center">
-          <AppLink
-            href="/signup"
-            className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            {t(($) => $.pricing.cta)}
-          </AppLink>
+                  )}
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {t(($) => $.pricing.tiers[tier].description)}
+                </p>
+                <ul className="mt-6 flex-1 space-y-3">
+                  {FEATURE_INDICES.map((idx) => {
+                    try {
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const feature = (t as any)(featureKey(tier, idx));
+                      if (!feature) return null;
+                      return (
+                        <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
+                          <Check className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
+                          {feature}
+                        </li>
+                      );
+                    } catch {
+                      return null;
+                    }
+                  })}
+                </ul>
+                <div className="mt-6">
+                  <AppLink
+                    href={tier === "enterprise" ? "/contact" : "/signup"}
+                    className={`inline-flex h-10 w-full items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                      isPro
+                        ? "bg-brand text-brand-foreground hover:bg-brand/90"
+                        : "border border-border bg-background text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {t(($) => $.pricing.tiers[tier].cta)}
+                  </AppLink>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

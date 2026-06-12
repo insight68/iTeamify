@@ -1,16 +1,21 @@
 "use client";
 
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, BarChart3 } from "lucide-react";
 import { useT } from "../i18n";
 import { AppLink } from "../navigation";
 
 /**
- * Hero section with dot-grid background, soft gradient wash,
- * gradient headline, CTAs, email-input mockup, and stat badges.
- * Light-tech theme — no animated star particles.
+ * Hero section with quantitative value proposition, chat demo preview,
+ * stat badges, and dual CTAs. Suanpan (AI accountant) branding.
  */
 export function HeroSection() {
   const { t } = useT("marketing");
+
+  const stats = [
+    t(($) => $.hero.stats.platforms),
+    t(($) => $.hero.stats.merchants),
+    t(($) => $.hero.stats.accuracy),
+  ];
 
   return (
     <section className="relative overflow-hidden">
@@ -34,13 +39,10 @@ export function HeroSection() {
             {t(($) => $.hero.eyebrow)}
           </span>
           <h1 className="font-serif text-4xl font-normal leading-[1.05] tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
-            {t(($) => $.hero.headline_line1)}{" "}
-            <span className="bg-gradient-to-br from-brand via-brand to-primary bg-clip-text italic text-transparent">
-              {t(($) => $.hero.headline_emphasis)}
-            </span>
+            {t(($) => $.hero.headline)}
           </h1>
           <p className="mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg md:text-xl">
-            {t(($) => $.hero.subtitle)}
+            {t(($) => $.hero.sub_headline)}
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <AppLink
@@ -51,47 +53,44 @@ export function HeroSection() {
               <ArrowRight className="size-4" aria-hidden />
             </AppLink>
             <AppLink
-              href="/docs"
+              href="#testimonials"
               className="inline-flex h-11 items-center gap-2 rounded-lg border border-border bg-background px-5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
             >
-              <BookOpen className="size-4" aria-hidden />
+              <BarChart3 className="size-4" aria-hidden />
               {t(($) => $.hero.secondary_cta)}
             </AppLink>
           </div>
         </div>
-        {/* Email-input mockup */}
+
+        {/* Chat demo preview */}
         <div className="mt-12 md:mt-16">
-          <div className="mx-auto max-w-md">
+          <div className="mx-auto max-w-lg">
             <div className="rounded-xl border border-border/60 bg-card p-4 shadow-lg ring-1 ring-foreground/5">
-              <div className="flex items-center gap-3">
-                <div className="flex-1 rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-muted-foreground">
-                  Enter your work email
+              <div className="space-y-3">
+                <div className="flex justify-end">
+                  <div className="max-w-[80%] rounded-2xl bg-brand px-4 py-2.5 text-sm text-brand-foreground">
+                    {t(($) => $.hero.chat_preview.user)}
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  Get started
-                </button>
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] rounded-2xl bg-muted px-4 py-2.5 text-sm text-foreground">
+                    <span className="font-semibold">算盘</span>: {t(($) => $.hero.chat_preview.assistant)}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
         {/* Stat badges */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-          <StatBadge label={t(($) => $.hero.stats.agents)} />
-          <StatBadge label={t(($) => $.hero.stats.availability)} />
-          <StatBadge label={t(($) => $.hero.stats.price)} />
+          {stats.map((stat, i) => (
+            <span key={i} className="inline-flex items-center rounded-full border border-border/60 bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm">
+              {stat}
+            </span>
+          ))}
         </div>
       </div>
     </section>
-  );
-}
-
-function StatBadge({ label }: { label: string }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-border/60 bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm">
-      {label}
-    </span>
   );
 }

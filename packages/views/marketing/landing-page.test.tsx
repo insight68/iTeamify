@@ -76,7 +76,7 @@ describe("LandingPage", () => {
 
   it("renders the testimonials section", () => {
     renderPage(<LandingPage />);
-    expect(screen.getByRole("region", { name: /5,000\+ merchants using suanpan/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /turned reconciliation from a 3-day nightmare/i })).toBeInTheDocument();
   });
 
   it("renders the three-tier pricing cards", () => {

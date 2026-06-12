@@ -33,14 +33,14 @@ const FOOTER_COLUMNS: Record<
   resources: [
     { id: "docs", href: "/docs", kind: "route" },
     { id: "blog", href: "/blog", kind: "route" },
-    { id: "self_host", href: "/self-hosting", kind: "route" },
+    { id: "api", href: "/docs/api", kind: "route" },
     { id: "github", href: "https://github.com/teamify-ai/teamify", kind: "route" },
   ],
   company: [
     { id: "about", href: "/about", kind: "route" },
-    { id: "careers", href: "/careers", kind: "route" },
     { id: "contact", href: "/contact", kind: "route" },
-    { id: "x", href: "https://x.com/teamifyAI", kind: "route" },
+    { id: "careers", href: "/careers", kind: "route" },
+    { id: "privacy", href: "/privacy", kind: "route" },
   ],
   legal: [
     { id: "terms", href: "/terms", kind: "route" },
@@ -55,8 +55,8 @@ const FOOTER_COLUMNS: Record<
  *  present in that column's i18n bundle. */
 type LinkIdsFor<C extends ColumnKey> =
   C extends "product" ? "features" | "how_it_works" | "pricing" | "changelog" :
-  C extends "resources" ? "docs" | "blog" | "self_host" | "github" :
-  C extends "company" ? "about" | "careers" | "contact" | "x" :
+  C extends "resources" ? "docs" | "blog" | "api" | "github" :
+  C extends "company" ? "about" | "contact" | "careers" | "privacy" :
   C extends "legal" ? "terms" | "privacy" | "license" :
   never;
 

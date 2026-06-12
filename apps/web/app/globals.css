@@ -150,7 +150,7 @@
     --accent: oklch(0.93 0.02 260);
     --accent-foreground: oklch(0.15 0.02 260);
 
-    --brand: oklch(0.55 0.2 260);                 /* Blue-purple brand */
+    --brand: oklch(0.64 0.15 195);                 /* Teal brand for suanpan */
     --brand-foreground: oklch(1 0 0);
 
     --destructive: oklch(0.58 0.22 25);

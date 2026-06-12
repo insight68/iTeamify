@@ -29,11 +29,21 @@ function renderPage(ui: ReactElement) {
 }
 
 describe("LandingPage", () => {
-  it("renders the hero headline with gradient emphasis", () => {
+  it("renders the hero headline 'Hire AI Employees'", () => {
     renderPage(<LandingPage />);
     expect(
       screen.getByRole("heading", { level: 1 }),
-    ).toHaveTextContent(/agents as teammates/i);
+    ).toHaveTextContent(/hire ai employees/i);
+  });
+
+  it("renders at least one rotating role in the hero", () => {
+    renderPage(<LandingPage />);
+    // At least one role should be visible (first one has no aria-hidden)
+    const roles = ["ads manager", "designer", "developer", "support", "SRE", "architect"];
+    const foundRole = roles.some((role) =>
+      screen.queryByText(new RegExp(role, "i")) !== null,
+    );
+    expect(foundRole).toBe(true);
   });
 
   it("renders the hero stat badges", () => {
@@ -68,14 +78,12 @@ describe("LandingPage", () => {
     expect(screen.getAllByText("Codex").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders the four how-it-works steps", () => {
+  it("renders the two how-it-works steps", () => {
     renderPage(<LandingPage />);
-    const section = screen.getByRole("region", { name: /four steps/i });
+    const section = screen.getByRole("region", { name: /two steps/i });
     for (const title of [
-      "Create a workspace",
-      "Connect a runtime",
-      "Assign work to an agent",
-      "Ship together",
+      "Sign up with email",
+      "Start using",
     ]) {
       expect(within(section).getByText(title)).toBeInTheDocument();
     }

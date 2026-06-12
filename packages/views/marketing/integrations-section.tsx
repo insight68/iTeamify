@@ -3,16 +3,18 @@
 import { useT } from "../i18n";
 
 const TOOL_KEYS = [
-  "claude_code",
-  "codex",
-  "copilot_cli",
-  "openclaw",
-  "cursor",
-  "gemini",
-  "opencode",
-  "hermes",
-  "kimi",
-  "kiro",
+  "taobao",
+  "douyin",
+  "pinduoduo",
+  "jd",
+  "kuaishou",
+  "xiaohongshu",
+  "weishop",
+  "bilibili",
+  "shopify",
+  "amazon",
+  "lazada",
+  "shopee",
 ] as const;
 
 /**

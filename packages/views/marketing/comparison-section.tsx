@@ -4,15 +4,14 @@ import { Check, Minus } from "lucide-react";
 import { useT } from "../i18n";
 
 const ROW_KEYS = [
-  "cost",
-  "onboarding",
-  "working_hours",
-  "proactivity",
-  "context_memory",
-  "integration",
+  "monthly_time",
+  "auto_match",
+  "missing_rate",
+  "alert_speed",
+  "monthly_cost",
 ] as const;
 
-const COL_KEYS = ["teamify", "chatbot", "sde_agent", "human"] as const;
+const COL_KEYS = ["suanpan", "manual", "excel", "software"] as const;
 
 /**
  * Comparison table: Teamify Agent vs Chatbot vs SDE Agent vs Human.
@@ -55,7 +54,7 @@ export function ComparisonSection() {
                       key={col}
                       scope="col"
                       className={`px-5 py-4 text-center text-sm font-semibold ${
-                        col === "teamify"
+                        col === "suanpan"
                           ? "text-brand"
                           : "text-muted-foreground"
                       }`}
@@ -72,7 +71,7 @@ export function ComparisonSection() {
                       {t(($) => $.comparison.rows[rowKey].label)}
                     </th>
                     {COL_KEYS.map((colKey) => {
-                      const isTeamify = colKey === "teamify";
+                      const isTeamify = colKey === "suanpan";
                       const value = t(($) => $.comparison.rows[rowKey][colKey]);
                       const isCheck = value === "✓";
                       return (

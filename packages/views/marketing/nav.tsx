@@ -4,9 +4,8 @@ import { useT } from "../i18n";
 import { AppLink } from "../navigation";
 
 /**
- * Sticky top nav for the public landing page. Anchors jump to in-page
- * sections; the primary CTA opens signup. Marked "use client" because
- * AppLink needs the NavigationAdapter context, which is always client-side.
+ * Sticky top nav for the suanpan landing page. Anchors jump to in-page
+ * sections; the primary CTA opens signup.
  */
 export function LandingNav() {
   const { t } = useT("marketing");
@@ -19,17 +18,17 @@ export function LandingNav() {
         >
           <img
             src="/logo.svg"
-            alt="Teamify"
+            alt="算盘"
             className="h-7 w-7 rounded-md"
           />
-          <span>Teamify</span>
+          <span>算盘</span>
         </AppLink>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <a
-            href="#agents"
+            href="#features"
             className="transition-colors hover:text-foreground"
           >
-            {t(($) => $.nav.agents)}
+            {t(($) => $.nav.features)}
           </a>
           <a
             href="#integrations"
@@ -38,10 +37,10 @@ export function LandingNav() {
             {t(($) => $.nav.integrations)}
           </a>
           <a
-            href="#how-it-works"
+            href="#chat-demo"
             className="transition-colors hover:text-foreground"
           >
-            {t(($) => $.nav.how_it_works)}
+            {t(($) => $.nav.chat_demo)}
           </a>
           <a
             href="#pricing"

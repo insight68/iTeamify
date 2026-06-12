@@ -9,14 +9,14 @@ import {
 import { useT } from "../i18n";
 
 const FAQ_KEYS = [
-  "what_is_teamify",
-  "how_agents_differ",
-  "which_clis",
-  "self_host",
-  "agent_security",
-  "agent_limits",
-  "pricing",
-  "open_source",
+  "platforms",
+  "security",
+  "learning",
+  "payment",
+  "refund",
+  "api",
+  "contract",
+  "compare",
 ] as const;
 
 /**

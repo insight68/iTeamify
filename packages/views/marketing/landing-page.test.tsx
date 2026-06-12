@@ -29,78 +29,60 @@ function renderPage(ui: ReactElement) {
 }
 
 describe("LandingPage", () => {
-  it("renders the hero headline 'Hire AI Employees'", () => {
+  it("renders the hero headline about reconciliation", () => {
     renderPage(<LandingPage />);
     expect(
       screen.getByRole("heading", { level: 1 }),
-    ).toHaveTextContent(/hire ai employees/i);
-  });
-
-  it("renders at least one rotating role in the hero", () => {
-    renderPage(<LandingPage />);
-    // At least one role should be visible (first one has no aria-hidden)
-    const roles = ["ads manager", "designer", "developer", "support", "SRE", "architect"];
-    const foundRole = roles.some((role) =>
-      screen.queryByText(new RegExp(role, "i")) !== null,
-    );
-    expect(foundRole).toBe(true);
+    ).toHaveTextContent(/reconcile monthly accounts/i);
   });
 
   it("renders the hero stat badges", () => {
     renderPage(<LandingPage />);
-    expect(screen.getAllByText("10+ AI Agents").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("24/7 Availability").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("$20/mo per Agent").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/12\+ marketplace/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/99\.9% accuracy/i).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders the 10 agent role cards", () => {
+  it("renders the 4 feature cards", () => {
     renderPage(<LandingPage />);
-    const section = screen.getByRole("region", { name: /10 agent roles/i });
+    const section = screen.getByRole("region", { name: /4 core capabilities/i });
     for (const title of [
-      "Coding Agent",
-      "Review Agent",
-      "QA Agent",
-      "DevOps Agent",
-      "Data Analyst",
-      "Security Agent",
-      "Docs Agent",
-      "SRE Agent",
-      "Support Agent",
-      "Architect Agent",
+      "Order Reconciliation",
+      "Fee Verification",
+      "Profit Analysis",
+      "Anomaly Monitoring",
     ]) {
       expect(within(section).getByText(title)).toBeInTheDocument();
     }
   });
 
-  it("renders the integrations marquee", () => {
+  it("renders the integrations marquee with e-commerce platforms", () => {
     renderPage(<LandingPage />);
-    expect(screen.getAllByText("Claude Code").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Codex").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Taobao/Tmall").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Douyin").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders the two how-it-works steps", () => {
+  it("renders the chat demo section", () => {
     renderPage(<LandingPage />);
-    const section = screen.getByRole("region", { name: /two steps/i });
-    for (const title of [
-      "Sign up with email",
-      "Start using",
-    ]) {
-      expect(within(section).getByText(title)).toBeInTheDocument();
-    }
+    expect(screen.getByRole("region", { name: /no excel skills needed/i })).toBeInTheDocument();
   });
 
-  it("renders the comparison table", () => {
+  it("renders the comparison table with suanpan highlight", () => {
     renderPage(<LandingPage />);
-    const section = screen.getByRole("region", { name: /not a chatbot/i });
-    expect(within(section).getByText("Teamify Agent")).toBeInTheDocument();
-    expect(within(section).getByText("Chatbot")).toBeInTheDocument();
-    expect(within(section).getByText("Human")).toBeInTheDocument();
+    const section = screen.getByRole("region", { name: /not excel\. not accounting software/i });
+    expect(within(section).getByText("Suanpan")).toBeInTheDocument();
+    expect(within(section).getByText("Manual")).toBeInTheDocument();
+    expect(within(section).getByText("Excel")).toBeInTheDocument();
+  });
+
+  it("renders the testimonials section", () => {
+    renderPage(<LandingPage />);
+    expect(screen.getByRole("region", { name: /5,000\+ merchants using suanpan/i })).toBeInTheDocument();
   });
 
   it("renders the three-tier pricing cards", () => {
     renderPage(<LandingPage />);
     const section = screen.getByRole("region", { name: /simple, transparent pricing/i });
-    expect(within(section).getByText("Free")).toBeInTheDocument();
+    expect(within(section).getByText("Free Trial")).toBeInTheDocument();
     expect(within(section).getByText("Pro")).toBeInTheDocument();
     expect(within(section).getByText("Enterprise")).toBeInTheDocument();
   });
@@ -109,14 +91,14 @@ describe("LandingPage", () => {
     renderPage(<LandingPage />);
     const faq = screen.getByRole("region", { name: /common questions/i });
     for (const question of [
-      /what is teamify, exactly\?/i,
-      /how are teamify agents different from chatbots/i,
-      /which ai coding tools/i,
-      /can i self-host/i,
-      /are agents sandboxed/i,
-      /is there a limit on how many agents/i,
-      /what does it cost/i,
-      /how open is/i,
+      /which platforms do you support/i,
+      /is my data secure/i,
+      /what if i don't know how to use/i,
+      /what payment methods/i,
+      /can i get a refund/i,
+      /is there an api/i,
+      /do i need to sign a contract/i,
+      /how is this different from hiring an accountant/i,
     ]) {
       expect(within(faq).getByText(question)).toBeInTheDocument();
     }
@@ -125,14 +107,14 @@ describe("LandingPage", () => {
   it("renders the bottom CTA pointing to /signup", () => {
     renderPage(<LandingPage />);
     expect(
-      screen.getByRole("link", { name: /create your workspace/i }),
+      screen.getByRole("link", { name: /start free trial — no credit card required/i }),
     ).toHaveAttribute("href", "/signup");
   });
 
   it("renders the footer marquee with benefit phrases", () => {
     renderPage(<LandingPage />);
-    expect(screen.getAllByText("Agents that code").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Open source").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("94% auto-match").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("14-day free trial").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders the four-column footer with all link groups", () => {

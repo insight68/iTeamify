@@ -17,6 +17,7 @@
     "./hooks/*": "./hooks/*.ts",
     "./lib/utils": "./lib/utils.ts",
     "./lib/data-table": "./lib/data-table.ts",
+    "./lib/editable-data-table": "./lib/editable-data-table.ts",
     "./styles/tokens.css": "./styles/tokens.css",
     "./styles/base.css": "./styles/base.css"
   },

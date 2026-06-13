@@ -1,0 +1,4288 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - link "Junior" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "Junior" [ref=e6]
+        - generic [ref=e7]:
+          - link "Use Cases" [ref=e8] [cursor=pointer]:
+            - /url: /use-cases
+          - link "Compare" [ref=e9] [cursor=pointer]:
+            - /url: /compare
+          - link "Integrations" [ref=e10] [cursor=pointer]:
+            - /url: /integrations
+          - link "Pricing" [ref=e11] [cursor=pointer]:
+            - /url: /pricing
+          - link "Blog" [ref=e12] [cursor=pointer]:
+            - /url: /blog
+          - link "Docs" [ref=e13] [cursor=pointer]:
+            - /url: /docs
+          - button "Contact Us" [ref=e15] [cursor=pointer]
+        - generic [ref=e16]:
+          - button "Language" [ref=e18] [cursor=pointer]:
+            - img [ref=e19]
+            - generic [ref=e22]: EN
+            - img [ref=e23]
+          - link "Sign in" [ref=e25] [cursor=pointer]:
+            - /url: /login
+          - link "Free Trial" [ref=e26] [cursor=pointer]:
+            - /url: /login?next=%2Fhire
+            - generic [ref=e27]: Free Trial
+    - generic [ref=e28]:
+      - generic [ref=e29]:
+        - generic:
+          - generic:
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+        - generic:
+          - generic:
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+            - generic:
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+            - generic:
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+            - generic:
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "0"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+              - generic: "1"
+        - generic [ref=e31]:
+          - generic [ref=e32]:
+            - 'heading "Hire AI Employees: Your AI coworker, your ops assistant." [level=1] [ref=e33]':
+              - text: "Hire AI Employees:"
+              - text: Your AI coworker, your
+              - generic [ref=e34]: ops assistant.
+            - paragraph [ref=e35]: Junior is the AI coworker that joins your Slack or Teams, connects to 3,000+ tools, and runs your campaigns, sales, and ops. Focus on the business. Let Junior handle the rest.
+            - generic [ref=e36]:
+              - link "Try It Free → $100 Credit" [ref=e37] [cursor=pointer]:
+                - /url: /login?next=%2Fhire
+              - link "Talk to a Human" [ref=e38] [cursor=pointer]:
+                - /url: https://calendly.com/kuse-carmen/junior-discovery-pilot
+            - generic [ref=e39]:
+              - generic [ref=e40]:
+                - generic [ref=e42]:
+                  - generic [ref=e44]:
+                    - generic [ref=e45]: "0"
+                    - generic [ref=e46]: "1"
+                    - generic [ref=e47]: "2"
+                    - generic [ref=e48]: "3"
+                    - generic [ref=e49]: "4"
+                    - generic [ref=e50]: "5"
+                    - generic [ref=e51]: "6"
+                    - generic [ref=e52]: "7"
+                    - generic [ref=e53]: "8"
+                    - generic [ref=e54]: "9"
+                  - generic [ref=e56]:
+                    - generic [ref=e57]: "0"
+                    - generic [ref=e58]: "1"
+                    - generic [ref=e59]: "2"
+                    - generic [ref=e60]: "3"
+                    - generic [ref=e61]: "4"
+                    - generic [ref=e62]: "5"
+                    - generic [ref=e63]: "6"
+                    - generic [ref=e64]: "7"
+                    - generic [ref=e65]: "8"
+                    - generic [ref=e66]: "9"
+                  - generic [ref=e68]:
+                    - generic [ref=e69]: "0"
+                    - generic [ref=e70]: "1"
+                    - generic [ref=e71]: "2"
+                    - generic [ref=e72]: "3"
+                    - generic [ref=e73]: "4"
+                    - generic [ref=e74]: "5"
+                    - generic [ref=e75]: "6"
+                    - generic [ref=e76]: "7"
+                    - generic [ref=e77]: "8"
+                    - generic [ref=e78]: "9"
+                  - generic [ref=e79]: +
+                - generic [ref=e80]: Companies
+              - generic [ref=e81]:
+                - generic [ref=e83]:
+                  - generic [ref=e85]:
+                    - generic [ref=e86]: "0"
+                    - generic [ref=e87]: "1"
+                    - generic [ref=e88]: "2"
+                    - generic [ref=e89]: "3"
+                    - generic [ref=e90]: "4"
+                    - generic [ref=e91]: "5"
+                    - generic [ref=e92]: "6"
+                    - generic [ref=e93]: "7"
+                    - generic [ref=e94]: "8"
+                    - generic [ref=e95]: "9"
+                  - generic [ref=e96]: M
+                  - generic [ref=e97]: +
+                - generic [ref=e98]: Messages
+              - generic [ref=e99]:
+                - generic [ref=e101]:
+                  - generic [ref=e103]:
+                    - generic [ref=e104]: "0"
+                    - generic [ref=e105]: "1"
+                    - generic [ref=e106]: "2"
+                    - generic [ref=e107]: "3"
+                    - generic [ref=e108]: "4"
+                    - generic [ref=e109]: "5"
+                    - generic [ref=e110]: "6"
+                    - generic [ref=e111]: "7"
+                    - generic [ref=e112]: "8"
+                    - generic [ref=e113]: "9"
+                  - generic [ref=e115]:
+                    - generic [ref=e116]: "0"
+                    - generic [ref=e117]: "1"
+                    - generic [ref=e118]: "2"
+                    - generic [ref=e119]: "3"
+                    - generic [ref=e120]: "4"
+                    - generic [ref=e121]: "5"
+                    - generic [ref=e122]: "6"
+                    - generic [ref=e123]: "7"
+                    - generic [ref=e124]: "8"
+                    - generic [ref=e125]: "9"
+                  - generic [ref=e126]: +
+                - generic [ref=e127]: Countries
+              - generic [ref=e128]:
+                - generic [ref=e130]:
+                  - generic [ref=e132]:
+                    - generic [ref=e133]: "0"
+                    - generic [ref=e134]: "1"
+                    - generic [ref=e135]: "2"
+                    - generic [ref=e136]: "3"
+                    - generic [ref=e137]: "4"
+                    - generic [ref=e138]: "5"
+                    - generic [ref=e139]: "6"
+                    - generic [ref=e140]: "7"
+                    - generic [ref=e141]: "8"
+                    - generic [ref=e142]: "9"
+                  - generic [ref=e144]:
+                    - generic [ref=e145]: "0"
+                    - generic [ref=e146]: "1"
+                    - generic [ref=e147]: "2"
+                    - generic [ref=e148]: "3"
+                    - generic [ref=e149]: "4"
+                    - generic [ref=e150]: "5"
+                    - generic [ref=e151]: "6"
+                    - generic [ref=e152]: "7"
+                    - generic [ref=e153]: "8"
+                    - generic [ref=e154]: "9"
+                  - generic [ref=e156]:
+                    - generic [ref=e157]: "0"
+                    - generic [ref=e158]: "1"
+                    - generic [ref=e159]: "2"
+                    - generic [ref=e160]: "3"
+                    - generic [ref=e161]: "4"
+                    - generic [ref=e162]: "5"
+                    - generic [ref=e163]: "6"
+                    - generic [ref=e164]: "7"
+                    - generic [ref=e165]: "8"
+                    - generic [ref=e166]: "9"
+                  - generic [ref=e167]: +
+                - generic [ref=e168]: Tasks/day
+          - generic [ref=e171]:
+            - generic [ref=e177]: Mail · Kuse Inc.
+            - generic [ref=e178]:
+              - generic [ref=e179]: Your Q2 growth goals. Worth a quick chat?
+              - generic [ref=e180]:
+                - img "Junior" [ref=e181]
+                - generic [ref=e182]:
+                  - generic [ref=e183]:
+                    - generic [ref=e184]: Junior
+                    - generic [ref=e185]: <junior@kuse.ai>
+                    - generic [ref=e186]: Today, 8:47 AM
+                  - generic [ref=e187]: "To: david.chen@brightcorp.com"
+            - generic [ref=e188]:
+              - paragraph [ref=e189]: Hi David,
+              - paragraph [ref=e190]: I noticed BrightCorp posted 4 ops and SDR roles this month. Congrats on the growth.
+              - paragraph [ref=e191]:
+                - text: We help scaling teams replace that hiring with AI employees that start on day one. Based on your stack, I put together a quick breakdown of where we could free up
+                - strong [ref=e192]: ~20 hrs/week
+                - text: before Q2 ends.
+              - paragraph [ref=e193]: Worth a 15-minute call? I have Thursday 2pm or Friday morning open.
+              - generic [ref=e194]:
+                - generic [ref=e195]: Junior
+                - generic [ref=e196]: AI Sales Rep · Kuse Inc.
+                - generic [ref=e197]: junior@kuse.ai
+      - region "As featured in" [ref=e199]:
+        - generic [ref=e200]:
+          - generic [ref=e201]: As featured in
+          - generic [ref=e202]:
+            - 'link "Bloomberg: The AI Coworker Who Won’t Stop Snitching" [ref=e203] [cursor=pointer]':
+              - /url: https://www.bloomberg.com/news/articles/2026-04-02/meet-the-new-ai-coworker-who-won-t-stop-snitching-to-your-boss
+              - img "Bloomberg" [ref=e204]
+            - 'link "Business Insider: We Built AI Employees and Had to Create a Human-Only Slack" [ref=e205] [cursor=pointer]':
+              - /url: https://www.businessinsider.com/kuse-ceo-openclaw-hype-ai-employees-human-only-slack-escape-2026-4
+              - img "Business Insider" [ref=e206]
+            - 'link "LinkedIn: The Colleague Who Never Sleeps" [ref=e207] [cursor=pointer]':
+              - /url: https://www.linkedin.com/news/story/get-ready-for-a-colleague-who-never-sleeps-never-stops-7848137/
+              - img "LinkedIn" [ref=e208]
+    - generic [ref=e209]:
+      - heading "Hire the role your team needs next." [level=2] [ref=e211]
+      - generic [ref=e213]:
+        - generic [ref=e214]:
+          - generic:
+            - generic:
+              - generic:
+                - img "AI Sales Rep"
+              - generic:
+                - generic: Revenue
+                - heading "AI Sales Rep" [level=3]
+                - paragraph: Researches accounts, drafts outreach, updates CRM, and reports pipeline movement daily.
+                - link:
+                  - /url: /register?role=ai-sales-rep
+                  - text: Start free trial
+                  - img
+          - generic [ref=e216] [cursor=pointer]:
+            - img "AI Executive Assistant" [ref=e218]
+            - generic [ref=e219]:
+              - generic [ref=e220]: Priority role
+              - heading "AI Executive Assistant" [level=3] [ref=e221]
+              - paragraph [ref=e222]: Manages inbox, preps meetings, schedules follow-ups, and handles daily coordination.
+              - link [ref=e223]:
+                - /url: /register?role=ai-executive-assistant
+                - text: Start free trial
+                - img [ref=e224]
+          - generic [ref=e227]:
+            - img "AI Media Buyer" [ref=e229]
+            - generic [ref=e230]:
+              - generic [ref=e231]: Priority role
+              - heading "AI Media Buyer" [level=3] [ref=e232]
+              - paragraph [ref=e233]: Monitors campaigns, pauses underperformers, reallocates budget, and drafts new tests.
+              - link "Start free trial" [ref=e234] [cursor=pointer]:
+                - /url: /register?role=ai-media-buyer
+                - text: Start free trial
+                - img [ref=e235]
+          - generic [ref=e238] [cursor=pointer]:
+            - img "AI Sales Development Rep" [ref=e240]
+            - generic [ref=e241]:
+              - generic [ref=e242]: Priority role
+              - heading "AI Sales Development Rep" [level=3] [ref=e243]
+              - paragraph [ref=e244]: Turns leads and CRM activity into consistent outbound messaging and follow-up execution.
+              - link [ref=e245]:
+                - /url: /register?role=ai-sales-development-rep
+                - text: Start free trial
+                - img [ref=e246]
+          - generic:
+            - generic:
+              - generic:
+                - img "AI Customer Support Rep"
+              - generic:
+                - generic: Support
+                - heading "AI Customer Support Rep" [level=3]
+                - paragraph: Answers common questions, escalates edge cases, and keeps customer context organized.
+                - link:
+                  - /url: /register?role=ai-customer-support-rep
+                  - text: Start free trial
+                  - img
+          - generic:
+            - generic:
+              - generic:
+                - img "AI Operations Coordinator"
+              - generic:
+                - generic: Operations
+                - heading "AI Operations Coordinator" [level=3]
+                - paragraph: Tracks tasks, chases blockers, updates docs, and keeps cross-functional work moving.
+                - link:
+                  - /url: /register?role=ai-operations-coordinator
+                  - text: Start free trial
+                  - img
+          - generic:
+            - generic:
+              - generic:
+                - img "AI Performance Marketer"
+              - generic:
+                - generic: Growth
+                - heading "AI Performance Marketer" [level=3]
+                - paragraph: Reviews performance, drafts campaign ideas, and manages routine reporting and execution.
+                - link:
+                  - /url: /register?role=ai-performance-marketer
+                  - text: Start free trial
+                  - img
+          - generic:
+            - generic:
+              - generic:
+                - img "AI Research Analyst"
+              - generic:
+                - generic: Research
+                - heading "AI Research Analyst" [level=3]
+                - paragraph: Monitors competitors, summarizes markets, builds briefs, and turns sources into decisions.
+                - link:
+                  - /url: /register?role=ai-research-analyst
+                  - text: Start free trial
+                  - img
+          - generic:
+            - generic:
+              - generic:
+                - img "AI Recruiting Coordinator"
+              - generic:
+                - generic: Hiring
+                - heading "AI Recruiting Coordinator" [level=3]
+                - paragraph: Screens candidates, drafts outreach, coordinates interviews, and keeps pipelines moving.
+                - link:
+                  - /url: /register?role=ai-recruiting-coordinator
+                  - text: Start free trial
+                  - img
+          - generic:
+            - generic:
+              - generic:
+                - img "AI Finance Assistant"
+              - generic:
+                - generic: Finance
+                - heading "AI Finance Assistant" [level=3]
+                - paragraph: Organizes invoices, tracks spending context, prepares summaries, and flags missing data.
+                - link:
+                  - /url: /register?role=ai-finance-assistant
+                  - text: Start free trial
+                  - img
+          - generic:
+            - generic:
+              - generic:
+                - img "AI Account Manager"
+              - generic:
+                - generic: Accounts
+                - heading "AI Account Manager" [level=3]
+                - paragraph: Prepares check-ins, monitors account health, follows up on commitments, and flags risks.
+                - link:
+                  - /url: /register?role=ai-account-manager
+                  - text: Start free trial
+                  - img
+        - button "Previous role" [ref=e249]:
+          - img [ref=e250]
+        - button "Next role" [ref=e253]:
+          - img [ref=e254]
+    - generic [ref=e257]:
+      - heading "Junior works where your team already works." [level=2] [ref=e258]
+      - generic [ref=e259]:
+        - generic [ref=e262]:
+          - img "Slack" [ref=e264]
+          - paragraph [ref=e265]: Native Slack integration
+          - paragraph [ref=e266]: "@mention Junior in any channel, DM directly, or add it to a thread. Works from desktop and mobile."
+        - generic [ref=e269]:
+          - img "Microsoft Teams" [ref=e271]
+          - paragraph [ref=e272]: Microsoft Teams support
+          - paragraph [ref=e273]: Add Junior to any Teams channel or group chat. Keeps work moving across your org.
+    - generic [ref=e275]:
+      - generic [ref=e276]:
+        - heading "Works with every tool your team already uses." [level=2] [ref=e277]
+        - paragraph [ref=e278]: No tab-switching, no copy-paste. Junior connects to 3,000+ apps so work happens where it should.
+        - link "View all 3,000+ integrations" [ref=e279] [cursor=pointer]:
+          - /url: /integrations
+          - text: View all 3,000+ integrations
+          - img [ref=e280]
+      - generic [ref=e282]:
+        - img
+        - img "Junior" [ref=e285]
+        - generic "Slack" [ref=e287]:
+          - img "Slack" [ref=e288]
+        - generic "Gmail" [ref=e290]:
+          - img "Gmail" [ref=e291]
+        - generic "Notion" [ref=e293]:
+          - img "Notion" [ref=e294]
+        - generic "Google Calendar" [ref=e296]:
+          - img "Google Calendar" [ref=e297]
+        - generic "GitHub" [ref=e299]:
+          - img "GitHub" [ref=e300]
+        - generic "HubSpot" [ref=e302]:
+          - img "HubSpot" [ref=e303]
+        - generic "Stripe" [ref=e305]:
+          - img "Stripe" [ref=e306]
+        - generic "Linear" [ref=e308]:
+          - img "Linear" [ref=e309]
+        - generic "Jira" [ref=e311]:
+          - img "Jira" [ref=e312]
+        - generic "Airtable" [ref=e314]:
+          - img "Airtable" [ref=e315]
+        - generic "Google Drive" [ref=e317]:
+          - img "Google Drive" [ref=e318]
+        - generic "Zoom" [ref=e320]:
+          - img "Zoom" [ref=e321]
+        - generic "Google Sheets" [ref=e323]:
+          - img "Google Sheets" [ref=e324]
+        - generic "Figma" [ref=e326]:
+          - img "Figma" [ref=e327]
+        - generic "Google Docs" [ref=e329]:
+          - img "Google Docs" [ref=e330]
+    - generic [ref=e332]:
+      - heading "From scattered requests to finished work." [level=2] [ref=e333]
+      - generic [ref=e334]:
+        - generic [ref=e335]:
+          - img "Sign up and choose a role" [ref=e337]
+          - generic [ref=e338]:
+            - paragraph [ref=e339]: /01
+            - heading "Sign up and choose a role" [level=3] [ref=e340]
+            - paragraph [ref=e341]: Pick the AI employee your team needs, connect your workspace, and start without a setup project.
+        - generic [ref=e342]:
+          - img "Junior joins your workspace" [ref=e344]
+          - generic [ref=e345]:
+            - paragraph [ref=e346]: /02
+            - heading "Junior joins your workspace" [level=3] [ref=e347]
+            - paragraph [ref=e348]: Junior appears as a teammate in Slack or Teams. @mention, DM, or add to a channel from desktop or mobile.
+        - generic [ref=e349]:
+          - img "Connect your tools" [ref=e351]
+          - generic [ref=e352]:
+            - paragraph [ref=e353]: /03
+            - heading "Connect your tools" [level=3] [ref=e354]
+            - paragraph [ref=e355]: Gmail, Notion, HubSpot, Calendar, GitHub, and more. Junior builds context from the tools your team already uses.
+        - generic [ref=e356]:
+          - img "Junior starts delivering" [ref=e358]
+          - generic [ref=e359]:
+            - paragraph [ref=e360]: /04
+            - heading "Junior starts delivering" [level=3] [ref=e361]
+            - paragraph [ref=e362]: It drafts, researches, updates, follows up, and reports back with completed work and next steps.
+    - generic [ref=e364]:
+      - heading "Not a chatbot. Not an agent. An AI employee." [level=2] [ref=e365]
+      - paragraph [ref=e366]: The difference isn’t features. It’s the relationship.
+      - generic [ref=e367]:
+        - generic [ref=e368]:
+          - generic [ref=e369]:
+            - generic [ref=e370]:
+              - text: vs. AI Chatbots
+              - generic [ref=e371]: ChatGPT, Claude
+            - generic [ref=e372]: "01"
+          - heading "You don't prompt Junior. Junior works." [level=3] [ref=e373]
+          - paragraph [ref=e374]: Chatbots wait to be asked. Junior monitors your Slack, email, and calendar, then acts without being triggered, filing reports, following up on leads, updating records.
+          - generic [ref=e375]:
+            - generic [ref=e378]: Autonomous by default
+            - generic [ref=e381]: Prompt-dependent
+        - generic [ref=e382]:
+          - generic [ref=e383]:
+            - generic [ref=e384]:
+              - text: vs. AI Agents
+              - generic [ref=e385]: Lindy, Relevance AI
+            - generic [ref=e386]: "02"
+          - heading "No workflow to build. No dashboard to check." [level=3] [ref=e387]
+          - paragraph [ref=e388]: Agents run pre-wired automations you set up. Junior understands open-ended goals, works in Slack where your team already is, and handles tasks that don't fit a rigid template.
+          - generic [ref=e389]:
+            - generic [ref=e392]: Goal-driven, lives in Slack
+            - generic [ref=e395]: Workflow-dependent
+        - generic [ref=e396]:
+          - generic [ref=e397]:
+            - generic [ref=e398]:
+              - text: vs. Human Hires
+              - generic [ref=e399]: FTE / contractor
+            - generic [ref=e400]: "03"
+          - heading "Starts on day one. Gets smarter every week." [level=3] [ref=e401]
+          - paragraph [ref=e402]: A human hire takes months to onboard and costs $5k–10k+/mo. Junior is live in minutes, available 24/7, and remembers every conversation, doc, and preference across your whole org.
+          - generic [ref=e403]:
+            - generic [ref=e406]: Free trial, live in minutes
+            - generic [ref=e409]: $5–10k+/mo, months to ramp
+    - generic [ref=e410]:
+      - heading "Real customers, real outcomes." [level=2] [ref=e412]
+      - generic [ref=e414]:
+        - generic [ref=e415]:
+          - generic [ref=e417]:
+            - generic [ref=e419]: Ops reports from 3 systems, in chat
+            - generic [ref=e420]:
+              - generic [ref=e421]: CUSTOMER STORY
+              - paragraph [ref=e422]: “Junior sits in Teams with us and turns Azure DevOps, email, and SharePoint into operational reports without leaving chat.”
+              - generic [ref=e423]:
+                - paragraph [ref=e424]: Operations team
+                - paragraph [ref=e425]: B2B services · South Africa
+          - generic [ref=e427] [cursor=pointer]:
+            - generic [ref=e429]: Discussion to tickets in one thread
+            - generic [ref=e430]:
+              - generic [ref=e431]: CUSTOMER STORY
+              - paragraph [ref=e432]: “Junior reads Slack, Notion, and GitHub, then turns the discussion into concrete follow-up work, Notion tickets and product research included.”
+              - generic [ref=e433]:
+                - paragraph [ref=e434]: T54
+                - paragraph [ref=e435]: Product team · California
+          - generic:
+            - generic:
+              - generic:
+                - generic: Full marketing plan in days, not months
+              - generic:
+                - generic: CUSTOMER STORY
+                - paragraph: “Junior helped us think through a marketing plan for a print-on-demand platform, niche positioning, content automation, and campaign strategy, without the founder recording a single video.”
+                - generic:
+                  - paragraph: POD platform founder
+                  - paragraph: Etsy seller turned operator · Italy
+          - generic:
+            - generic:
+              - generic:
+                - generic: Outbound experiment, end-to-end
+              - generic:
+                - generic: CUSTOMER STORY
+                - paragraph: “Hand Junior an ICP and it finds the prospects, collects contact info, and drafts the outreach. The workflow maps to outbound experiments we would otherwise run manually.”
+                - generic:
+                  - paragraph: B2B SaaS founder
+                  - paragraph: Cold outreach · Miami
+          - generic [ref=e437] [cursor=pointer]:
+            - generic [ref=e439]: Research tasks off the founder's plate
+            - generic [ref=e440]:
+              - generic [ref=e441]: CUSTOMER STORY
+              - paragraph [ref=e442]: “I asked Junior in Slack to find upcoming AI startup events in Tokyo and email me the results. That is the kind of small research task I want off my plate.”
+              - generic [ref=e443]:
+                - paragraph [ref=e444]: Aki from Opti
+                - paragraph [ref=e445]: Founder · Tokyo
+        - button "Previous testimonial" [ref=e447]:
+          - img [ref=e448]
+        - button "Next testimonial" [ref=e451]:
+          - img [ref=e452]
+    - generic [ref=e456]:
+      - link "Bloomberg article cover Bloomberg The AI Coworker Who Won’t Stop Snitching" [ref=e457] [cursor=pointer]:
+        - /url: https://www.bloomberg.com/news/articles/2026-04-02/meet-the-new-ai-coworker-who-won-t-stop-snitching-to-your-boss
+        - img "Bloomberg article cover" [ref=e459]
+        - img "Bloomberg" [ref=e461]
+        - generic [ref=e462]:
+          - heading "The AI Coworker Who Won’t Stop Snitching" [level=3] [ref=e463]
+          - img [ref=e465]
+      - link "Business Insider article cover Business Insider We Built AI Employees and Had to Create a Human-Only Slack" [ref=e468] [cursor=pointer]:
+        - /url: https://www.businessinsider.com/kuse-ceo-openclaw-hype-ai-employees-human-only-slack-escape-2026-4
+        - img "Business Insider article cover" [ref=e470]
+        - img "Business Insider" [ref=e472]
+        - generic [ref=e473]:
+          - heading "We Built AI Employees and Had to Create a Human-Only Slack" [level=3] [ref=e474]
+          - img [ref=e476]
+      - link "LinkedIn article cover LinkedIn The Colleague Who Never Sleeps" [ref=e479] [cursor=pointer]:
+        - /url: https://www.linkedin.com/news/story/get-ready-for-a-colleague-who-never-sleeps-never-stops-7848137/
+        - img "LinkedIn article cover" [ref=e481]
+        - img "LinkedIn" [ref=e483]
+        - generic [ref=e484]:
+          - heading "The Colleague Who Never Sleeps" [level=3] [ref=e485]
+          - img [ref=e487]
+    - generic [ref=e491]:
+      - generic [ref=e492]:
+        - heading "Credits starting from $100/mo" [level=2] [ref=e493]
+        - paragraph [ref=e494]: "* Credits are tied to compute units (AI tokens), more credits, more tasks done. We don't charge for any of Junior's work devices (computer, email, browser, etc)."
+      - generic [ref=e495]:
+        - generic [ref=e496]:
+          - paragraph [ref=e497]: FREE TRIAL
+          - paragraph [ref=e498]: $0
+          - generic [ref=e499]: $100 credit · limited time
+          - paragraph [ref=e500]: Try Junior on real work. One free trial per workspace or business domain.
+          - list [ref=e501]:
+            - listitem [ref=e502]:
+              - img [ref=e503]
+              - generic [ref=e505]: $100 free credit
+            - listitem [ref=e506]:
+              - img [ref=e507]
+              - generic [ref=e509]: Claude Sonnet only
+            - listitem [ref=e510]:
+              - img [ref=e511]
+              - generic [ref=e513]: 1 Junior only
+            - listitem [ref=e514]:
+              - img [ref=e515]
+              - generic [ref=e517]: 3 concurrent sessions
+            - listitem [ref=e518]:
+              - img [ref=e519]
+              - generic [ref=e521]: Slack or Teams integration
+          - paragraph [ref=e522]: Best for evaluating Junior on a single workflow
+          - link "Start Free" [ref=e523] [cursor=pointer]:
+            - /url: /register
+          - paragraph [ref=e524]: Granted automatically when you connect Slack or Teams.
+        - generic [ref=e525]:
+          - generic [ref=e526]: Recommended
+          - paragraph [ref=e527]: STANDARD
+          - generic [ref=e528]:
+            - generic [ref=e529]: $100
+            - generic [ref=e530]: /mo
+          - generic [ref=e531]: All models · plugins + skills
+          - generic [ref=e532]:
+            - generic [ref=e533]: Pick your monthly budget
+            - combobox "Pick your monthly budget" [ref=e534]:
+              - option "$100/mo" [selected]
+              - option "$200/mo"
+              - option "$300/mo"
+              - option "$400/mo"
+              - option "$500/mo"
+              - option "$600/mo"
+              - option "$700/mo"
+              - option "$800/mo"
+              - option "$900/mo"
+              - option "$1,000/mo"
+              - option "$1,100/mo"
+              - option "$1,200/mo"
+              - option "$1,300/mo"
+              - option "$1,400/mo"
+              - option "$1,500/mo"
+              - option "$1,600/mo"
+              - option "$1,700/mo"
+              - option "$1,800/mo"
+              - option "$1,900/mo"
+              - option "$2,000/mo"
+              - option "$2,100/mo"
+              - option "$2,200/mo"
+              - option "$2,300/mo"
+              - option "$2,400/mo"
+              - option "$2,500/mo"
+              - option "$2,600/mo"
+              - option "$2,700/mo"
+              - option "$2,800/mo"
+              - option "$2,900/mo"
+              - option "$3,000/mo"
+              - option "$3,100/mo"
+              - option "$3,200/mo"
+              - option "$3,300/mo"
+              - option "$3,400/mo"
+              - option "$3,500/mo"
+              - option "$3,600/mo"
+              - option "$3,700/mo"
+              - option "$3,800/mo"
+              - option "$3,900/mo"
+              - option "$4,000/mo"
+              - option "$4,100/mo"
+              - option "$4,200/mo"
+              - option "$4,300/mo"
+              - option "$4,400/mo"
+              - option "$4,500/mo"
+              - option "$4,600/mo"
+              - option "$4,700/mo"
+              - option "$4,800/mo"
+              - option "$4,900/mo"
+              - option "$5,000/mo"
+              - option "$5,100/mo"
+              - option "$5,200/mo"
+              - option "$5,300/mo"
+              - option "$5,400/mo"
+              - option "$5,500/mo"
+              - option "$5,600/mo"
+              - option "$5,700/mo"
+              - option "$5,800/mo"
+              - option "$5,900/mo"
+              - option "$6,000/mo"
+              - option "$6,100/mo"
+              - option "$6,200/mo"
+              - option "$6,300/mo"
+              - option "$6,400/mo"
+              - option "$6,500/mo"
+              - option "$6,600/mo"
+              - option "$6,700/mo"
+              - option "$6,800/mo"
+              - option "$6,900/mo"
+              - option "$7,000/mo"
+              - option "$7,100/mo"
+              - option "$7,200/mo"
+              - option "$7,300/mo"
+              - option "$7,400/mo"
+              - option "$7,500/mo"
+              - option "$7,600/mo"
+              - option "$7,700/mo"
+              - option "$7,800/mo"
+              - option "$7,900/mo"
+              - option "$8,000/mo"
+              - option "$8,100/mo"
+              - option "$8,200/mo"
+              - option "$8,300/mo"
+              - option "$8,400/mo"
+              - option "$8,500/mo"
+              - option "$8,600/mo"
+              - option "$8,700/mo"
+              - option "$8,800/mo"
+              - option "$8,900/mo"
+              - option "$9,000/mo"
+              - option "$9,100/mo"
+              - option "$9,200/mo"
+              - option "$9,300/mo"
+              - option "$9,400/mo"
+              - option "$9,500/mo"
+              - option "$9,600/mo"
+              - option "$9,700/mo"
+              - option "$9,800/mo"
+              - option "$9,900/mo"
+              - option "$10,000/mo"
+              - option "$10,100/mo"
+              - option "$10,200/mo"
+              - option "$10,300/mo"
+              - option "$10,400/mo"
+              - option "$10,500/mo"
+              - option "$10,600/mo"
+              - option "$10,700/mo"
+              - option "$10,800/mo"
+              - option "$10,900/mo"
+              - option "$11,000/mo"
+              - option "$11,100/mo"
+              - option "$11,200/mo"
+              - option "$11,300/mo"
+              - option "$11,400/mo"
+              - option "$11,500/mo"
+              - option "$11,600/mo"
+              - option "$11,700/mo"
+              - option "$11,800/mo"
+              - option "$11,900/mo"
+              - option "$12,000/mo"
+              - option "$12,100/mo"
+              - option "$12,200/mo"
+              - option "$12,300/mo"
+              - option "$12,400/mo"
+              - option "$12,500/mo"
+              - option "$12,600/mo"
+              - option "$12,700/mo"
+              - option "$12,800/mo"
+              - option "$12,900/mo"
+              - option "$13,000/mo"
+              - option "$13,100/mo"
+              - option "$13,200/mo"
+              - option "$13,300/mo"
+              - option "$13,400/mo"
+              - option "$13,500/mo"
+              - option "$13,600/mo"
+              - option "$13,700/mo"
+              - option "$13,800/mo"
+              - option "$13,900/mo"
+              - option "$14,000/mo"
+              - option "$14,100/mo"
+              - option "$14,200/mo"
+              - option "$14,300/mo"
+              - option "$14,400/mo"
+              - option "$14,500/mo"
+              - option "$14,600/mo"
+              - option "$14,700/mo"
+              - option "$14,800/mo"
+              - option "$14,900/mo"
+              - option "$15,000/mo"
+              - option "$15,100/mo"
+              - option "$15,200/mo"
+              - option "$15,300/mo"
+              - option "$15,400/mo"
+              - option "$15,500/mo"
+              - option "$15,600/mo"
+              - option "$15,700/mo"
+              - option "$15,800/mo"
+              - option "$15,900/mo"
+              - option "$16,000/mo"
+              - option "$16,100/mo"
+              - option "$16,200/mo"
+              - option "$16,300/mo"
+              - option "$16,400/mo"
+              - option "$16,500/mo"
+              - option "$16,600/mo"
+              - option "$16,700/mo"
+              - option "$16,800/mo"
+              - option "$16,900/mo"
+              - option "$17,000/mo"
+              - option "$17,100/mo"
+              - option "$17,200/mo"
+              - option "$17,300/mo"
+              - option "$17,400/mo"
+              - option "$17,500/mo"
+              - option "$17,600/mo"
+              - option "$17,700/mo"
+              - option "$17,800/mo"
+              - option "$17,900/mo"
+              - option "$18,000/mo"
+              - option "$18,100/mo"
+              - option "$18,200/mo"
+              - option "$18,300/mo"
+              - option "$18,400/mo"
+              - option "$18,500/mo"
+              - option "$18,600/mo"
+              - option "$18,700/mo"
+              - option "$18,800/mo"
+              - option "$18,900/mo"
+              - option "$19,000/mo"
+              - option "$19,100/mo"
+              - option "$19,200/mo"
+              - option "$19,300/mo"
+              - option "$19,400/mo"
+              - option "$19,500/mo"
+              - option "$19,600/mo"
+              - option "$19,700/mo"
+              - option "$19,800/mo"
+              - option "$19,900/mo"
+              - option "$20,000/mo"
+          - list [ref=e535]:
+            - listitem [ref=e536]:
+              - img [ref=e537]
+              - generic [ref=e539]: All models incl. Claude Opus
+            - listitem [ref=e540]:
+              - img [ref=e541]
+              - generic [ref=e543]: Up to 5 Juniors
+            - listitem [ref=e544]:
+              - img [ref=e545]
+              - generic [ref=e547]: 20 concurrent sessions
+            - listitem [ref=e548]:
+              - img [ref=e549]
+              - generic [ref=e551]: Predefined plugins + skills
+            - listitem [ref=e552]:
+              - img [ref=e553]
+              - generic [ref=e555]: $100–$20,000/mo, $100 steps
+            - listitem [ref=e556]:
+              - img [ref=e557]
+              - generic [ref=e559]: Top up anytime
+          - paragraph [ref=e560]: Best for daily, ongoing work
+          - link "Get Started" [ref=e561] [cursor=pointer]:
+            - /url: /hire?salary=100
+            - text: Get Started
+            - img [ref=e562]
+        - generic [ref=e564]:
+          - paragraph [ref=e565]: ENTERPRISE
+          - paragraph [ref=e566]: from $3,000/mo
+          - generic [ref=e567]: Book a Demo
+          - paragraph [ref=e568]: Custom rollouts for teams that need more than the slider can express.
+          - list [ref=e569]:
+            - listitem [ref=e570]:
+              - img [ref=e571]
+              - generic [ref=e573]: Unlimited Juniors
+            - listitem [ref=e574]:
+              - img [ref=e575]
+              - generic [ref=e577]: 50 concurrent sessions
+            - listitem [ref=e578]:
+              - img [ref=e579]
+              - generic [ref=e581]: Multiple roles and workflows
+            - listitem [ref=e582]:
+              - img [ref=e583]
+              - generic [ref=e585]: Invoicing + custom billing terms
+            - listitem [ref=e586]:
+              - img [ref=e587]
+              - generic [ref=e589]: Security review support + DPA
+            - listitem [ref=e590]:
+              - img [ref=e591]
+              - generic [ref=e593]: SLA + priority support
+            - listitem [ref=e594]:
+              - img [ref=e595]
+              - generic [ref=e597]: Dedicated onboarding + tailored limits/controls
+            - listitem [ref=e598]:
+              - img [ref=e599]
+              - generic [ref=e601]: Custom plugins, skills, and integrations
+          - paragraph [ref=e602]: Best for company-wide rollouts
+          - link "Book a Demo" [ref=e603] [cursor=pointer]:
+            - /url: https://calendly.com/kuse-carmen/junior-discovery-pilot
+      - generic [ref=e604]:
+        - paragraph [ref=e605]: "All paid plans include:"
+        - generic [ref=e606]:
+          - generic [ref=e607]: Full context, fully applied
+          - generic [ref=e608]: Takes initiative
+          - generic [ref=e609]: Parallel execution
+          - generic [ref=e610]: Minimal management overhead
+        - paragraph [ref=e611]: Top up $200 anytime to add more budget within the current billing cycle.
+      - link "Hire your first Junior" [ref=e613] [cursor=pointer]:
+        - /url: /hire?salary=100
+    - generic [ref=e615]:
+      - heading "Frequently asked questions about AI employees." [level=2] [ref=e616]
+      - generic [ref=e617]:
+        - generic [ref=e618]:
+          - button "How is an AI employee different from ChatGPT or Claude?" [ref=e619]:
+            - generic [ref=e620]: How is an AI employee different from ChatGPT or Claude?
+            - generic [ref=e621]: +
+          - paragraph [ref=e622]: ChatGPT is a tool you use. Junior is a teammate who uses tools. It has persistent memory of your organization, takes initiative on tasks, joins your workspace (Slack or Teams), reads meeting recaps and transcripts when you share them, and runs scheduled work 24/7 without being prompted.
+        - generic [ref=e623]:
+          - button "What tools does my AI employee connect with?" [ref=e624]:
+            - generic [ref=e625]: What tools does my AI employee connect with?
+            - generic [ref=e626]: +
+          - paragraph [ref=e627]: Slack or Microsoft Teams as the primary workspace, plus Gmail, Notion, HubSpot, Google Calendar, GitHub, Stripe, and 3,000+ more via Pipedream.
+        - generic [ref=e628]:
+          - button "How long does it take to onboard an AI employee?" [ref=e629]:
+            - generic [ref=e630]: How long does it take to onboard an AI employee?
+            - generic [ref=e631]: +
+          - paragraph [ref=e632]: Junior starts working the same day. Connect Slack or Teams plus email, and your AI employee begins delivering within hours.
+        - generic [ref=e633]:
+          - button "Do we need Slack or Microsoft Teams?" [ref=e634]:
+            - generic [ref=e635]: Do we need Slack or Microsoft Teams?
+            - generic [ref=e636]: +
+          - paragraph [ref=e637]: Yes, one of Slack or Microsoft Teams. That's where your AI employee shows up as a teammate, gets @mentioned, and joins threads alongside your team.
+        - generic [ref=e638]:
+          - button "Is my data safe?" [ref=e639]:
+            - generic [ref=e640]: Is my data safe?
+            - generic [ref=e641]: +
+          - paragraph [ref=e642]: Each AI employee runs in its own isolated runtime environment. Encrypted in transit (TLS 1.2+) and at rest (AES-256). Never used for model training. Full audit logs.
+        - generic [ref=e643]:
+          - button "What about prompt injection?" [ref=e644]:
+            - generic [ref=e645]: What about prompt injection?
+            - generic [ref=e646]: +
+          - paragraph [ref=e647]: "Three layers: OAuth scopes that bound what tools Junior can call, model-side injection resistance, and our own input filters. Junior is designed not to act outside its authorized scope, and approval gates catch anything that would. We treat prompt injection as an ongoing arms race, not a solved problem."
+        - generic [ref=e648]:
+          - button "Can I control what Junior accesses?" [ref=e649]:
+            - generic [ref=e650]: Can I control what Junior accesses?
+            - generic [ref=e651]: +
+          - paragraph [ref=e652]: Yes. Junior only accesses what you explicitly grant. Every action is logged and reviewable.
+        - generic [ref=e653]:
+          - button "Does an AI employee replace my team?" [ref=e654]:
+            - generic [ref=e655]: Does an AI employee replace my team?
+            - generic [ref=e656]: +
+          - paragraph [ref=e657]: No. AI employees handle execution so your team focuses on strategy and relationships.
+        - generic [ref=e658]:
+          - button "What if Junior gets something wrong?" [ref=e659]:
+            - generic [ref=e660]: What if Junior gets something wrong?
+            - generic [ref=e661]: +
+          - paragraph [ref=e662]: Correct it directly in Slack and Junior records the correction for next time. Approval gates on customer-facing actions are on by default, so most mistakes get caught before they ship. Every action is logged with the agent's reasoning, including the ones you cancel.
+    - generic [ref=e663]:
+      - generic [ref=e667]:
+        - heading "Your team is ready. Hire your AI employee today." [level=2] [ref=e668]
+        - paragraph [ref=e669]: AI employees that keep business work moving across Slack or Teams, email, and your tools. No code setup. Ready in minutes. Working on their own by Day 1.
+        - generic [ref=e670]:
+          - link "Book a Demo" [ref=e671] [cursor=pointer]:
+            - /url: https://calendly.com/kuse-carmen/junior-discovery-pilot
+          - link "Get Started" [ref=e672] [cursor=pointer]:
+            - /url: /login?next=%2Fhire
+      - generic [ref=e673]:
+        - generic [ref=e675]:
+          - generic [ref=e676]: Own email, Slack, and name
+          - generic [ref=e678]: Ready on day one
+          - generic [ref=e680]: Works in your existing tools
+          - generic [ref=e682]: One hire, any role
+          - generic [ref=e684]: Never forgets a decision
+          - generic [ref=e686]: Onboards in minutes, not months
+          - generic [ref=e688]: Active before your team wakes up
+          - generic [ref=e690]: 24/7 across every time zone
+          - generic [ref=e692]: Own email, Slack, and name
+          - generic [ref=e694]: Ready on day one
+          - generic [ref=e696]: Works in your existing tools
+          - generic [ref=e698]: One hire, any role
+          - generic [ref=e700]: Never forgets a decision
+          - generic [ref=e702]: Onboards in minutes, not months
+          - generic [ref=e704]: Active before your team wakes up
+          - generic [ref=e706]: 24/7 across every time zone
+        - generic [ref=e709]:
+          - generic [ref=e710]: Sends emails from its own inbox
+          - generic [ref=e712]: Remembers every meeting and doc
+          - generic [ref=e714]: Flags issues before they escalate
+          - generic [ref=e716]: Joins your team directory
+          - generic [ref=e718]: Files tickets without being asked
+          - generic [ref=e720]: Pulls reports automatically
+          - generic [ref=e722]: Follows up so you don't have to
+          - generic [ref=e724]: Answers Slack in seconds
+          - generic [ref=e726]: Sends emails from its own inbox
+          - generic [ref=e728]: Remembers every meeting and doc
+          - generic [ref=e730]: Flags issues before they escalate
+          - generic [ref=e732]: Joins your team directory
+          - generic [ref=e734]: Files tickets without being asked
+          - generic [ref=e736]: Pulls reports automatically
+          - generic [ref=e738]: Follows up so you don't have to
+          - generic [ref=e740]: Answers Slack in seconds
+        - generic [ref=e743]:
+          - generic [ref=e744]: Scale without growing headcount
+          - generic [ref=e746]: Institutional memory that sticks
+          - generic [ref=e748]: Replace repetitive work entirely
+          - generic [ref=e750]: Ship with a smaller team
+          - generic [ref=e752]: Run ops on autopilot
+          - generic [ref=e754]: Free your team for high-impact work
+          - generic [ref=e756]: No context lost between conversations
+          - generic [ref=e758]: Compound productivity every week
+          - generic [ref=e760]: Scale without growing headcount
+          - generic [ref=e762]: Institutional memory that sticks
+          - generic [ref=e764]: Replace repetitive work entirely
+          - generic [ref=e766]: Ship with a smaller team
+          - generic [ref=e768]: Run ops on autopilot
+          - generic [ref=e770]: Free your team for high-impact work
+          - generic [ref=e772]: No context lost between conversations
+          - generic [ref=e774]: Compound productivity every week
+    - region "Featured on There's An AI For That" [ref=e776]:
+      - link "Junior - Featured on There's An AI For That" [ref=e777] [cursor=pointer]:
+        - /url: https://theresanaiforthat.com/ai/junior-so/?ref=featured&v=11097300
+        - img "Junior - Featured on There's An AI For That" [ref=e778]
+    - generic [ref=e780]:
+      - generic [ref=e781]:
+        - generic [ref=e782]:
+          - link "Junior" [ref=e783] [cursor=pointer]:
+            - /url: /
+            - img "Junior" [ref=e784]
+          - paragraph [ref=e785]: AI employees and AI coworkers for every role.
+          - generic [ref=e786]:
+            - link "X" [ref=e787] [cursor=pointer]:
+              - /url: https://x.com/hirejuniorso
+              - img [ref=e788]
+            - link "YouTube" [ref=e790] [cursor=pointer]:
+              - /url: https://www.youtube.com/@juniordotso
+              - img [ref=e791]
+        - generic [ref=e793]:
+          - generic [ref=e794]: Product
+          - generic [ref=e795]:
+            - link "How it works" [ref=e796] [cursor=pointer]:
+              - /url: /#how-it-works
+            - link "Use Cases" [ref=e797] [cursor=pointer]:
+              - /url: /use-cases
+            - link "Compare" [ref=e798] [cursor=pointer]:
+              - /url: /compare
+            - link "Pricing" [ref=e799] [cursor=pointer]:
+              - /url: /pricing
+            - link "Blog" [ref=e800] [cursor=pointer]:
+              - /url: /blog
+            - link "Guide" [ref=e801] [cursor=pointer]:
+              - /url: /guide
+            - link "Docs" [ref=e802] [cursor=pointer]:
+              - /url: /docs
+            - link "Kuse" [ref=e803] [cursor=pointer]:
+              - /url: https://kuse.ai
+        - generic [ref=e804]:
+          - generic [ref=e805]: For Media Buyers
+          - generic [ref=e806]:
+            - link "AI Media Buyer" [ref=e807] [cursor=pointer]:
+              - /url: /use-cases/ai-media-buyer
+            - link "Agentic Advertising" [ref=e808] [cursor=pointer]:
+              - /url: /use-cases/agentic-advertising
+            - link "Google Ads Automation" [ref=e809] [cursor=pointer]:
+              - /url: /use-cases/claude-code-google-ads
+            - link "Meta Ads Automation" [ref=e810] [cursor=pointer]:
+              - /url: /use-cases/claude-code-meta-ads
+            - link "Automated PPC Reporting" [ref=e811] [cursor=pointer]:
+              - /url: /use-cases/automated-ppc-reporting
+            - link "Meta Ads Monitoring" [ref=e812] [cursor=pointer]:
+              - /url: /use-cases/meta-ads-performance-monitoring
+        - generic [ref=e813]:
+          - generic [ref=e814]: For Sales Teams
+          - generic [ref=e815]:
+            - link "AI Sales Assistant" [ref=e816] [cursor=pointer]:
+              - /url: /use-cases/ai-sales-assistant
+            - link "Sales Follow-Up Automation" [ref=e817] [cursor=pointer]:
+              - /url: /use-cases/sales-follow-up-automation
+            - link "CRM Update Automation" [ref=e818] [cursor=pointer]:
+              - /url: /use-cases/crm-update-automation
+        - generic [ref=e819]:
+          - generic [ref=e820]: More Roles
+          - generic [ref=e821]:
+            - link "AI Employee for Founders" [ref=e822] [cursor=pointer]:
+              - /url: /use-cases/ai-employee-for-founders
+            - link "AI Employee for Marketing" [ref=e823] [cursor=pointer]:
+              - /url: /use-cases/ai-employee-for-marketing
+            - link "Weekly Reporting" [ref=e824] [cursor=pointer]:
+              - /url: /use-cases/ai-agent-for-weekly-reporting
+            - link "Slack Daily Briefings" [ref=e825] [cursor=pointer]:
+              - /url: /use-cases/ai-agent-for-slack-daily-briefings
+        - generic [ref=e826]:
+          - generic [ref=e827]: Compare
+          - generic [ref=e828]:
+            - link "Junior vs ChatGPT" [ref=e829] [cursor=pointer]:
+              - /url: /compare/junior-vs-chatgpt
+            - link "Junior vs Claude" [ref=e830] [cursor=pointer]:
+              - /url: /compare/junior-vs-claude
+            - link "Junior vs Claude in Slack" [ref=e831] [cursor=pointer]:
+              - /url: /compare/junior-vs-claude-in-slack
+            - link "Junior vs Copilot" [ref=e832] [cursor=pointer]:
+              - /url: /compare/junior-vs-copilot
+            - link "Junior vs Zapier" [ref=e833] [cursor=pointer]:
+              - /url: /compare/junior-vs-zapier
+            - link "Junior vs Lindy" [ref=e834] [cursor=pointer]:
+              - /url: /compare/junior-vs-lindy
+            - link "Junior vs Viktor" [ref=e835] [cursor=pointer]:
+              - /url: /compare/junior-vs-viktor
+            - link "Junior vs Sintra" [ref=e836] [cursor=pointer]:
+              - /url: /compare/junior-vs-sintra
+            - link "Junior vs OpenClaw" [ref=e837] [cursor=pointer]:
+              - /url: /compare/junior-vs-openclaw
+            - link "Junior vs Relevance AI" [ref=e838] [cursor=pointer]:
+              - /url: /compare/junior-vs-relevance
+            - link "Junior vs Manus" [ref=e839] [cursor=pointer]:
+              - /url: /compare/junior-vs-manus
+            - link "Junior vs Cluely" [ref=e840] [cursor=pointer]:
+              - /url: /compare/junior-vs-cluely
+        - generic [ref=e841]:
+          - generic [ref=e842]: Legal
+          - generic [ref=e843]:
+            - link "Terms" [ref=e844] [cursor=pointer]:
+              - /url: /terms-of-service
+            - link "Privacy" [ref=e845] [cursor=pointer]:
+              - /url: /privacy
+        - generic [ref=e846]:
+          - generic [ref=e847]: Contact
+          - generic [ref=e848]:
+            - img "Azzurra" [ref=e849]
+            - generic [ref=e850]: Azzurra
+            - generic [ref=e851]: AI
+          - paragraph [ref=e852]: Partnerships & press inquiries
+          - link "Email us →" [ref=e853] [cursor=pointer]:
+            - /url: mailto:azzurra@junior.so?subject=Partnership%20Inquiry%20%E2%80%93%20Junior
+          - link "Media & Press" [ref=e854] [cursor=pointer]:
+            - /url: /press
+          - link "Referral Program" [ref=e855] [cursor=pointer]:
+            - /url: https://partners.dub.co/junior-so
+      - generic [ref=e857]: © 2026 Junior. All rights reserved.
+  - alert [ref=e858]

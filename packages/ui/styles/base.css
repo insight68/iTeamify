@@ -262,12 +262,25 @@
   animation: fade-in-up 0.6s ease-out both;
 }
 
+/* Hero: rotating role text — fade/slide cycle through stacked spans.
+ * Each span is absolutely positioned inside a fixed-height inline-block.
+ * Staggered animation-delay makes them cycle one after another. */
+@keyframes hero-role-cycle {
+  0%, 15% { opacity: 1; transform: translateY(0); }
+  20%, 100% { opacity: 0; transform: translateY(-8px); }
+}
+
+.animate-hero-role {
+  animation: hero-role-cycle 6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee-reverse,
   .animate-matrix-drift,
   .animate-star-twinkle,
   .animate-mockup-float,
-  .animate-fade-in-up {
+  .animate-fade-in-up,
+  .animate-hero-role {
     animation: none;
   }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { User, Bot, ChevronRight, CheckCircle2, AlertTriangle, Zap, ArrowRight, Eye, EyeOff } from "lucide-react"
 import { Badge } from "@teamify/ui/components/ui/badge"
 import { Card, CardContent } from "@teamify/ui/components/ui/card"
@@ -24,6 +24,16 @@ export function StepDetailContent({ workflow, step }: StepDetailContentProps) {
   const currentDemo = step
     ? DEMO_STAGES.find((d) => d.stepId === step.id)
     : undefined
+
+  // Auto-navigate to first step when no step is selected (skip overview)
+  useEffect(() => {
+    const firstStep = workflow.steps[0]
+    if (!step && firstStep) {
+      navigation.replace(
+        `/workflows/${workflow.id}?step=${firstStep.id}`,
+      )
+    }
+  }, [step, workflow.id, workflow.steps, navigation])
 
   // Overview mode: no step selected
   if (!step) {

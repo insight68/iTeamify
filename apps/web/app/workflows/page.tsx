@@ -1,7 +1,14 @@
 "use client"
 
-import { WorkflowsListPage } from "@teamify/views/workflows"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function Page() {
-  return <WorkflowsListPage />
+  const router = useRouter()
+
+  useEffect(() => {
+    router.replace("/workflows/demo-procurement")
+  }, [router])
+
+  return null
 }

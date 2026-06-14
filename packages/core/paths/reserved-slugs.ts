@@ -58,6 +58,7 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   "careers",
   "press",
   "download",
+  "workflows",
 
   // Account / billing (likely-future global routes in the avatar menu)
   "profile",

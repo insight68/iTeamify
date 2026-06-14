@@ -22,6 +22,7 @@ import type runtimes from "../locales/en/runtimes.json";
 import type layout from "../locales/en/layout.json";
 import type org from "../locales/en/org.json";
 import type marketing from "../locales/en/marketing.json";
+import type workflows from "../locales/en/workflows.json";
 
 // Module augmentation enables i18next v26 selector API across the monorepo:
 // `t($ => $.signin.title)` resolves to the value in en/auth.json.
@@ -58,6 +59,7 @@ declare module "i18next" {
       layout: typeof layout;
       org: typeof org;
       marketing: typeof marketing;
+      workflows: typeof workflows;
     };
     enableSelector: true;
   }

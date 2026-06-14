@@ -74,7 +74,7 @@ export function HeroSection() {
                 </div>
                 <div className="flex justify-start">
                   <div className="max-w-[80%] rounded-2xl bg-muted px-4 py-2.5 text-sm text-foreground">
-                    <span className="font-semibold">算盘</span>: {t(($) => $.hero.chat_preview.assistant)}
+                    <span className="font-semibold">iTeamify</span>: {t(($) => $.hero.chat_preview.assistant)}
                   </div>
                 </div>
               </div>

@@ -45,6 +45,7 @@
     "./invitations": "./invitations/index.ts",
     "./onboarding": "./onboarding/index.ts",
     "./marketing": "./marketing/index.ts",
+    "./workflows": "./workflows/index.ts",
     "./platform": "./platform/index.ts",
     "./i18n": "./i18n/index.ts",
     "./locales": "./locales/index.ts",
@@ -91,7 +92,8 @@
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "remark-math": "catalog:",
-    "sonner": "^2.0.7"
+    "sonner": "^2.0.7",
+    "xlsx": "catalog:"
   },
   "peerDependencies": {
     "@tanstack/react-query": "catalog:",

@@ -731,7 +731,10 @@ export function useRealtimeSync(
     };
   }, [ws, qc, authStore, onToast]);
 
-  // Reconnect -> refetch all data to recover missed events
+  // Reconnect -> refetch all data to recover missed events.
+  // Micro-staggered: workspace-scoped queries are invalidated via a single
+  // predicate call, then global queries fire after a short delay to avoid
+  // sending 14+ simultaneous HTTP requests after every disconnect.
   useEffect(() => {
     if (!ws) return;
 
@@ -740,20 +743,28 @@ export function useRealtimeSync(
       try {
         const wsId = getCurrentWsId();
         if (wsId) {
-          qc.invalidateQueries({ queryKey: issueKeys.all(wsId) });
-          qc.invalidateQueries({ queryKey: inboxKeys.all(wsId) });
-          qc.invalidateQueries({ queryKey: workspaceKeys.agents(wsId) });
-          qc.invalidateQueries({ queryKey: workspaceKeys.members(wsId) });
-          qc.invalidateQueries({ queryKey: workspaceKeys.skills(wsId) });
-          qc.invalidateQueries({ queryKey: projectKeys.all(wsId) });
-          qc.invalidateQueries({ queryKey: runtimeKeys.all(wsId) });
-          qc.invalidateQueries({ queryKey: autopilotKeys.all(wsId) });
-          qc.invalidateQueries({ queryKey: agentTaskSnapshotKeys.all(wsId) });
-          qc.invalidateQueries({ queryKey: agentActivityKeys.all(wsId) });
-          qc.invalidateQueries({ queryKey: agentRunCountsKeys.all(wsId) });
-          qc.invalidateQueries({ queryKey: ["chat"] });
+          // Batch all workspace-scoped invalidations into one predicate call.
+          // refetchType: "active" ensures only queries with mounted observers
+          // (visible data) trigger immediate refetches.
+          qc.invalidateQueries({
+            predicate: (query) => {
+              const key = query.queryKey;
+              // Match any query key that contains the current workspace ID.
+              return key.some(
+                (segment) =>
+                  typeof segment === "string" && segment === wsId,
+              );
+            },
+            refetchType: "active",
+          });
         }
-        qc.invalidateQueries({ queryKey: workspaceKeys.list() });
+        // Stagger global queries 20ms after workspace-scoped ones to
+        // prevent connection contention.
+        await new Promise((r) => setTimeout(r, 20));
+        qc.invalidateQueries({
+          queryKey: workspaceKeys.list(),
+          refetchType: "active",
+        });
       } catch (e) {
         logger.error("reconnect refetch failed", e);
       }

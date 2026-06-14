@@ -52,7 +52,7 @@ export function ChatDemoSection() {
                     }`}
                   >
                     {msg.role === "assistant" && (
-                      <span className="mr-2 font-semibold">算盘</span>
+                      <span className="mr-2 font-semibold">iTeamify</span>
                     )}
                     {msg.text}
                   </div>

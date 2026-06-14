@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, lazy } from "react";
+import { memo, useCallback, useEffect, useMemo, lazy } from "react";
 import { toast } from "sonner";
 import { ChevronRight, ListTodo } from "lucide-react";
 import type { IssueStatus } from "@teamify/core/types";
@@ -26,7 +26,7 @@ import { BatchActionToolbar } from "./batch-action-toolbar";
 import { ListView } from "./list-view";
 import { useT } from "../../i18n";
 
-export function IssuesPage() {
+export const IssuesPage = memo(function IssuesPage() {
   const { t } = useT("issues");
   const wsId = useWorkspaceId();
   const { data: allIssues = [], isLoading: loading } = useQuery(issueListOptions(wsId));
@@ -176,4 +176,4 @@ export function IssuesPage() {
       </ViewStoreProvider>
     </div>
   );
-}
+});

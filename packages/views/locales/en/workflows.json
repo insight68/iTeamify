@@ -1,0 +1,38 @@
+{
+  "page": {
+    "title": "Workflows",
+    "description": "Upload Excel files to visualize business processes with AI-powered automation",
+    "existing": "Saved workflows",
+    "empty": "No workflows yet. Upload an Excel file to get started."
+  },
+  "upload": {
+    "title": "Upload Excel file",
+    "hint": "Drag & drop an .xlsx or .xls file here, or click to browse",
+    "dropHere": "Drop your file here",
+    "parsing": "Parsing workflow data..."
+  },
+  "sidebar": {
+    "steps": "Process Steps",
+    "totalSteps": "Steps",
+    "departments": "Departments",
+    "aiCoverage": "AI Coverage"
+  },
+  "detail": {
+    "backToList": "Back to workflows",
+    "notFound": "Workflow not found",
+    "totalSteps": "Total Steps",
+    "departments": "Departments",
+    "aiCoverage": "AI Coverage",
+    "source": "Source",
+    "noData": "No data available",
+    "traditionalTitle": "Traditional Process",
+    "traditionalSub": "Current manual workflow",
+    "aiTitle": "AI-Powered Process",
+    "aiSub": "Automated by AI digital employees",
+    "aiHighlights": "AI Enhancement Points"
+  },
+  "common": {
+    "steps": "steps",
+    "departments": "departments"
+  }
+}

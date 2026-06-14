@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 import { Bot } from "lucide-react";
 import { cn } from "@teamify/ui/lib/utils";
 
@@ -13,7 +13,9 @@ interface ActorAvatarProps {
   className?: string;
 }
 
-function ActorAvatar({
+// All props are primitives — React.memo with default shallow comparison
+// prevents re-renders when parent re-renders for unrelated state changes.
+const ActorAvatar = memo(function ActorAvatar({
   name,
   initials,
   avatarUrl,
@@ -53,6 +55,6 @@ function ActorAvatar({
       )}
     </div>
   );
-}
+});
 
 export { ActorAvatar, type ActorAvatarProps };

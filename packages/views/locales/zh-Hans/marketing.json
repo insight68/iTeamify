@@ -13,7 +13,7 @@
   "hero": {
     "eyebrow": "电商专用的 AI 对账工具",
     "headline": "月度对账，从 3 天到 30 分钟",
-    "sub_headline": "算盘自动化 94% 的对账工作。零漏单、零差错。",
+    "sub_headline": "iTeamify自动化 94% 的对账工作。零漏单、零差错。",
     "primary_cta": "免费试用 — 上传第一个订单",
     "secondary_cta": "看看真实案例",
     "stats": {
@@ -27,7 +27,7 @@
     }
   },
   "features": {
-    "eyebrow": "算盘能做什么",
+    "eyebrow": "iTeamify能做什么",
     "heading": "4 大核心能力，搞定电商对账",
     "items": {
       "order_reconciliation": {
@@ -68,9 +68,9 @@
   },
   "chat_demo": {
     "eyebrow": "用对话，完成对账",
-    "heading": "不懂 Excel，不用学。你会说话，就会用算盘。",
+    "heading": "不懂 Excel，不用学。你会说话，就会用iTeamify。",
     "subtitle": "90% 的对账工作，用自然语言就能完成",
-    "footer_note": "算盘是 24/7 待命的 AI 对账搭档，从不会累，从不会错。",
+    "footer_note": "iTeamify是 24/7 待命的 AI 对账搭档，从不会累，从不会错。",
     "messages": {
       "user_1": "帮我查下为什么上月利润下降了？",
       "assistant_1": "上月利润下降 12%。正在分析原因...",
@@ -78,10 +78,10 @@
     }
   },
   "comparison": {
-    "eyebrow": "为什么选算盘",
+    "eyebrow": "为什么选iTeamify",
     "heading": "不是 Excel，不是财务软件，是懂电商的 AI",
     "columns": {
-      "suanpan": "算盘",
+      "suanpan": "iTeamify",
       "manual": "人工",
       "excel": "Excel",
       "software": "财务软件"
@@ -126,25 +126,25 @@
   },
   "testimonials": {
     "eyebrow": "5,000+ 商家正在使用",
-    "heading": "他们用算盘，把对账变成了 30 分钟的事",
+    "heading": "他们用iTeamify，把对账变成了 30 分钟的事",
     "items": {
       "live_stream": {
         "segment": "直播电商",
-        "quote": "以前月底对账要熬通宵，现在算盘 30 分钟就搞定。异常订单还自动标出来，省心太多了。",
+        "quote": "以前月底对账要熬通宵，现在iTeamify 30 分钟就搞定。异常订单还自动标出来，省心太多了。",
         "author": "李先生",
         "author_initial": "李",
         "role": "抖音美妆店，月 GMV ¥80 万"
       },
       "multi_platform": {
         "segment": "多平台卖家",
-        "quote": "淘宝+抖音+拼多多，三个平台的对账以前是个噩梦。算盘统一管理，再也不用切来切去了。",
+        "quote": "淘宝+抖音+拼多多，三个平台的对账以前是个噩梦。iTeamify统一管理，再也不用切来切去了。",
         "author": "王女士",
         "author_initial": "王",
         "role": "服装电商，4 平台同步运营"
       },
       "agency": {
         "segment": "代运营公司",
-        "quote": "我们管理 15 家店铺，算盘批量对账，每家 5 分钟出报告。客户都说我们专业度高了不少。",
+        "quote": "我们管理 15 家店铺，iTeamify批量对账，每家 5 分钟出报告。客户都说我们专业度高了不少。",
         "author": "赵总",
         "author_initial": "赵",
         "role": "电商代运营，服务 15+ 品牌"
@@ -159,7 +159,7 @@
         "name": "免费试用",
         "price": "¥0",
         "period": "14天",
-        "description": "体验算盘的全部核心功能",
+        "description": "体验iTeamify的全部核心功能",
         "features": [
           "1 个店铺绑定",
           "1,000 笔订单对账",
@@ -211,7 +211,7 @@
       },
       "learning": {
         "question": "不会用怎么办？",
-        "answer": "不用学。会上网、会打字，就会用算盘。第一次使用有引导教程，遇到问题随时联系客服，我们会在 10 分钟内响应。"
+        "answer": "不用学。会上网、会打字，就会用iTeamify。第一次使用有引导教程，遇到问题随时联系客服，我们会在 10 分钟内响应。"
       },
       "payment": {
         "question": "支持哪些支付方式？",
@@ -231,17 +231,17 @@
       },
       "compare": {
         "question": "和代账公司有什么区别？",
-        "answer": "算盘是自动化工具，不是人工服务。我们帮你把 90% 的对账工作自动化，剩下的 10% 复杂情况你可以自己处理或找代账公司确认。很多代账公司也在用算盘提高效率。"
+        "answer": "iTeamify是自动化工具，不是人工服务。我们帮你把 90% 的对账工作自动化，剩下的 10% 复杂情况你可以自己处理或找代账公司确认。很多代账公司也在用iTeamify提高效率。"
       }
     }
   },
   "cta": {
     "heading": "第一次对账，30 分钟搞定",
-    "body": "上传你的第一个订单，让算盘开始工作。免费试用 14 天，满意再付费。",
+    "body": "上传你的第一个订单，让iTeamify开始工作。免费试用 14 天，满意再付费。",
     "button": "免费试用 — 无需信用卡"
   },
   "footer": {
-    "brand_blurb": "算盘，你的 24/7 AI 对账搭档。每笔订单、每分钱、对得清清楚楚。",
+    "brand_blurb": "iTeamify，你的 24/7 AI 对账搭档。每笔订单、每分钱、对得清清楚楚。",
     "marquee": {
       "row1": {
         "phrase_1": "自动匹配 94%",
@@ -301,6 +301,6 @@
         }
       }
     },
-    "copyright": "© {{year}} 算盘. 基于对账，不止于对账。"
+    "copyright": "© {{year}} iTeamify. 基于对账，不止于对账。"
   }
 }

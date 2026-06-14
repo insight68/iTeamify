@@ -18,10 +18,10 @@ export function LandingNav() {
         >
           <img
             src="/logo.svg"
-            alt="算盘"
+            alt="iTeamify"
             className="h-7 w-7 rounded-md"
           />
-          <span>算盘</span>
+          <span>iTeamify</span>
         </AppLink>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <a

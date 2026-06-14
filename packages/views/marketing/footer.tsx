@@ -86,7 +86,7 @@ export function LandingFooter() {
                 alt="Teamify"
                 className="h-7 w-7 rounded-md"
               />
-              <span>算盘</span>
+              <span>iTeamify</span>
             </div>
             <p className="mt-3 max-w-xs text-sm text-muted-foreground">
               {t(($) => $.footer.brand_blurb)}

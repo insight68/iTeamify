@@ -1,0 +1,38 @@
+{
+  "page": {
+    "title": "业务流程",
+    "description": "上传 Excel 文件，可视化展示业务流程图与 AI 自动化能力",
+    "existing": "已保存的流程",
+    "empty": "暂无流程。上传 Excel 文件即可开始。"
+  },
+  "upload": {
+    "title": "上传 Excel 文件",
+    "hint": "拖拽 .xlsx 或 .xls 文件到此处，或点击选择文件",
+    "dropHere": "松开以添加文件",
+    "parsing": "正在解析流程数据..."
+  },
+  "sidebar": {
+    "steps": "流程步骤",
+    "totalSteps": "步骤",
+    "departments": "部门",
+    "aiCoverage": "AI 覆盖"
+  },
+  "detail": {
+    "backToList": "返回流程列表",
+    "notFound": "未找到该流程",
+    "totalSteps": "总步骤",
+    "departments": "涉及部门",
+    "aiCoverage": "AI 覆盖",
+    "source": "来源",
+    "noData": "暂无数据",
+    "traditionalTitle": "传统工作方式",
+    "traditionalSub": "当前人工操作流程",
+    "aiTitle": "AI 赋能方式",
+    "aiSub": "由 AI 数字员工自动执行",
+    "aiHighlights": "AI 增强要点"
+  },
+  "common": {
+    "steps": "步",
+    "departments": "个部门"
+  }
+}

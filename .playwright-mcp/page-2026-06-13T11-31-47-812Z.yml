@@ -1,0 +1,126 @@
+- generic [ref=e1]:
+  - generic [ref=e38]:
+    - generic [ref=e39]:
+      - button "返回流程列表" [ref=e40]:
+        - img
+        - text: 返回流程列表
+      - heading "采购供应链全流程" [level=1] [ref=e41]
+      - generic [ref=e42]:
+        - generic [ref=e43]: 业务流程梳理.xls
+        - generic [ref=e44]: ·
+        - generic [ref=e45]: 10 步
+        - generic [ref=e46]: 7 个部门
+    - generic [ref=e47]:
+      - generic [ref=e48]:
+        - button "1" [ref=e50]
+        - generic [ref=e52]:
+          - button "客户需求提报 业务部" [ref=e53]:
+            - heading "客户需求提报" [level=3] [ref=e54]
+            - generic [ref=e55]: 业务部
+            - img [ref=e56]
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - generic [ref=e60]:
+                - img [ref=e61]
+                - text: 传统工作事项
+              - list [ref=e64]:
+                - listitem [ref=e65]: 手动填写采购需求，包括产品型号、采购量、目标价等
+            - generic [ref=e66]:
+              - generic [ref=e67]:
+                - img [ref=e68]
+                - text: AI 数字员工执行事项
+              - list [ref=e71]:
+                - listitem [ref=e72]: AI 标准化需求表单自动填充校验，缺失字段手工补齐
+                - listitem [ref=e73]: 自动抓取历史同型号产品参数、历史成交价、交付周期回填参考
+                - listitem [ref=e74]: 需求单一键归档，同步推送至采购工作台，生成唯一需求单号
+      - generic [ref=e75]:
+        - button "2" [ref=e77]
+        - generic [ref=e79]:
+          - button "采购核价 & 询价 & 比价 采购部" [active] [ref=e80]:
+            - heading "采购核价 & 询价 & 比价" [level=3] [ref=e81]
+            - generic [ref=e82]: 采购部
+            - img [ref=e83]
+          - generic [ref=e178]:
+            - generic [ref=e179]:
+              - generic [ref=e180]:
+                - img [ref=e181]
+                - text: 传统工作事项
+              - list [ref=e184]:
+                - listitem [ref=e185]: 采购核价评估
+                - listitem [ref=e186]: 逐一询价
+                - listitem [ref=e187]: 比价，手动制作比价表格
+            - generic [ref=e188]:
+              - generic [ref=e189]:
+                - img [ref=e190]
+                - text: AI 数字员工执行事项
+              - list [ref=e193]:
+                - listitem [ref=e194]: AI 自动调取供应商库，匹配对应品类供应商批量发起询价
+                - listitem [ref=e195]: 自动抓取历史报价、行业均价完成核价初评估
+                - listitem [ref=e196]: 自动生成标准化比价表，多供应商报价横向对比、价格偏差标记
+                - listitem [ref=e197]: 新品自动推送高评分备选供应商、生成询价模板
+                - listitem [ref=e198]: AI 自动拆解原材料，自动评估成本，并记录到成本数据库中
+      - generic [ref=e85]:
+        - button "3" [ref=e87]
+        - button "比价结果同步 采购部" [ref=e90]:
+          - heading "比价结果同步" [level=3] [ref=e91]
+          - generic [ref=e92]: 采购部
+          - img [ref=e93]
+      - generic [ref=e95]:
+        - button "4" [ref=e97]
+        - button "销售合同签订 业务部" [ref=e100]:
+          - heading "销售合同签订" [level=3] [ref=e101]
+          - generic [ref=e102]: 业务部
+          - img [ref=e103]
+      - generic [ref=e105]:
+        - button "5" [ref=e107]
+        - button "采购合同拟定与审批 采购部/采购经理" [ref=e110]:
+          - heading "采购合同拟定与审批" [level=3] [ref=e111]
+          - generic [ref=e112]: 采购部/采购经理
+          - img [ref=e113]
+      - generic [ref=e115]:
+        - button "6" [ref=e117]
+        - button "付款与台账登记 采购部/财务部" [ref=e120]:
+          - heading "付款与台账登记" [level=3] [ref=e121]
+          - generic [ref=e122]: 采购部/财务部
+          - img [ref=e123]
+      - generic [ref=e125]:
+        - button "7" [ref=e127]
+        - button "物流履约跟踪 采购部/商务部" [ref=e130]:
+          - heading "物流履约跟踪" [level=3] [ref=e131]
+          - generic [ref=e132]: 采购部/商务部
+          - img [ref=e133]
+      - generic [ref=e135]:
+        - button "8" [ref=e137]
+        - button "货物验收入库 物流部" [ref=e140]:
+          - heading "货物验收入库" [level=3] [ref=e141]
+          - generic [ref=e142]: 物流部
+          - img [ref=e143]
+      - generic [ref=e145]:
+        - button "9" [ref=e147]
+        - button "发票处理与账单核对 财务部" [ref=e150]:
+          - heading "发票处理与账单核对" [level=3] [ref=e151]
+          - generic [ref=e152]: 财务部
+          - img [ref=e153]
+      - generic [ref=e155]:
+        - button "10" [ref=e157]
+        - button "单据整理归档 财务部" [ref=e159]:
+          - heading "单据整理归档" [level=3] [ref=e160]
+          - generic [ref=e161]: 财务部
+          - img [ref=e162]
+    - generic [ref=e165]:
+      - generic [ref=e166]:
+        - generic [ref=e167]: "10"
+        - generic [ref=e168]: 总步骤
+      - generic [ref=e169]:
+        - generic [ref=e170]: "7"
+        - generic [ref=e171]: 涉及部门
+      - generic [ref=e172]:
+        - generic [ref=e173]: 10/10
+        - generic [ref=e174]: AI 覆盖
+      - generic [ref=e175]:
+        - generic [ref=e176]: 业务流程梳理.xls
+        - generic [ref=e177]: 来源
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e33] [cursor=pointer]:
+    - img [ref=e34]
+  - alert [ref=e37]

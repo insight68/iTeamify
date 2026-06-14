@@ -1,0 +1,143 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - button "返回流程列表" [ref=e6]:
+          - img [ref=e7]
+          - text: 返回流程列表
+        - paragraph [ref=e9]: 采购供应链全流程
+      - generic [ref=e11]:
+        - generic [ref=e12]: 流程步骤 (10)
+        - list [ref=e14]:
+          - listitem [ref=e15]:
+            - button "1 客户需求提报 业务部" [ref=e16]:
+              - generic [ref=e17]: "1"
+              - generic [ref=e18]: 客户需求提报
+              - generic [ref=e19]: 业务部
+          - listitem [ref=e20]:
+            - button "2 采购核价 & 询价 & 比价 采购部" [ref=e21]:
+              - generic [ref=e22]: "2"
+              - generic [ref=e23]: 采购核价 & 询价 & 比价
+              - generic [ref=e24]: 采购部
+          - listitem [ref=e25]:
+            - button "3 比价结果同步 采购部" [ref=e26]:
+              - generic [ref=e27]: "3"
+              - generic [ref=e28]: 比价结果同步
+              - generic [ref=e29]: 采购部
+          - listitem [ref=e30]:
+            - button "4 销售合同签订 业务部" [ref=e31]:
+              - generic [ref=e32]: "4"
+              - generic [ref=e33]: 销售合同签订
+              - generic [ref=e34]: 业务部
+          - listitem [ref=e35]:
+            - button "5 采购合同拟定与审批 采购部/采购经理" [ref=e36]:
+              - generic [ref=e37]: "5"
+              - generic [ref=e38]: 采购合同拟定与审批
+              - generic [ref=e39]: 采购部/采购经理
+          - listitem [ref=e40]:
+            - button "6 付款与台账登记 采购部/财务部" [ref=e41]:
+              - generic [ref=e42]: "6"
+              - generic [ref=e43]: 付款与台账登记
+              - generic [ref=e44]: 采购部/财务部
+          - listitem [ref=e45]:
+            - button "7 物流履约跟踪 采购部/商务部" [ref=e46]:
+              - generic [ref=e47]: "7"
+              - generic [ref=e48]: 物流履约跟踪
+              - generic [ref=e49]: 采购部/商务部
+          - listitem [ref=e50]:
+            - button "8 货物验收入库 物流部" [ref=e51]:
+              - generic [ref=e52]: "8"
+              - generic [ref=e53]: 货物验收入库
+              - generic [ref=e54]: 物流部
+          - listitem [ref=e55]:
+            - button "9 发票处理与账单核对 财务部" [ref=e56]:
+              - generic [ref=e57]: "9"
+              - generic [ref=e58]: 发票处理与账单核对
+              - generic [ref=e59]: 财务部
+          - listitem [ref=e60]:
+            - button "10 单据整理归档 财务部" [ref=e61]:
+              - generic [ref=e62]: "10"
+              - generic [ref=e63]: 单据整理归档
+              - generic [ref=e64]: 财务部
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]: "10"
+          - generic [ref=e69]: 步骤
+        - generic [ref=e70]:
+          - generic [ref=e71]: "7"
+          - generic [ref=e72]: 部门
+        - generic [ref=e73]:
+          - img [ref=e74]
+          - generic [ref=e77]:
+            - generic [ref=e78]: 10/10
+            - generic [ref=e79]: AI 覆盖
+    - main [ref=e80]:
+      - generic [ref=e81]:
+        - generic [ref=e82]:
+          - heading "采购供应链全流程" [level=1] [ref=e83]
+          - paragraph [ref=e84]: 业务流程梳理.xls · 10 步
+        - generic [ref=e85]:
+          - generic [ref=e87] [cursor=pointer]:
+            - generic [ref=e88]: "1"
+            - generic [ref=e89]:
+              - paragraph [ref=e90]: 客户需求提报
+              - generic [ref=e91]: 业务部
+            - img [ref=e92]
+          - generic [ref=e95] [cursor=pointer]:
+            - generic [ref=e96]: "2"
+            - generic [ref=e97]:
+              - paragraph [ref=e98]: 采购核价 & 询价 & 比价
+              - generic [ref=e99]: 采购部
+            - img [ref=e100]
+          - generic [ref=e103] [cursor=pointer]:
+            - generic [ref=e104]: "3"
+            - generic [ref=e105]:
+              - paragraph [ref=e106]: 比价结果同步
+              - generic [ref=e107]: 采购部
+            - img [ref=e108]
+          - generic [ref=e111] [cursor=pointer]:
+            - generic [ref=e112]: "4"
+            - generic [ref=e113]:
+              - paragraph [ref=e114]: 销售合同签订
+              - generic [ref=e115]: 业务部
+            - img [ref=e116]
+          - generic [ref=e119] [cursor=pointer]:
+            - generic [ref=e120]: "5"
+            - generic [ref=e121]:
+              - paragraph [ref=e122]: 采购合同拟定与审批
+              - generic [ref=e123]: 采购部/采购经理
+            - img [ref=e124]
+          - generic [ref=e127] [cursor=pointer]:
+            - generic [ref=e128]: "6"
+            - generic [ref=e129]:
+              - paragraph [ref=e130]: 付款与台账登记
+              - generic [ref=e131]: 采购部/财务部
+            - img [ref=e132]
+          - generic [ref=e135] [cursor=pointer]:
+            - generic [ref=e136]: "7"
+            - generic [ref=e137]:
+              - paragraph [ref=e138]: 物流履约跟踪
+              - generic [ref=e139]: 采购部/商务部
+            - img [ref=e140]
+          - generic [ref=e143] [cursor=pointer]:
+            - generic [ref=e144]: "8"
+            - generic [ref=e145]:
+              - paragraph [ref=e146]: 货物验收入库
+              - generic [ref=e147]: 物流部
+            - img [ref=e148]
+          - generic [ref=e151] [cursor=pointer]:
+            - generic [ref=e152]: "9"
+            - generic [ref=e153]:
+              - paragraph [ref=e154]: 发票处理与账单核对
+              - generic [ref=e155]: 财务部
+            - img [ref=e156]
+          - generic [ref=e159] [cursor=pointer]:
+            - generic [ref=e160]: "10"
+            - generic [ref=e161]:
+              - paragraph [ref=e162]: 单据整理归档
+              - generic [ref=e163]: 财务部
+            - img [ref=e164]
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e171] [cursor=pointer]:
+    - img [ref=e172]
+  - alert [ref=e175]

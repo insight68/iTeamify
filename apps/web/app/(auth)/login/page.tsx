@@ -24,6 +24,7 @@ import { Button } from "@teamify/ui/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { setLoggedInCookie } from "@/features/auth/auth-cookie";
 import { LoginPage, validateCliCallback } from "@teamify/views/auth";
+import { LandingNav, LandingFooter } from "@teamify/views/marketing";
 import { useT } from "@teamify/views/i18n";
 
 /**
@@ -133,6 +134,17 @@ function LoginPageContent() {
     .filter(Boolean)
     .join(",") || undefined;
 
+  // Shared shell wrapper: LandingNav + centred content + LandingFooter
+  const shell = (content: React.ReactNode) => (
+    <div className="landing-light-tech flex min-h-svh flex-col bg-background">
+      <LandingNav />
+      <main className="flex flex-1 items-center justify-center px-4">
+        {content}
+      </main>
+      <LandingFooter />
+    </div>
+  );
+
   // While the desktop handoff is in progress (or has produced a token/error),
   // render a dedicated screen instead of flashing the login form or redirecting
   // away to a workspace page.
@@ -140,7 +152,7 @@ function LoginPageContent() {
     const handoffCard = desktopError ? (
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-2xl font-semibold">
             {t(($) => $.web.desktop_handoff.failed_title)}
           </CardTitle>
           <CardDescription>{desktopError}</CardDescription>
@@ -149,7 +161,7 @@ function LoginPageContent() {
     ) : (
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-2xl font-semibold">
             {t(($) => $.web.desktop_handoff.opening_title)}
           </CardTitle>
           <CardDescription>
@@ -175,64 +187,33 @@ function LoginPageContent() {
       </Card>
     );
 
-    return (
-      <div className="flex min-h-svh">
-        <div
-          className="relative hidden w-1/2 md:block"
-          style={{
-            backgroundImage: "url(/images/vera.webp)",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-        <div className="flex w-full items-center justify-center bg-background md:w-1/2">
-          <div className="w-full max-w-sm px-6">
-            {handoffCard}
-          </div>
-        </div>
-      </div>
-    );
+    return shell(handoffCard);
   }
 
-  return (
-    <div className="flex min-h-svh">
-      {/* Left: image, hidden on mobile */}
-      <div
-        className="relative hidden w-1/2 md:block"
-        style={{
-          backgroundImage: "url(/images/vera.webp)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
+  return shell(
+    <div className="w-full max-w-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <LoginPage
+        fullPage={false}
+        defaultMode="password"
+        onSuccess={handleSuccess}
+        onForgotPassword={() => router.push(paths.resetPassword())}
+        google={
+          googleClientId
+            ? {
+                clientId: googleClientId,
+                redirectUri: `${window.location.origin}/auth/callback`,
+                state: googleState,
+              }
+            : undefined
+        }
+        cliCallback={
+          cliCallbackRaw && validateCliCallback(cliCallbackRaw)
+            ? { url: cliCallbackRaw, state: cliState }
+            : undefined
+        }
+        onTokenObtained={setLoggedInCookie}
       />
-
-      {/* Right: form */}
-      <div className="flex w-full items-center justify-center bg-background md:w-1/2">
-        <div className="w-full max-w-sm px-6">
-          <LoginPage
-            fullPage={false}
-            defaultMode="password"
-            onSuccess={handleSuccess}
-            onForgotPassword={() => router.push(paths.resetPassword())}
-            google={
-              googleClientId
-                ? {
-                    clientId: googleClientId,
-                    redirectUri: `${window.location.origin}/auth/callback`,
-                    state: googleState,
-                  }
-                : undefined
-            }
-            cliCallback={
-              cliCallbackRaw && validateCliCallback(cliCallbackRaw)
-                ? { url: cliCallbackRaw, state: cliState }
-                : undefined
-            }
-            onTokenObtained={setLoggedInCookie}
-          />
-        </div>
-      </div>
-    </div>
+    </div>,
   );
 }
 

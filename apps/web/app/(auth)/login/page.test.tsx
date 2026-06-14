@@ -90,6 +90,13 @@ vi.mock("@teamify/core/api", () => ({
   },
 }));
 
+// Mock marketing components (LandingNav / LandingFooter) — the login shell
+// renders them but they are not the subject under test.
+vi.mock("@teamify/views/marketing", () => ({
+  LandingNav: () => null,
+  LandingFooter: () => null,
+}));
+
 import LoginPage from "./page";
 
 describe("LoginPage", () => {
@@ -104,7 +111,7 @@ describe("LoginPage", () => {
     render(<LoginPage />, { wrapper: createWrapper() });
 
     expect(screen.getByText("Sign in to Teamify")).toBeInTheDocument();
-    expect(screen.getByText("Enter your email to get a login code")).toBeInTheDocument();
+    expect(screen.getByText("Enter your email and password to sign in")).toBeInTheDocument();
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Log in" })

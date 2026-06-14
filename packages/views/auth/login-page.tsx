@@ -337,10 +337,10 @@ export function LoginPage({
 
   if (step === "cli_confirm" && existingUser) {
     return wrapContent(
-        <Card className="w-full max-w-sm">
+        <Card className="w-full max-w-sm shadow-sm ring-1 ring-foreground/5">
           <CardHeader className="text-center">
             {logo && <div className="mx-auto mb-4">{logo}</div>}
-            <CardTitle className="text-2xl">
+            <CardTitle className="text-2xl font-semibold">
               {t(($) => $.cli.title)}
             </CardTitle>
             <CardDescription>
@@ -379,10 +379,10 @@ export function LoginPage({
 
   if (step === "code") {
     return wrapContent(
-        <Card className="w-full max-w-sm">
+        <Card className="w-full max-w-sm shadow-sm ring-1 ring-foreground/5">
           <CardHeader className="text-center">
             {logo && <div className="mx-auto mb-4">{logo}</div>}
-            <CardTitle className="text-2xl">
+            <CardTitle className="text-2xl font-semibold">
               {t(($) => $.verify.title)}
             </CardTitle>
             <CardDescription>
@@ -447,10 +447,10 @@ export function LoginPage({
   // -------------------------------------------------------------------------
 
   return wrapContent(
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-sm shadow-sm ring-1 ring-foreground/5">
         <CardHeader className="text-center">
           {logo && <div className="mx-auto mb-4">{logo}</div>}
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-2xl font-semibold">
             {t(($) => $.signin.title)}
           </CardTitle>
           <CardDescription>
@@ -506,26 +506,24 @@ export function LoginPage({
               <p className="text-sm text-destructive">{error}</p>
             )}
 
-            <div className="flex gap-2">
-              <Button
-                type="submit"
-                form="login-form"
-                className="flex-1"
-                size="lg"
-                disabled={!email || (loginMode === "password" && !password) || loading}
-              >
-                {loading
-                  ? (loginMode === "password"
-                      ? t(($) => $.signin.logging_in)
-                      : t(($) => $.signin.sending))
-                  : (loginMode === "password"
-                      ? t(($) => $.signin.login)
-                      : t(($) => $.signin.continue))}
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              form="login-form"
+              className="w-full"
+              size="lg"
+              disabled={!email || (loginMode === "password" && !password) || loading}
+            >
+              {loading
+                ? (loginMode === "password"
+                    ? t(($) => $.signin.logging_in)
+                    : t(($) => $.signin.sending))
+                : (loginMode === "password"
+                    ? t(($) => $.signin.login)
+                    : t(($) => $.signin.continue))}
+            </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3">
+        <CardFooter className="flex flex-col gap-3 bg-transparent">
           {/* Login mode toggle */}
           <div className="flex w-full items-center justify-center gap-2 text-sm">
             <span className="text-muted-foreground">
@@ -552,7 +550,7 @@ export function LoginPage({
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">
+                  <span className="bg-background px-2 text-muted-foreground">
                     {t(($) => $.signin.divider)}
                   </span>
                 </div>

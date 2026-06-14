@@ -85,6 +85,10 @@ export function issueListOptions(wsId: string) {
     queryKey: issueKeys.list(wsId),
     queryFn: () => fetchFirstPages(),
     select: flattenIssueBuckets,
+    // Safety net: if WS events are missed (silent disconnect, tab background
+    // suspension), data auto-freshens within 5 minutes. In normal operation WS
+    // events invalidate this query immediately, so this staleTime is never hit.
+    staleTime: 5 * 60 * 1000,
   });
 }
 

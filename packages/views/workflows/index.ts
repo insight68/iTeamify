@@ -3,5 +3,13 @@ export { WorkflowDetailPage } from "./components/workflow-detail-page"
 export { WorkflowTimeline } from "./components/workflow-timeline"
 export { WorkflowStepCard } from "./components/workflow-step-card"
 export { UploadZone } from "./components/upload-zone"
+export { StepDemoViewer } from "./components/demo/step-demo-viewer"
 export { parseWorkflowExcel } from "./lib/parse-excel"
-export type { Workflow, WorkflowStep } from "./lib/types"
+export type {
+  Workflow,
+  WorkflowStep,
+  DemoVisualType,
+  DemoStage,
+  StepDemo,
+} from "./lib/types"
+export { DEMO_STAGES } from "./lib/demo-data"

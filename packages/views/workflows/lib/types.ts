@@ -1,1 +1,7 @@
-export type { WorkflowStep, Workflow } from "@teamify/core/workflows/types"
+export type {
+  WorkflowStep,
+  Workflow,
+  DemoVisualType,
+  DemoStage,
+  StepDemo,
+} from "@teamify/core/workflows/types"

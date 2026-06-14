@@ -31,6 +31,19 @@
     "aiSub": "由 AI 数字员工自动执行",
     "aiHighlights": "AI 增强要点"
   },
+  "demo": {
+    "viewDemo": "查看 AI 演示",
+    "closeDemo": "关闭演示",
+    "nextStage": "下一步",
+    "prevStage": "上一步",
+    "autoPlay": "自动播放",
+    "stageCount": "阶段 {current}/{total}",
+    "processingComplete": "处理完成",
+    "aiProcessing": "AI 处理中...",
+    "resultSummary": "处理结果",
+    "highlights": "亮点",
+    "warnings": "注意事项"
+  },
   "common": {
     "steps": "步",
     "departments": "个部门"

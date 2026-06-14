@@ -31,6 +31,19 @@
     "aiSub": "Automated by AI digital employees",
     "aiHighlights": "AI Enhancement Points"
   },
+  "demo": {
+    "viewDemo": "View AI Demo",
+    "closeDemo": "Close Demo",
+    "nextStage": "Next",
+    "prevStage": "Previous",
+    "autoPlay": "Auto Play",
+    "stageCount": "Stage {current} of {total}",
+    "processingComplete": "Processing Complete",
+    "aiProcessing": "AI Processing...",
+    "resultSummary": "Result Summary",
+    "highlights": "Highlights",
+    "warnings": "Warnings"
+  },
   "common": {
     "steps": "steps",
     "departments": "departments"

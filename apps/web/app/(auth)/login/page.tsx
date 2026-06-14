@@ -138,7 +138,7 @@ function LoginPageContent() {
   const shell = (content: React.ReactNode) => (
     <div className="landing-light-tech flex min-h-svh flex-col bg-background">
       <LandingNav />
-      <main className="flex flex-1 items-center justify-center px-4">
+      <main className="flex flex-1 items-center justify-center px-4 py-8 sm:px-8">
         {content}
       </main>
       <LandingFooter />

@@ -1,12 +1,15 @@
 "use client"
 
-import { User, Bot, ChevronRight, CheckCircle2, AlertTriangle, Zap, ArrowRight } from "lucide-react"
+import { useState } from "react"
+import { User, Bot, ChevronRight, CheckCircle2, AlertTriangle, Zap, ArrowRight, Eye, EyeOff } from "lucide-react"
 import { Badge } from "@teamify/ui/components/ui/badge"
 import { Card, CardContent } from "@teamify/ui/components/ui/card"
 import { Button } from "@teamify/ui/components/ui/button"
 import { useT } from "../../i18n"
 import { useNavigation } from "../../navigation"
 import type { Workflow, WorkflowStep } from "../lib/types"
+import { DEMO_STAGES } from "../lib/demo-data"
+import { StepDemoViewer } from "./demo/step-demo-viewer"
 
 interface StepDetailContentProps {
   workflow: Workflow
@@ -16,6 +19,11 @@ interface StepDetailContentProps {
 export function StepDetailContent({ workflow, step }: StepDetailContentProps) {
   const { t } = useT("workflows")
   const navigation = useNavigation()
+  const [showDemo, setShowDemo] = useState(false)
+
+  const currentDemo = step
+    ? DEMO_STAGES.find((d) => d.stepId === step.id)
+    : undefined
 
   // Overview mode: no step selected
   if (!step) {
@@ -172,6 +180,40 @@ export function StepDetailContent({ workflow, step }: StepDetailContentProps) {
               )
             })}
           </div>
+        </div>
+      )}
+
+      {/* AI Demo Section */}
+      {currentDemo && (
+        <div className="mt-8">
+          {!showDemo ? (
+            <Button
+              onClick={() => setShowDemo(true)}
+              className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+              size="lg"
+            >
+              <Eye className="size-4" />
+              {t(($) => $.demo.viewDemo)}
+            </Button>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDemo(false)}
+                >
+                  <EyeOff className="size-3.5" />
+                  <span className="ml-1.5">{t(($) => $.demo.closeDemo)}</span>
+                </Button>
+              </div>
+              <StepDemoViewer
+                stages={currentDemo.stages}
+                onClose={() => setShowDemo(false)}
+              />
+            </div>
+          )}
         </div>
       )}
 

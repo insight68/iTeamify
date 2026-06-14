@@ -10,7 +10,7 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@teamify/core/i18n";
-import { RESOURCES } from "@teamify/views/locales";
+import { loadResources } from "@teamify/views/locales";
 import "./globals.css";
 
 // Font stack: Inter for Latin UI text + system Chinese fonts for zh content.
@@ -126,7 +126,9 @@ export default async function RootLayout({
   const locale: SupportedLocale = isSupportedLocale(headerLocale)
     ? headerLocale
     : DEFAULT_LOCALE;
-  const resources = { [locale]: RESOURCES[locale] };
+  // Only the active locale's translations are bundled — saves ~172KB (gzipped
+  // ~50-70KB) vs. eagerly importing both en + zh-Hans.
+  const resources = { [locale]: await loadResources(locale) };
 
   return (
     <html

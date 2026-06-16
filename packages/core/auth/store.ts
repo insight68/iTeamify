@@ -18,8 +18,8 @@ export interface AuthState {
   isLoading: boolean;
 
   initialize: () => Promise<void>;
-  sendCode: (email: string) => Promise<void>;
-  verifyCode: (email: string, code: string) => Promise<User>;
+  sendCode: (contact: string | { email?: string; phone?: string; channel?: "email" | "sms" }) => Promise<void>;
+  verifyCode: (contact: string | { email?: string; phone?: string; channel?: "email" | "sms" }, code: string) => Promise<User>;
   verifyPassword: (email: string, password: string) => Promise<User>;
   setPassword: (newPassword: string) => Promise<void>;
   loginWithGoogle: (code: string, redirectUri: string) => Promise<User>;
@@ -76,12 +76,12 @@ export function createAuthStore(options: AuthStoreOptions) {
       }
     },
 
-    sendCode: async (email: string) => {
-      await api.sendCode(email);
+    sendCode: async (contact) => {
+      await api.sendCode(contact);
     },
 
-    verifyCode: async (email: string, code: string) => {
-      const { token, user } = await api.verifyCode(email, code);
+    verifyCode: async (contact, code: string) => {
+      const { token, user } = await api.verifyCode(contact, code);
       if (!cookieAuth) {
         // Token mode: persist for Electron / legacy.
         storage.setItem("teamify_token", token);

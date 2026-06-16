@@ -322,17 +322,25 @@ export class ApiClient {
   }
 
   // Auth
-  async sendCode(email: string): Promise<void> {
+  async sendCode(
+    contact: string | { email?: string; phone?: string; channel?: "email" | "sms" },
+  ): Promise<void> {
+    const body = typeof contact === "string" ? { email: contact } : contact;
     await this.fetch("/auth/send-code", {
       method: "POST",
-      body: JSON.stringify({ email }),
+      body: JSON.stringify(body),
     });
   }
 
-  async verifyCode(email: string, code: string): Promise<LoginResponse> {
+  async verifyCode(
+    contact: string | { email?: string; phone?: string; channel?: "email" | "sms" },
+    code: string,
+  ): Promise<LoginResponse> {
+    const body =
+      typeof contact === "string" ? { email: contact, code } : { ...contact, code };
     return this.fetch("/auth/verify-code", {
       method: "POST",
-      body: JSON.stringify({ email, code }),
+      body: JSON.stringify(body),
     });
   }
 

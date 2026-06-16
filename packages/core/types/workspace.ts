@@ -29,6 +29,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   avatar_url: string | null;
   onboarded_at: string | null;
   /**
@@ -64,6 +65,7 @@ export interface MemberWithUser {
   created_at: string;
   name: string;
   email: string;
+  phone?: string | null;
   avatar_url: string | null;
 }
 
@@ -72,6 +74,7 @@ export interface Invitation {
   workspace_id: string;
   inviter_id: string;
   invitee_email: string;
+  invitee_phone?: string | null;
   invitee_user_id: string | null;
   role: MemberRole;
   status: "pending" | "accepted" | "declined" | "expired";
@@ -87,6 +90,7 @@ export interface InvitationPreview {
   id: string;
   workspace_id: string;
   invitee_email: string;
+  invitee_phone?: string;
   role: string;
   status: string;
   expires_at: string;

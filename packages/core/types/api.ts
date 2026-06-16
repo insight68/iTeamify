@@ -90,7 +90,8 @@ export interface UpdateMeRequest {
 }
 
 export interface CreateMemberRequest {
-  email: string;
+  email?: string;
+  phone?: string;
   role?: MemberRole;
 }
 

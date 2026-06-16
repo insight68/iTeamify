@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Crown, Shield, User, Plus, MoreHorizontal, UserMinus, Users, Clock, X, Mail } from "lucide-react";
+import { Crown, Shield, User, Plus, MoreHorizontal, UserMinus, Users, Clock, X, Mail, Phone, Info } from "lucide-react";
 import { ActorAvatar } from "../../common/actor-avatar";
 import type { MemberWithUser, MemberRole, Invitation } from "@teamify/core/types";
 import { Input } from "@teamify/ui/components/ui/input";
@@ -43,6 +43,8 @@ import { useCurrentWorkspace } from "@teamify/core/paths";
 import { memberListOptions, invitationListOptions, workspaceKeys } from "@teamify/core/workspace/queries";
 import { api } from "@teamify/core/api";
 import { useT } from "../../i18n";
+
+type InviteMethod = "email" | "phone";
 
 const ROLE_ICONS: Record<MemberRole, typeof Crown> = {
   owner: Crown,
@@ -106,7 +108,7 @@ function MemberRow({
       <ActorAvatar actorType="member" actorId={member.user_id} size={32} />
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium truncate">{member.name}</div>
-        <div className="text-xs text-muted-foreground truncate">{member.email}</div>
+        <div className="text-xs text-muted-foreground truncate">{member.phone || member.email}</div>
       </div>
       {showMenu && (
         <DropdownMenu>
@@ -195,14 +197,16 @@ function InvitationRow({
   const { t } = useT("settings");
   const roleConfig = useRoleLabels();
   const rc = roleConfig[invitation.role];
+  const inviteeContact = invitation.invitee_phone || invitation.invitee_email;
+  const ContactIcon = invitation.invitee_phone ? Phone : Mail;
 
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-        <Mail className="h-4 w-4 text-muted-foreground" />
+        <ContactIcon className="h-4 w-4 text-muted-foreground" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium truncate">{invitation.invitee_email}</div>
+        <div className="text-sm font-medium truncate">{inviteeContact}</div>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Clock className="h-3 w-3" />
           <span>{t(($) => $.members.pending_status)}</span>
@@ -236,7 +240,8 @@ export function MembersTab() {
   const { data: members = [] } = useQuery(memberListOptions(wsId));
   const { data: invitations = [] } = useQuery(invitationListOptions(wsId));
 
-  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteMethod, setInviteMethod] = useState<InviteMethod>("email");
+  const [inviteContact, setInviteContact] = useState("");
   const [inviteRole, setInviteRole] = useState<MemberRole>("member");
   const [inviteLoading, setInviteLoading] = useState(false);
   const [memberActionId, setMemberActionId] = useState<string | null>(null);
@@ -255,16 +260,22 @@ export function MembersTab() {
 
   const handleInviteMember = async () => {
     if (!workspace) return;
+    const contact = inviteContact.trim();
+    if (!contact) return;
     setInviteLoading(true);
     try {
       await api.createMember(workspace.id, {
-        email: inviteEmail,
+        ...(inviteMethod === "phone" ? { phone: contact } : { email: contact }),
         role: inviteRole,
       });
-      setInviteEmail("");
+      setInviteContact("");
       setInviteRole("member");
       qc.invalidateQueries({ queryKey: workspaceKeys.invitations(wsId) });
-      toast.success(t(($) => $.members.toast_invitation_sent));
+      toast.success(
+        inviteMethod === "phone"
+          ? t(($) => $.members.toast_phone_invitation_created)
+          : t(($) => $.members.toast_invitation_sent),
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t(($) => $.members.toast_invitation_failed));
     } finally {
@@ -276,7 +287,7 @@ export function MembersTab() {
     if (!workspace) return;
     setConfirmAction({
       title: t(($) => $.members.revoke_invitation_title),
-      description: t(($) => $.members.revoke_invitation_description, { email: invitation.invitee_email }),
+      description: t(($) => $.members.revoke_invitation_description, { contact: invitation.invitee_phone || invitation.invitee_email }),
       variant: "destructive",
       onConfirm: async () => {
         setInvitationActionId(invitation.id);
@@ -345,14 +356,45 @@ export function MembersTab() {
                 <Plus className="h-4 w-4 text-muted-foreground" />
                 <h3 className="text-sm font-medium">{t(($) => $.members.invite_title)}</h3>
               </div>
-              <div className="grid gap-3 sm:grid-cols-[1fr_120px_auto]">
+              <div className="grid gap-3 sm:grid-cols-[150px_1fr_120px_auto]">
+                <Select
+                  value={inviteMethod}
+                  onValueChange={(value) => {
+                    setInviteMethod(value as InviteMethod);
+                    setInviteContact("");
+                  }}
+                >
+                  <SelectTrigger size="sm">
+                    <SelectValue>
+                      {() =>
+                        inviteMethod === "phone"
+                          ? t(($) => $.members.invite_method_phone)
+                          : t(($) => $.members.invite_method_email)
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="email">
+                      <Mail className="h-3.5 w-3.5" />
+                      {t(($) => $.members.invite_method_email)}
+                    </SelectItem>
+                    <SelectItem value="phone">
+                      <Phone className="h-3.5 w-3.5" />
+                      {t(($) => $.members.invite_method_phone)}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
                 <Input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder={t(($) => $.members.invite_email_placeholder)}
+                  type={inviteMethod === "phone" ? "tel" : "email"}
+                  value={inviteContact}
+                  onChange={(e) => setInviteContact(e.target.value)}
+                  placeholder={
+                    inviteMethod === "phone"
+                      ? t(($) => $.members.invite_phone_placeholder)
+                      : t(($) => $.members.invite_email_placeholder)
+                  }
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && inviteEmail.trim()) handleInviteMember();
+                    if (e.key === "Enter" && inviteContact.trim()) handleInviteMember();
                   }}
                 />
                 <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as MemberRole)}>
@@ -366,11 +408,17 @@ export function MembersTab() {
                 </Select>
                 <Button
                   onClick={handleInviteMember}
-                  disabled={inviteLoading || !inviteEmail.trim()}
+                  disabled={inviteLoading || !inviteContact.trim()}
                 >
                   {inviteLoading ? t(($) => $.members.inviting) : t(($) => $.members.invite_button)}
                 </Button>
               </div>
+              {inviteMethod === "phone" && (
+                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+                  <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span>{t(($) => $.members.invite_phone_notify_hint)}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

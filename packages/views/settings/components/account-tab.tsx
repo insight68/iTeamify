@@ -236,6 +236,17 @@ export function AccountTab() {
                 className="mt-1"
               />
             </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">{t(($) => $.account.phone_label)}</Label>
+              <Input
+                type="tel"
+                value={user?.phone ?? ""}
+                placeholder={t(($) => $.account.phone_not_set)}
+                readOnly
+                disabled
+                className="mt-1"
+              />
+            </div>
             <div className="flex items-center justify-end gap-2 pt-1">
               <Button
                 size="sm"

@@ -103,6 +103,8 @@ export function validateCliCallback(cliCallback: string): boolean {
 // Component
 // ---------------------------------------------------------------------------
 
+const DEFAULT_CODE_CHANNEL: "email" | "sms" = "sms";
+
 export function LoginPage({
   logo,
   onSuccess,
@@ -119,7 +121,9 @@ export function LoginPage({
   const qc = useQueryClient();
   const [step, setStep] = useState<"email" | "code" | "cli_confirm">("email");
   const [loginMode, setLoginMode] = useState<"code" | "password">(defaultMode ?? "code");
+  const [codeChannel, setCodeChannel] = useState<"email" | "sms">(DEFAULT_CODE_CHANNEL);
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -129,6 +133,10 @@ export function LoginPage({
   // Tracks how the existing session was detected so handleCliAuthorize
   // uses the matching token source (cookie → issueCliToken, localStorage → direct).
   const authSourceRef = useRef<"cookie" | "localStorage">("cookie");
+  const codeContact = codeChannel === "sms"
+    ? { phone: phone.trim(), channel: "sms" as const }
+    : { email: email.trim(), channel: "email" as const };
+  const codeContactValue = codeChannel === "sms" ? phone.trim() : email.trim();
 
   // Check for existing session when CLI callback is present.
   // Prioritises cookie auth (= current browser session) to avoid authorising
@@ -176,7 +184,11 @@ export function LoginPage({
   const handleSendCode = useCallback(
     async (e?: React.FormEvent) => {
       e?.preventDefault();
-      if (!email) {
+      if (loginMode === "code" && !codeContactValue) {
+        setError(codeChannel === "sms" ? t(($) => $.common.phone_required) : t(($) => $.common.email_required));
+        return;
+      }
+      if (loginMode === "password" && !email) {
         setError(t(($) => $.common.email_required));
         return;
       }
@@ -214,7 +226,7 @@ export function LoginPage({
       setLoading(true);
       setError("");
       try {
-        await useAuthStore.getState().sendCode(email);
+        await useAuthStore.getState().sendCode(codeContact);
         setStep("code");
         setCode("");
         setCooldown(60);
@@ -228,7 +240,7 @@ export function LoginPage({
         setLoading(false);
       }
     },
-    [email, password, loginMode, t, cliCallback, onSuccess, onTokenObtained, qc],
+    [email, password, loginMode, codeContact, codeContactValue, codeChannel, t, cliCallback, onSuccess, onTokenObtained, qc],
   );
 
   const handleVerify = useCallback(
@@ -239,7 +251,7 @@ export function LoginPage({
       try {
         if (cliCallback) {
           // CLI path: get token directly for the redirect URL
-          const { token } = await api.verifyCode(email, value);
+          const { token } = await api.verifyCode(codeContact, value);
           localStorage.setItem("teamify_token", token);
           api.setToken(token);
           onTokenObtained?.();
@@ -251,7 +263,7 @@ export function LoginPage({
         // caller's onSuccess can read it synchronously to compute a destination
         // URL (first workspace's slug, or /workspaces/new for zero-workspace
         // users).
-        await useAuthStore.getState().verifyCode(email, value);
+        await useAuthStore.getState().verifyCode(codeContact, value);
         const wsList = await api.listWorkspaces();
         qc.setQueryData(workspaceKeys.list(), wsList);
         onTokenObtained?.();
@@ -266,14 +278,14 @@ export function LoginPage({
         setLoading(false);
       }
     },
-    [email, onSuccess, cliCallback, onTokenObtained, qc, t],
+    [codeContact, onSuccess, cliCallback, onTokenObtained, qc, t],
   );
 
   const handleResend = async () => {
     if (cooldown > 0) return;
     setError("");
     try {
-      await useAuthStore.getState().sendCode(email);
+      await useAuthStore.getState().sendCode(codeContact);
       setCooldown(60);
     } catch (err) {
       setError(
@@ -386,7 +398,9 @@ export function LoginPage({
               {t(($) => $.verify.title)}
             </CardTitle>
             <CardDescription>
-              {t(($) => $.verify.description, { email })}
+              {codeChannel === "sms"
+                ? t(($) => $.verify.description_sms, { phone })
+                : t(($) => $.verify.description, { email })}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-4">
@@ -456,23 +470,67 @@ export function LoginPage({
           <CardDescription>
             {loginMode === "password"
               ? t(($) => $.signin.description_password)
-              : t(($) => $.signin.description)}
+              : codeChannel === "sms"
+                ? t(($) => $.signin.description_sms)
+                : t(($) => $.signin.description)}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form id="login-form" onSubmit={handleSendCode} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="login-email">{t(($) => $.common.email)}</Label>
-              <Input
-                id="login-email"
-                type="email"
-                placeholder={t(($) => $.common.email_placeholder)}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoFocus
-                required
-              />
-            </div>
+            {loginMode === "code" && (
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={codeChannel === "email" ? "default" : "outline"}
+                  onClick={() => {
+                    setCodeChannel("email");
+                    setError("");
+                  }}
+                >
+                  {t(($) => $.signin.email_code)}
+                </Button>
+                <Button
+                  type="button"
+                  variant={codeChannel === "sms" ? "default" : "outline"}
+                  onClick={() => {
+                    setCodeChannel("sms");
+                    setError("");
+                  }}
+                >
+                  {t(($) => $.signin.sms_code)}
+                </Button>
+              </div>
+            )}
+
+            {(loginMode === "password" || codeChannel === "email") && (
+              <div className="space-y-2">
+                <Label htmlFor="login-email">{t(($) => $.common.email)}</Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder={t(($) => $.common.email_placeholder)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoFocus
+                  required
+                />
+              </div>
+            )}
+
+            {loginMode === "code" && codeChannel === "sms" && (
+              <div className="space-y-2">
+                <Label htmlFor="login-phone">{t(($) => $.common.phone)}</Label>
+                <Input
+                  id="login-phone"
+                  type="tel"
+                  placeholder={t(($) => $.common.phone_placeholder)}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  autoFocus
+                  required
+                />
+              </div>
+            )}
 
             {loginMode === "password" && (
               <div className="space-y-2">
@@ -511,7 +569,11 @@ export function LoginPage({
               form="login-form"
               className="w-full"
               size="lg"
-              disabled={!email || (loginMode === "password" && !password) || loading}
+              disabled={
+                loading ||
+                (loginMode === "password" && (!email || !password)) ||
+                (loginMode === "code" && !codeContactValue)
+              }
             >
               {loading
                 ? (loginMode === "password"
@@ -534,6 +596,7 @@ export function LoginPage({
               className="text-primary underline-offset-4 hover:underline"
               onClick={() => {
                 setLoginMode(loginMode === "code" ? "password" : "code");
+                setCodeChannel(DEFAULT_CODE_CHANNEL);
                 setError("");
                 setPassword("");
                 setCode("");

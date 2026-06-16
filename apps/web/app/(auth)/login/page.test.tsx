@@ -126,18 +126,40 @@ describe("LoginPage", () => {
     expect(mockSendCode).not.toHaveBeenCalled();
   });
 
-  it("calls sendCode with email after switching to code mode", async () => {
+  it("calls sendCode with email after switching to code then email code mode", async () => {
     mockSendCode.mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    await user.type(screen.getByLabelText("Email"), "test@teamify.world");
-    // Switch to code mode
+    // Switch to code mode (defaults to SMS channel), then pick Email code
     await user.click(screen.getByRole("button", { name: /use code/i }));
+    await user.click(screen.getByRole("button", { name: "Email code" }));
+    await user.type(screen.getByLabelText("Email"), "test@teamify.world");
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     await waitFor(() => {
-      expect(mockSendCode).toHaveBeenCalledWith("test@teamify.world");
+      expect(mockSendCode).toHaveBeenCalledWith({
+        email: "test@teamify.world",
+        channel: "email",
+      });
+    });
+  });
+
+  it("calls sendCode with phone in default SMS code mode", async () => {
+    mockSendCode.mockResolvedValueOnce(undefined);
+    const user = userEvent.setup();
+    render(<LoginPage />, { wrapper: createWrapper() });
+
+    // Switch to code mode — SMS is the default channel
+    await user.click(screen.getByRole("button", { name: /use code/i }));
+    await user.type(screen.getByLabelText("Phone"), "+1 555 010 1234");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() => {
+      expect(mockSendCode).toHaveBeenCalledWith({
+        phone: "+1 555 010 1234",
+        channel: "sms",
+      });
     });
   });
 
@@ -160,9 +182,10 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    await user.type(screen.getByLabelText("Email"), "test@teamify.world");
-    // Switch to code mode
+    // Switch to code mode (defaults to SMS channel), then pick Email code
     await user.click(screen.getByRole("button", { name: /use code/i }));
+    await user.click(screen.getByRole("button", { name: "Email code" }));
+    await user.type(screen.getByLabelText("Email"), "test@teamify.world");
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     await waitFor(() => {

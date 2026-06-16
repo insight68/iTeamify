@@ -114,44 +114,35 @@ describe("LoginPage", () => {
   // Email step rendering
   // -------------------------------------------------------------------------
 
-  it("renders email form with 'Sign in to Teamify' title", () => {
+  it("renders SMS code form with 'Sign in to Teamify' title by default", () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
     expect(
       screen.getByText(/Sign in to Teamify/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/enter your email to get a login code/i),
+      screen.getByText(/enter your phone number to get an sms code/i),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/phone/i)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /continue/i }),
     ).toBeInTheDocument();
   });
 
   // -------------------------------------------------------------------------
-  // Email validation
+  // Contact validation
   // -------------------------------------------------------------------------
 
-  it("shows error when submitting with empty email", async () => {
+  it("shows disabled submit when phone is empty", async () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
 
-    // The Continue button is disabled when email is empty, so we submit the
-    // form programmatically the same way the component does — via form submit.
-    // Since the button is disabled, we directly call handleSendCode's logic
-    // by removing the required attr and submitting.
-    const emailInput = screen.getByLabelText(/email/i);
-    // The input has required + the button is disabled, so we need to type
-    // a space then clear to trigger the empty-email error path.
-    // Actually, the component guards `if (!email)` in handleSendCode.
-    // But the button is disabled when `!email`. Let's verify:
+    const phoneInput = screen.getByLabelText(/phone/i);
     const button = screen.getByRole("button", { name: /continue/i });
     expect(button).toBeDisabled();
 
-    // Type an email to enable button, then clear it — button becomes disabled again
     const user = userEvent.setup();
-    await user.type(emailInput, "a");
+    await user.type(phoneInput, "+1");
     expect(button).not.toBeDisabled();
-    await user.clear(emailInput);
+    await user.clear(phoneInput);
     expect(button).toBeDisabled();
   });
 
@@ -164,10 +155,28 @@ describe("LoginPage", () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
 
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
-    expect(mockSendCode).toHaveBeenCalledWith("test@example.com");
+    expect(mockSendCode).toHaveBeenCalledWith({
+      email: "test@example.com",
+      channel: "email",
+    });
+  });
+
+  it("calls sendCode on form submit with phone in default SMS mode", async () => {
+    mockSendCode.mockResolvedValueOnce(undefined);
+    renderWithI18n(<LoginPage onSuccess={onSuccess} />);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/phone/i), "+1 555 010 1234");
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(mockSendCode).toHaveBeenCalledWith({
+      phone: "+1 555 010 1234",
+      channel: "sms",
+    });
   });
 
   it("shows 'Sending code...' while submitting", async () => {
@@ -176,7 +185,7 @@ describe("LoginPage", () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
 
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText(/email/i), "test@example.com");
+    await user.type(screen.getByLabelText(/phone/i), "+1 555 010 1234");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
     expect(screen.getByText(/sending code/i)).toBeInTheDocument();
@@ -187,6 +196,7 @@ describe("LoginPage", () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
 
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -203,6 +213,7 @@ describe("LoginPage", () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
 
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -216,6 +227,7 @@ describe("LoginPage", () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
 
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -239,6 +251,7 @@ describe("LoginPage", () => {
 
     const user = userEvent.setup();
     // Step 1: email
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -254,7 +267,10 @@ describe("LoginPage", () => {
 
     await waitFor(() => {
       expect(mockVerifyCode).toHaveBeenCalledWith(
-        "test@example.com",
+        {
+          email: "test@example.com",
+          channel: "email",
+        },
         "123456",
       );
       expect(mockApiListWorkspaces).toHaveBeenCalled();
@@ -275,6 +291,7 @@ describe("LoginPage", () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
 
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -302,6 +319,7 @@ describe("LoginPage", () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
 
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -321,6 +339,7 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
 
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -337,6 +356,7 @@ describe("LoginPage", () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
 
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -571,6 +591,7 @@ describe("LoginPage", () => {
     );
 
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "cli@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -585,7 +606,10 @@ describe("LoginPage", () => {
 
     await waitFor(() => {
       expect(mockApiVerifyCode).toHaveBeenCalledWith(
-        "cli@example.com",
+        {
+          email: "cli@example.com",
+          channel: "email",
+        },
         "654321",
       );
       expect(onTokenObtained).toHaveBeenCalled();
@@ -637,6 +661,7 @@ describe("LoginPage", () => {
     );
 
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -664,6 +689,7 @@ describe("LoginPage", () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
 
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /email code/i }));
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /continue/i }));
 

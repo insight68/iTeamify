@@ -7,7 +7,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useQuery } from "@tanstack/react-query";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@teamify/ui/components/ui/tooltip";
 import { Button } from "@teamify/ui/components/ui/button";
-import type { Issue, IssueStatus } from "@teamify/core/types";
+import type { Issue, IssueStatus, Project } from "@teamify/core/types";
 import { useWorkspaceId } from "@teamify/core/hooks";
 import { useLoadMoreByStatus } from "@teamify/core/issues/mutations";
 import type { MyIssuesFilter } from "@teamify/core/issues/queries";
@@ -22,6 +22,9 @@ import { InfiniteScrollSentinel } from "./infinite-scroll-sentinel";
 import { useT } from "../../i18n";
 
 const EMPTY_PROGRESS_MAP = new Map<string, ChildProgress>();
+// Stable empty default so the projects-query loading window doesn't hand a
+// fresh `[]` to every ListRow on each render, busting their React.memo.
+const EMPTY_PROJECTS: Project[] = [];
 const ROW_HEIGHT = 36;
 const VIRTUALIZE_THRESHOLD = 20;
 const MAX_LIST_HEIGHT = 600;
@@ -122,10 +125,10 @@ function StatusAccordionItem({
   const select = useIssueSelectionStore((s) => s.select);
   const deselect = useIssueSelectionStore((s) => s.deselect);
   const wsId = useWorkspaceId();
-  const storeProperties = useViewStore((s) => s.cardProperties);
-  const { data: projects = [] } = useQuery({
+  const showProject = useViewStore((s) => s.cardProperties.project);
+  const { data: projects = EMPTY_PROJECTS } = useQuery({
     ...projectListOptions(wsId),
-    enabled: storeProperties.project && issues.some((i) => !!i.project_id),
+    enabled: showProject && issues.some((i) => !!i.project_id),
   });
   const { loadMore, hasMore, isLoading, total } = useLoadMoreByStatus(
     status,

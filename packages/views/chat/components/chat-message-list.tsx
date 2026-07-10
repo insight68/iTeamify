@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, memo } from "react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@teamify/ui/lib/utils";
@@ -20,7 +20,7 @@ import { ChevronRight, ChevronDown, Brain, AlertCircle, AlertTriangle, Copy } fr
 import { useScrollFade } from "@teamify/ui/hooks/use-scroll-fade";
 import { useAutoScroll } from "@teamify/ui/hooks/use-auto-scroll";
 import { taskMessagesOptions } from "@teamify/core/chat/queries";
-import { Markdown } from "@teamify/views/common/markdown";
+import { MemoizedMarkdown } from "@teamify/views/common/markdown";
 import { copyMarkdown } from "../../editor";
 import type { AgentAvailability } from "@teamify/core/agents";
 import type { ChatMessage, ChatPendingTask, TaskMessagePayload, TaskFailureReason } from "@teamify/core/types";
@@ -159,7 +159,12 @@ function toTimelineItem(m: TaskMessagePayload): ChatTimelineItem {
 
 // ─── Message bubbles ─────────────────────────────────────────────────────
 
-function MessageBubble({
+// Memoized so a streaming token (which mutates only the in-flight task's
+// ["task-messages"] cache, read inside AssistantMessage) doesn't re-render —
+// or re-run the per-message useQuery in — every prior bubble. `message`
+// references are stable across renders (cache array identity), so the default
+// shallow prop compare bails out for everything except the active task.
+const MessageBubble = memo(function MessageBubble({
   message,
   isPending,
 }: {
@@ -175,7 +180,7 @@ function MessageBubble({
            * Neutralise prose's leading/trailing margin so single-line
            * bubbles stay as compact as the plain-text version used to. */}
           <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-            <Markdown>{message.content}</Markdown>
+            <MemoizedMarkdown id={message.id}>{message.content}</MemoizedMarkdown>
           </div>
         </div>
       </div>
@@ -183,7 +188,7 @@ function MessageBubble({
   }
 
   return <AssistantMessage message={message} isPending={isPending} />;
-}
+});
 
 function AssistantMessage({
   message,
@@ -225,7 +230,7 @@ function AssistantMessage({
         <TimelineView items={timeline} />
       ) : (
         <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none">
-          <Markdown>{message.content}</Markdown>
+          <MemoizedMarkdown id={message.id}>{message.content}</MemoizedMarkdown>
         </div>
       )}
       <MessageFooter
@@ -414,7 +419,7 @@ function TimelineView({
       )}
       {final.length > 0 && (
         <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none">
-          <Markdown>{final.map((t) => t.content ?? "").join("")}</Markdown>
+          <MemoizedMarkdown>{final.map((t) => t.content ?? "").join("")}</MemoizedMarkdown>
         </div>
       )}
     </>
@@ -465,7 +470,7 @@ function OuterProcessFold({
 function MiddleTextRow({ item }: { item: ChatTimelineItem }) {
   return (
     <div className="py-0.5 text-xs text-muted-foreground prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-      <Markdown>{item.content ?? ""}</Markdown>
+      <MemoizedMarkdown>{item.content ?? ""}</MemoizedMarkdown>
     </div>
   );
 }

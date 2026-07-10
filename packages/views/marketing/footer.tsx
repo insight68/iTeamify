@@ -25,10 +25,10 @@ const FOOTER_COLUMNS: Record<
   ReadonlyArray<FooterLink>
 > = {
   product: [
-    { id: "features", href: "#features", kind: "anchor" },
-    { id: "how_it_works", href: "#how-it-works", kind: "anchor" },
-    { id: "pricing", href: "/pricing", kind: "route" },
-    { id: "changelog", href: "/changelog", kind: "route" },
+    { id: "reconciliation", href: "/reconciliation", kind: "route" },
+    { id: "agents", href: "#features", kind: "anchor" },
+    { id: "integrations", href: "#integrations", kind: "anchor" },
+    { id: "pricing", href: "#pricing", kind: "anchor" },
   ],
   resources: [
     { id: "docs", href: "/docs", kind: "route" },
@@ -54,7 +54,7 @@ const FOOTER_COLUMNS: Record<
  *  which column — TS proves every id used at runtime is actually
  *  present in that column's i18n bundle. */
 type LinkIdsFor<C extends ColumnKey> =
-  C extends "product" ? "features" | "how_it_works" | "pricing" | "changelog" :
+  C extends "product" ? "reconciliation" | "agents" | "integrations" | "pricing" :
   C extends "resources" ? "docs" | "blog" | "api" | "github" :
   C extends "company" ? "about" | "contact" | "careers" | "privacy" :
   C extends "legal" ? "terms" | "privacy" | "license" :
@@ -125,7 +125,7 @@ export function LandingFooter() {
         </div>
         <div className="mt-10 flex flex-col items-start justify-between gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center">
           <p>{copyright}</p>
-          <p>AI 对账，不止于对账。</p>
+          <p>{t(($) => $.footer.tagline)}</p>
         </div>
       </div>
     </footer>

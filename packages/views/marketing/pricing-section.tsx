@@ -13,7 +13,7 @@ function featureKey(tier: string, idx: number): string {
 }
 
 /**
- * Three-tier pricing cards. Pro tier is highlighted as recommended.
+ * Three-tier pricing cards. Team tier is highlighted as recommended.
  * Each card shows name, price, period, description, feature list,
  * and CTA button. Uses semantic tokens for light-tech theme.
  */
@@ -43,7 +43,7 @@ export function PricingSection() {
             return (
               <div
                 key={tier}
-                className={`relative flex flex-col rounded-2xl border p-6 shadow-sm md:p-8 ${
+                className={`relative flex flex-col rounded-lg border p-6 shadow-sm md:p-8 ${
                   isPro
                     ? "border-brand/40 bg-card shadow-[0_0_30px_color-mix(in_oklab,var(--brand)_10%,transparent)]"
                     : "border-border/60 bg-card"
@@ -51,7 +51,7 @@ export function PricingSection() {
               >
                 {isPro && (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground">
-                    Recommended
+                    {t(($) => $.pricing.recommended)}
                   </span>
                 )}
                 <h3 className="font-heading text-lg font-semibold text-foreground">

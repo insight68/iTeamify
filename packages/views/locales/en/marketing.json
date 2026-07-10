@@ -1,183 +1,330 @@
 {
   "nav": {
-    "features": "Features",
-    "integrations": "Integrations",
-    "chat_demo": "Chat Demo",
+    "features": "Agents",
+    "integrations": "Systems",
+    "chat_demo": "Collaboration",
     "comparison": "Compare",
-    "testimonials": "Testimonials",
+    "testimonials": "Use cases",
     "pricing": "Pricing",
     "faq": "FAQ",
+    "reconciliation": "Reconciliation",
     "sign_in": "Sign in",
-    "sign_up": "Start free trial"
+    "sign_up": "Start trial"
   },
   "hero": {
-    "eyebrow": "AI reconciliation for e-commerce",
-    "headline": "Reconcile monthly accounts in 30 minutes, not 3 days",
-    "sub_headline": "Suanpan automates 94% of reconciliation work. Zero missing orders, zero errors.",
-    "primary_cta": "Start free trial — upload first order",
-    "secondary_cta": "See real results",
+    "eyebrow": "AI operating team collaboration platform",
+    "headline": "Run your operating loop with AI agents and your team",
+    "sub_headline": "iTeamify connects orders, cash, inventory, procurement, and sales data so reconciliation, purchase planning, inventory transfers, demand forecasting, and operating analysis move through one shared workspace.",
+    "primary_cta": "Start trial",
+    "secondary_cta": "View reconciliation flow",
     "stats": {
-      "platforms": "12+ marketplaces supported",
-      "merchants": "5,000+ merchants using suanpan",
-      "accuracy": "99.9% accuracy rate"
+      "platforms": "6 operating agents",
+      "merchants": "Orders, cash, stock, profit",
+      "accuracy": "Humans approve key actions"
     },
-    "chat_preview": {
-      "user": "Help me reconcile last month's Douyin orders with payments",
-      "assistant": "Reconciled 2,847 orders, found 3 anomalies. Need me to explain?"
+    "dashboard": {
+      "title": "Operating agent hub",
+      "live_badge": "Agents collaborating live",
+      "agent_count": "18 operating actions waiting today",
+      "stock_signal": "SKU-A19 -> East warehouse",
+      "cash_signal": "¥82,000 cash timing",
+      "metrics": {
+        "reconciliation": {
+          "label": "Reconciliation",
+          "value": "96%",
+          "delta": "12 exceptions to review"
+        },
+        "forecast": {
+          "label": "Demand forecast",
+          "value": "+18%",
+          "delta": "3 SKUs heating up next week"
+        },
+        "transfer": {
+          "label": "Transfer plans",
+          "value": "7",
+          "delta": "East warehouse first"
+        },
+        "profit": {
+          "label": "Profit alerts",
+          "value": "4",
+          "delta": "Fees and returns cutting margin"
+        }
+      },
+      "agents": {
+        "reconciliation": {
+          "name": "Reconciliation agent",
+          "status": "Matching complete",
+          "detail": "Checks orders, refunds, payouts, and platform fees",
+          "result": "Found 12 amount differences",
+          "action": "Review exceptions"
+        },
+        "forecast": {
+          "name": "Demand forecasting agent",
+          "status": "Forecast updated",
+          "detail": "Reads 90-day sales, campaigns, and stock levels",
+          "result": "Recommends early replenishment for 3 SKUs",
+          "action": "View forecast"
+        },
+        "procurement": {
+          "name": "Procurement agent",
+          "status": "PO drafts ready",
+          "detail": "Calculates replenishment from demand and safety stock",
+          "result": "Generated 5 purchase suggestions",
+          "action": "Approve purchase"
+        },
+        "transfer": {
+          "name": "Inventory transfer agent",
+          "status": "Transfer plan pending",
+          "detail": "Compares warehouse stock, in-transit units, and regional demand",
+          "result": "Suggests moving 1,240 units",
+          "action": "Approve transfer"
+        },
+        "analytics": {
+          "name": "Operating analysis agent",
+          "status": "Brief generated",
+          "detail": "Explains changes in sales, margin, fees, and stock",
+          "result": "Tagged 4 issues for this week",
+          "action": "Read brief"
+        }
+      }
     }
   },
   "features": {
-    "eyebrow": "What suanpan does",
-    "heading": "4 core capabilities that handle e-commerce reconciliation",
+    "eyebrow": "The iTeamify agent team",
+    "heading": "Each agent owns one operating motion, then rolls it up into decisions",
+    "body": "iTeamify does not just stack data into reports. Agents share the same business context: they find issues, analyze causes, propose actions, and route the few judgment calls to the right teammate.",
+    "labels": {
+      "input": "Input",
+      "output": "Output"
+    },
     "items": {
-      "order_reconciliation": {
-        "title": "Order Reconciliation",
-        "description": "Auto-match multi-platform orders, from Tmall to Douyin, none left behind."
+      "reconciliation": {
+        "title": "Reconciliation agent",
+        "description": "Matches orders, refunds, payouts, platform fees, and supplier statements to find missing orders, differences, and unconfirmed cash.",
+        "input": "Orders / payouts / fees / invoices",
+        "output": "Exception list and reconciliation proof",
+        "human": "Review exceptions only"
       },
-      "fee_verification": {
-        "title": "Fee Verification",
-        "description": "Platform commissions, ad spend, shipping fees — verified down to the last cent."
+      "procurement": {
+        "title": "Procurement agent",
+        "description": "Uses forecasts, stock levels, in-transit quantities, and supplier lead times to draft purchase recommendations and PO plans.",
+        "input": "Forecast / safety stock / lead time",
+        "output": "Replenishment quantity and PO draft",
+        "human": "Approve purchase amount"
       },
-      "profit_analysis": {
-        "title": "Profit Analysis",
-        "description": "Auto-calculate real store profits. See exactly what you earned at a glance."
+      "transfer": {
+        "title": "Inventory transfer agent",
+        "description": "Spots shortages and slow-moving stock across warehouses, stores, and channels, then suggests where inventory should move next.",
+        "input": "Warehouse stock / regional sales / in-transit",
+        "output": "Transfer plan and priority",
+        "human": "Approve transfers"
       },
-      "anomaly_monitoring": {
-        "title": "Anomaly Monitoring",
-        "description": "24/7 difference monitoring. Missing orders and errors flagged instantly."
+      "forecast": {
+        "title": "Demand forecasting agent",
+        "description": "Analyzes sales history, campaigns, seasonality, and unusual movement to forecast future demand with confidence and risk signals.",
+        "input": "Sales history / campaigns / seasonality",
+        "output": "Demand forecast and risk flags",
+        "human": "Adjust campaign assumptions"
+      },
+      "analytics": {
+        "title": "Operating analysis agent",
+        "description": "Connects sales, margin, fees, inventory turns, and exceptions to explain why the business moved and what to do next.",
+        "input": "Sales / margin / fees / inventory",
+        "output": "Root-cause analysis and action list",
+        "human": "Choose operating actions"
+      },
+      "compliance": {
+        "title": "Compliance audit agent",
+        "description": "Checks reconciliation, purchasing, transfers, fee write-offs, and approvals against permissions, rules, and audit requirements.",
+        "input": "Rules / permissions / documents / logs",
+        "output": "Risk list and audit trail",
+        "human": "Approve exception handling"
       }
     }
   },
   "integrations": {
-    "eyebrow": "Full platform coverage",
-    "heading": "Connect everywhere you sell",
-    "tools": {
-      "taobao": "Taobao/Tmall",
-      "douyin": "Douyin",
-      "pinduoduo": "Pinduoduo",
-      "jd": "JD.com",
-      "kuaishou": "Kuaishou",
-      "xiaohongshu": "Xiaohongshu",
-      "weishop": "WeChat Shop",
-      "bilibili": "Bilibili",
-      "shopify": "Shopify",
-      "amazon": "Amazon",
-      "lazada": "Lazada",
-      "shopee": "Shopee"
+    "eyebrow": "Works with the systems you already run",
+    "heading": "Bring operating data into one collaborative workspace",
+    "groups": {
+      "orders": {
+        "title": "Orders and channels",
+        "description": "Taobao/Tmall, Douyin, Pinduoduo, JD, Shopify, Amazon",
+        "item_1": "Order lines",
+        "item_2": "Refunds",
+        "item_3": "Campaign data",
+        "item_4": "Product SKUs"
+      },
+      "finance": {
+        "title": "Cash and fees",
+        "description": "Marketplace bills, payment statements, commissions, ad spend, shipping fees, invoices",
+        "item_1": "Payouts",
+        "item_2": "Platform fees",
+        "item_3": "Supplier statements",
+        "item_4": "Finance proof"
+      },
+      "inventory": {
+        "title": "Inventory and logistics",
+        "description": "Warehouse stock, in-transit stock, transfer records, delivery status",
+        "item_1": "Stock levels",
+        "item_2": "In-transit units",
+        "item_3": "Warehouse split",
+        "item_4": "Transfer history"
+      },
+      "procurement": {
+        "title": "Procurement and suppliers",
+        "description": "Purchase requests, quotes, contracts, lead times, receiving, payment status",
+        "item_1": "Purchase demand",
+        "item_2": "Supplier quotes",
+        "item_3": "Purchase contracts",
+        "item_4": "Lead times"
+      },
+      "analysis": {
+        "title": "Reports and knowledge",
+        "description": "Excel, ERP, BI, Lark/DingTalk, company knowledge bases, and historical operating reports",
+        "item_1": "Excel uploads",
+        "item_2": "ERP data",
+        "item_3": "Operating reports",
+        "item_4": "Team knowledge"
+      }
     }
   },
   "chat_demo": {
-    "eyebrow": "Reconcile through conversation",
-    "heading": "No Excel skills needed. If you can type, you can use suanpan.",
-    "subtitle": "90% of reconciliation tasks completed through natural language",
-    "footer_note": "Suanpan is your 24/7 AI reconciliation partner — never tired, never wrong.",
+    "eyebrow": "How teams collaborate with agents",
+    "heading": "Agents run the data work. People approve the key actions.",
+    "subtitle": "iTeamify turns operating questions into traceable work: who found it, who analyzed it, what was suggested, and who approved it.",
+    "footer_note": "Every approval becomes team context, so the next similar issue moves faster.",
+    "approval_note": "Human-in-the-loop approvals",
     "messages": {
-      "user_1": "Why did last month's profit drop?",
-      "assistant_1": "Last month's profit dropped 12%. Analyzing causes...",
-      "assistant_2": "Found 3 main reasons:\n1. Douyin commission rate 15%→18%, extra ¥4,200\n2. Return rate up 3%, lost ¥2,100\n3. Shipping costs increased ¥1,500\nWant me to export the breakdown?"
+      "user_1": "Why did profit rise this week while cash collections did not?",
+      "assistant_1": "The operating analysis agent is checking reconciliation, inventory, and procurement data.",
+      "assistant_2": "Main reasons: 1. Douyin sales grew 18%, but 7 large orders are still unpaid; 2. South warehouse replenishment was paid early, reducing cash by ¥82,000; 3. Return rate rose for 3 SKUs. Review payout differences first, then adjust next week's purchasing pace."
+    },
+    "workflow": {
+      "step_1": {
+        "label": "Detect",
+        "title": "Exceptions enter the queue automatically",
+        "body": "Reconciliation and analysis agents spot differences before month-end."
+      },
+      "step_2": {
+        "label": "Analyze",
+        "title": "Cross-data root cause",
+        "body": "Orders, stock, procurement, and fees are connected to explain the cause."
+      },
+      "step_3": {
+        "label": "Suggest",
+        "title": "Actions, not just charts",
+        "body": "Agents propose replenishment, transfers, reviews, and purchase pauses."
+      },
+      "step_4": {
+        "label": "Approve",
+        "title": "The team stays in control",
+        "body": "Key actions require owner approval and leave an audit trail."
+      }
     }
   },
   "comparison": {
-    "eyebrow": "Why suanpan",
-    "heading": "Not Excel. Not accounting software. AI that understands e-commerce.",
+    "eyebrow": "Why a collaboration platform",
+    "heading": "Not ERP. Not BI. Not a single chatbot.",
     "columns": {
-      "suanpan": "Suanpan",
-      "manual": "Manual",
-      "excel": "Excel",
-      "software": "Accounting Software"
+      "iteamify": "iTeamify",
+      "erp": "ERP",
+      "bi": "BI reports",
+      "manual": "Manual sheets"
     },
     "rows": {
-      "monthly_time": {
-        "label": "Monthly time",
-        "suanpan": "30 min",
-        "manual": "3 days",
-        "excel": "1 day",
-        "software": "2 days"
+      "scope": {
+        "label": "Coverage",
+        "iteamify": "Cash, stock, orders, profit loop",
+        "erp": "Process records",
+        "bi": "Data display",
+        "manual": "Single-point work"
       },
-      "auto_match": {
-        "label": "Auto-match rate",
-        "suanpan": "94%",
-        "manual": "0%",
-        "excel": "Formulas needed",
-        "software": "60%"
+      "agents": {
+        "label": "Agent collaboration",
+        "iteamify": "Multi-agent workflow",
+        "erp": "None",
+        "bi": "None",
+        "manual": "Human coordination"
       },
-      "missing_rate": {
-        "label": "Missing order rate",
-        "suanpan": "0%",
-        "manual": "5%",
-        "excel": "10%",
-        "software": "3%"
+      "decision": {
+        "label": "Decision output",
+        "iteamify": "Recommendation + owner approval",
+        "erp": "Manual judgment",
+        "bi": "Limited explanation",
+        "manual": "Experience-based"
       },
-      "alert_speed": {
-        "label": "Anomaly alerts",
-        "suanpan": "Real-time",
-        "manual": "Month-end",
-        "excel": "Manual check",
-        "software": "Delayed"
+      "freshness": {
+        "label": "Response speed",
+        "iteamify": "Daily or event-driven",
+        "erp": "After entry",
+        "bi": "Scheduled reports",
+        "manual": "Month-end rollup"
       },
-      "monthly_cost": {
-        "label": "Monthly cost",
-        "suanpan": "From ¥199",
-        "manual": "¥5,000+",
-        "excel": "Free",
-        "software": "¥2,000+"
+      "traceability": {
+        "label": "Traceability",
+        "iteamify": "Tasks, data, decisions",
+        "erp": "Scattered records",
+        "bi": "Results only",
+        "manual": "Hard to trace"
       }
     }
   },
   "testimonials": {
-    "eyebrow": "5,000+ merchants using suanpan",
-    "heading": "They turned reconciliation from a 3-day nightmare into 30 minutes",
+    "eyebrow": "Built for these operating teams",
+    "heading": "Give repetitive analysis to agents. Keep judgment with the team.",
     "items": {
-      "live_stream": {
-        "segment": "Live Streaming",
-        "quote": "I used to pull all-nighters for month-end reconciliation. Now suanpan handles it in 30 minutes. Anomalies are auto-flagged. Life is so much easier.",
-        "author": "Mr. Li",
-        "author_initial": "L",
-        "role": "Douyin beauty store, ¥800k monthly GMV"
+      "finance": {
+        "segment": "Finance and reconciliation",
+        "quote": "Month-end no longer means chasing every sheet. The agent lists the differences first, so finance reviews only the exceptions.",
+        "author": "Finance lead",
+        "author_initial": "F",
+        "role": "Multi-channel commerce team"
       },
-      "multi_platform": {
-        "segment": "Multi-platform Seller",
-        "quote": "Taobao + Douyin + Pinduoduo used to be a nightmare. Suanpan unifies everything across platforms. No more switching back and forth.",
-        "author": "Ms. Wang",
-        "author_initial": "W",
-        "role": "Fashion e-commerce, 4 platforms"
+      "supply_chain": {
+        "segment": "Procurement and supply chain",
+        "quote": "Purchase suggestions no longer rely only on experience. Forecasts, stock levels, and lead times are calculated together.",
+        "author": "Supply chain manager",
+        "author_initial": "S",
+        "role": "Retail brand supply chain"
       },
-      "agency": {
-        "segment": "Agency",
-        "quote": "We manage 15 stores. Suanpan batch-reconciles everything — 5 minutes per store for full reports. Clients say we've never been more professional.",
-        "author": "Mr. Zhao",
-        "author_initial": "Z",
-        "role": "E-commerce agency, 15+ brands"
+      "management": {
+        "segment": "Operating management",
+        "quote": "The brief tells me which cash is missing, which stock should move, and which products need replenishment this week.",
+        "author": "Business owner",
+        "author_initial": "B",
+        "role": "Brand operating team"
       }
     }
   },
   "pricing": {
-    "heading": "Simple, transparent pricing",
-    "subtitle": "14-day free trial. Pay only when satisfied.",
+    "heading": "Start with one operating scene, then add more agents",
+    "subtitle": "Begin with reconciliation, then expand into procurement, transfers, forecasts, and analysis",
+    "recommended": "Recommended",
     "tiers": {
       "free": {
-        "name": "Free Trial",
+        "name": "Trial",
         "price": "¥0",
         "period": "14 days",
-        "description": "Experience all core features",
+        "description": "Validate the first reconciliation or analysis scene",
         "features": [
-          "1 store connection",
-          "1,000 orders reconciliation",
-          "Basic reports",
-          "Email support"
+          "1 operating scene",
+          "Basic data upload",
+          "Reconciliation or analysis demo",
+          "Basic report export",
+          "Fast scene review"
         ],
         "cta": "Start trial"
       },
       "pro": {
-        "name": "Pro",
+        "name": "Team",
         "price": "¥199",
-        "period": "/store/month",
-        "description": "For growing e-commerce sellers",
+        "period": "/agent/month up",
+        "description": "For operating teams that need shared workflows",
         "features": [
-          "5 store connections",
-          "Unlimited orders",
-          "Advanced profit analysis",
-          "API access",
+          "Multiple business agents",
+          "Team task collaboration",
+          "Operating exception queue",
+          "Data connection and export",
           "Priority support"
         ],
         "cta": "Start trial"
@@ -186,12 +333,12 @@
         "name": "Enterprise",
         "price": "Custom",
         "period": "",
-        "description": "For large teams and agencies",
+        "description": "For multi-brand, multi-warehouse, multi-system organizations",
         "features": [
-          "Unlimited stores",
-          "Custom features",
-          "Dedicated manager",
-          "Private deployment",
+          "Private deployment option",
+          "Custom integrations",
+          "Dedicated agent configuration",
+          "Permissions and audit",
           "SLA guarantee"
         ],
         "cta": "Contact sales"
@@ -202,76 +349,77 @@
     "heading": "Common questions",
     "items": {
       "platforms": {
-        "question": "Which platforms do you support?",
-        "answer": "We support Taobao/Tmall, Douyin, Pinduoduo, JD, Kuaishou, Xiaohongshu, WeChat Shop, Bilibili, Shopify, Amazon, Lazada, Shopee, and 12+ platforms. More coming soon."
+        "question": "Is iTeamify finance software, ERP, or BI?",
+        "answer": "None of those. iTeamify is an AI operating team collaboration platform. It connects orders, cash, inventory, procurement, and sales data so agents can analyze and suggest actions while the team approves and executes."
       },
       "security": {
-        "question": "Is my data secure?",
-        "answer": "We use bank-grade AES-256 encryption and are ISO27001 certified. Your data is used only for reconciliation, never shared. Export or delete anytime."
+        "question": "Will agents take risky actions automatically?",
+        "answer": "Key actions require owner approval by default, including purchasing, transfers, exception write-offs, and rule changes. Agents provide suggestions and evidence first."
       },
       "learning": {
-        "question": "What if I don't know how to use it?",
-        "answer": "No learning curve. If you can browse the web and type, you can use suanpan. First-time users get a guided tour. Need help? Customer support responds within 10 minutes."
+        "question": "Do we need to connect every system at once?",
+        "answer": "No. Start with one scene such as reconciliation, procurement, or inventory. You can upload Excel files or connect APIs, then expand after the first workflow is proven."
       },
       "payment": {
-        "question": "What payment methods do you accept?",
-        "answer": "We accept Alipay, WeChat Pay, and bank transfer. Enterprise plans support annual billing with discounts. Contact sales for details."
+        "question": "Who is this for?",
+        "answer": "Multi-channel commerce teams, retail brands, trading companies, agencies, and small to mid-sized teams with pressure around procurement, inventory, reconciliation, and operating analysis."
       },
       "refund": {
-        "question": "Can I get a refund?",
-        "answer": "Pro and Enterprise plans include a 7-day money-back guarantee. As long as no reconciliation data has been processed, you can request a full refund."
+        "question": "How do agents learn our business rules?",
+        "answer": "iTeamify captures store, supplier, warehouse, category, fee, and approval rules. Each approval becomes reusable context so similar issues move faster next time."
       },
       "api": {
-        "question": "Is there an API?",
-        "answer": "Pro plans and above include a REST API for order data push, reconciliation result queries, webhook callbacks, and more."
+        "question": "Can it integrate with existing systems?",
+        "answer": "Yes. iTeamify supports Excel uploads and can connect to marketplaces, ERP, warehouse, finance, BI, and collaboration systems depending on your needs."
       },
       "contract": {
-        "question": "Do I need to sign a contract?",
-        "answer": "Enterprise plans require a formal contract and can issue VAT special invoices. Pro plans can be purchased directly online with invoices issued after order completion."
+        "question": "How long does setup take?",
+        "answer": "A single scene can usually be validated quickly with sample data or Excel. Enterprise integration depends on the number of systems, data quality, and approval requirements."
       },
       "compare": {
-        "question": "How is this different from hiring an accountant?",
-        "answer": "Suanpan is an automation tool, not a human service. We automate 90% of reconciliation work. For the remaining 10% complex cases, you can handle them yourself or consult an accountant. Many accounting firms use suanpan to improve their efficiency."
+        "question": "How is this different from a chatbot?",
+        "answer": "A chatbot usually answers questions. iTeamify agents read operating data, create tasks, coordinate with other agents, suggest actions, and keep an approval trail."
       }
     }
   },
   "cta": {
-    "heading": "First-time reconciliation? 30 minutes is all you need.",
-    "body": "Upload your first order and let suanpan get to work. 14-day free trial — pay only when satisfied.",
-    "button": "Start free trial — no credit card required"
+    "heading": "Start one agent first",
+    "body": "Choose reconciliation, procurement, transfer planning, forecasting, or operating analysis and see how iTeamify turns repetitive work into an action queue.",
+    "button": "Start trial"
   },
   "footer": {
-    "brand_blurb": "Suanpan, your 24/7 AI reconciliation partner. Every order, every cent, accounted for.",
+    "brand_blurb": "iTeamify is an AI operating team collaboration platform for reconciliation, procurement, inventory transfers, demand forecasting, and operating analysis.",
+    "tagline": "AI operating team collaboration platform.",
     "marquee": {
       "row1": {
-        "phrase_1": "94% auto-match",
-        "phrase_2": "Zero missing orders",
-        "phrase_3": "12+ platforms",
-        "phrase_4": "24/7 monitoring",
-        "phrase_5": "30 min complete",
-        "phrase_6": "99.9% accuracy",
-        "phrase_7": "Real-time alerts",
-        "phrase_8": "No Excel needed"
+        "phrase_1": "Reconciliation agent",
+        "phrase_2": "Procurement agent",
+        "phrase_3": "Inventory transfer agent",
+        "phrase_4": "Demand forecasting agent",
+        "phrase_5": "Operating analysis agent",
+        "phrase_6": "Compliance audit agent",
+        "phrase_7": "Exceptions auto-queued",
+        "phrase_8": "Humans approve key actions"
       },
       "row2": {
-        "phrase_1": "14-day free trial",
-        "phrase_2": "From ¥199/mo",
-        "phrase_3": "API access",
-        "phrase_4": "Private deploy",
-        "phrase_5": "Bank-grade crypto",
-        "phrase_6": "ISO27001",
-        "phrase_7": "7-day refund",
-        "phrase_8": "Export anytime"
+        "phrase_1": "Order and payout checks",
+        "phrase_2": "Purchase suggestions",
+        "phrase_3": "Cross-warehouse transfers",
+        "phrase_4": "Demand trend forecasts",
+        "phrase_5": "Operating brief root cause",
+        "phrase_6": "Team approval trail",
+        "phrase_7": "Excel and system input",
+        "phrase_8": "Start from reconciliation"
       }
     },
     "columns": {
       "product": {
         "title": "Product",
         "links": {
-          "features": "Features",
-          "how_it_works": "How it works",
-          "pricing": "Pricing",
-          "changelog": "Changelog"
+          "reconciliation": "Reconciliation flow",
+          "agents": "Agent team",
+          "integrations": "Systems",
+          "pricing": "Pricing"
         }
       },
       "resources": {
@@ -301,6 +449,6 @@
         }
       }
     },
-    "copyright": "© {{year}} Suanpan. Beyond reconciliation."
+    "copyright": "© {{year}} iTeamify. AI operating team collaboration platform."
   }
 }

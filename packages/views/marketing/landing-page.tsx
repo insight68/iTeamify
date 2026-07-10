@@ -47,7 +47,7 @@ const CtaSection = lazy(
 );
 
 /**
- * Composed marketing page for suanpan AI reconciliation platform.
+ * Composed marketing page for the iTeamify operating-agent platform.
  *
  * Only above-fold content (nav, hero, footer skeleton) loads eagerly.
  * Remaining sections are code-split and loaded on first render — the

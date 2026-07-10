@@ -34,7 +34,7 @@ import { WorkspaceAvatar } from "../workspace/workspace-avatar";
 import { ActorAvatar } from "@teamify/ui/components/common/actor-avatar";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@teamify/ui/components/ui/collapsible";
 import { useCreateModeStore } from "@teamify/core/issues/stores/create-mode-store";
-import { useSearchStore } from "../search/search-store";
+import { useSearchStore } from "@teamify/core/search";
 import {
   Sidebar,
   SidebarContent,

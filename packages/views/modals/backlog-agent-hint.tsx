@@ -3,6 +3,7 @@
 import { toast } from "sonner";
 import { BacklogAgentHintDialog } from "../issues/components/backlog-agent-hint-dialog";
 import { useUpdateIssue } from "@teamify/core/issues/mutations";
+import { defaultStorage } from "@teamify/core/platform";
 import { useT } from "../i18n";
 
 export function BacklogAgentHintModal({
@@ -23,7 +24,7 @@ export function BacklogAgentHintModal({
         if (!v) onClose();
       }}
       onDismissPermanently={() => {
-        localStorage.setItem("teamify:backlog-agent-hint-dismissed", "true");
+        defaultStorage.setItem("teamify:backlog-agent-hint-dismissed", "true");
       }}
       onMoveToTodo={() => {
         if (issueId) {

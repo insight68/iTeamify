@@ -17,11 +17,11 @@ export function CtaSection() {
       className="py-20 md:py-28"
     >
       <div className="mx-auto max-w-3xl px-4 md:px-6">
-        <div className="relative rounded-2xl border border-border/60 bg-card p-10 text-center shadow-lg ring-1 ring-foreground/5 md:p-14">
+        <div className="relative rounded-lg border border-border/60 bg-card p-10 text-center shadow-lg ring-1 ring-foreground/5 md:p-14">
           {/* Subtle brand gradient border glow */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-2xl"
+            className="pointer-events-none absolute inset-0 rounded-lg"
             style={{
               boxShadow: "inset 0 0 40px color-mix(in oklab, var(--brand) 6%, transparent)",
             }}

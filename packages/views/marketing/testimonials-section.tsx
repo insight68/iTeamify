@@ -2,10 +2,10 @@
 
 import { useT } from "../i18n";
 
-const TESTIMONIAL_KEYS = ["live_stream", "multi_platform", "agency"] as const;
+const TESTIMONIAL_KEYS = ["finance", "supply_chain", "management"] as const;
 
 /**
- * Customer testimonials organized by industry segment.
+ * Customer scenarios organized by operating role.
  */
 export function TestimonialsSection() {
   const { t } = useT("marketing");
@@ -32,7 +32,7 @@ export function TestimonialsSection() {
           {TESTIMONIAL_KEYS.map((key) => (
             <div
               key={key}
-              className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm md:p-8"
+              className="rounded-lg border border-border/60 bg-card p-6 shadow-sm md:p-8"
             >
               <div className="mb-4 inline-flex rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
                 {t(($) => $.testimonials.items[key].segment)}
@@ -41,7 +41,7 @@ export function TestimonialsSection() {
                 &ldquo;{t(($) => $.testimonials.items[key].quote)}&rdquo;
               </blockquote>
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-full bg-muted text-sm font-semibold text-foreground">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-sm font-semibold text-foreground">
                   {t(($) => $.testimonials.items[key].author_initial)}
                 </div>
                 <div>

@@ -44,6 +44,7 @@ import { issueDetailOptions } from "@teamify/core/issues/queries";
 import { useCreateIssue, useUpdateIssue } from "@teamify/core/issues/mutations";
 import { useFileUpload } from "@teamify/core/hooks/use-file-upload";
 import { api } from "@teamify/core/api";
+import { defaultStorage } from "@teamify/core/platform";
 import { FileUploadButton } from "@teamify/ui/components/common/file-upload-button";
 import { PillButton } from "../common/pill-button";
 import { IssuePickerModal } from "./issue-picker-modal";
@@ -214,7 +215,7 @@ export function ManualCreatePanel({
       clearDraft();
       const shouldShowBacklogHint =
         status === "backlog" && assigneeType === "agent" && assigneeId &&
-        localStorage.getItem("teamify:backlog-agent-hint-dismissed") !== "true";
+        defaultStorage.getItem("teamify:backlog-agent-hint-dismissed") !== "true";
 
       if (shouldShowBacklogHint) {
         setBacklogHintIssueId(issue.id);
@@ -287,7 +288,7 @@ export function ManualCreatePanel({
               onClose();
             }}
             onDismissPermanently={() => {
-              localStorage.setItem("teamify:backlog-agent-hint-dismissed", "true");
+              defaultStorage.setItem("teamify:backlog-agent-hint-dismissed", "true");
             }}
             onMoveToTodo={() => {
               updateIssueMutation.mutate(

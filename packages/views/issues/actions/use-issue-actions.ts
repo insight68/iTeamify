@@ -19,6 +19,7 @@ import {
   agentListOptions,
 } from "@teamify/core/workspace/queries";
 import { pinListOptions, useCreatePin, useDeletePin } from "@teamify/core/pins";
+import { defaultStorage } from "@teamify/core/platform";
 import { canAssignAgent } from "../components/pickers";
 import { useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
@@ -100,8 +101,7 @@ export function useIssueActions(issue: Issue | null): UseIssueActionsResult {
         updates.assignee_type === "agent" &&
         updates.assignee_id &&
         issueStatus === "backlog" &&
-        typeof window !== "undefined" &&
-        localStorage.getItem(BACKLOG_HINT_LS_KEY) !== "true"
+        defaultStorage.getItem(BACKLOG_HINT_LS_KEY) !== "true"
       ) {
         openModal("issue-backlog-agent-hint", { issueId });
       }

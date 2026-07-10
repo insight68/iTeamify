@@ -4,9 +4,6 @@ import type { ReactElement } from "react";
 import { renderWithI18n } from "../test/i18n";
 import { LandingPage } from "./landing-page";
 
-// Mock navigation — LandingPage uses AppLink for in-app routes, which
-// expects a NavigationProvider. The test never exercises navigation, so
-// we no-op the provider entirely.
 vi.mock("../navigation", () => ({
   AppLink: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
     <a href={href} {...props}>
@@ -29,76 +26,100 @@ function renderPage(ui: ReactElement) {
 }
 
 describe("LandingPage", () => {
-  it("renders the hero headline about reconciliation", () => {
+  it("renders the AI operating team positioning", () => {
     renderPage(<LandingPage />);
     expect(
       screen.getByRole("heading", { level: 1 }),
-    ).toHaveTextContent(/reconcile monthly accounts/i);
+    ).toHaveTextContent(/run your operating loop/i);
+    expect(screen.getAllByText(/AI operating team collaboration platform/i).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders the hero stat badges", () => {
+  it("renders the operating hub with live agents", () => {
     renderPage(<LandingPage />);
-    expect(screen.getAllByText(/12\+ marketplace/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/99\.9% accuracy/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/operating agent hub/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/agents collaborating live/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/reconciliation agent/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/procurement agent/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/inventory transfer agent/i).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders the 4 feature cards", () => {
+  it("links the reconciliation entry to /reconciliation", () => {
     renderPage(<LandingPage />);
-    const section = screen.getByRole("region", { name: /4 core capabilities/i });
+    expect(
+      screen.getByRole("link", { name: /view reconciliation flow/i }),
+    ).toHaveAttribute("href", "/reconciliation");
+  });
+
+  it("renders the 6 operating agent cards", async () => {
+    renderPage(<LandingPage />);
+    const section = await screen.findByRole("region", { name: /each agent owns one operating motion/i });
     for (const title of [
-      "Order Reconciliation",
-      "Fee Verification",
-      "Profit Analysis",
-      "Anomaly Monitoring",
+      "Reconciliation agent",
+      "Procurement agent",
+      "Inventory transfer agent",
+      "Demand forecasting agent",
+      "Operating analysis agent",
+      "Compliance audit agent",
     ]) {
-      expect(within(section).getByText(title)).toBeInTheDocument();
+      expect(within(section).getAllByText(title).length).toBeGreaterThanOrEqual(1);
     }
   });
 
-  it("renders the integrations marquee with e-commerce platforms", () => {
+  it("renders grouped system integrations", async () => {
     renderPage(<LandingPage />);
-    expect(screen.getAllByText("Taobao/Tmall").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Douyin").length).toBeGreaterThanOrEqual(1);
+    const section = await screen.findByRole("region", { name: /bring operating data/i });
+    for (const group of [
+      "Orders and channels",
+      "Cash and fees",
+      "Inventory and logistics",
+      "Procurement and suppliers",
+      "Reports and knowledge",
+    ]) {
+      expect(within(section).getByText(group)).toBeInTheDocument();
+    }
   });
 
-  it("renders the chat demo section", () => {
+  it("renders the collaboration workflow", async () => {
     renderPage(<LandingPage />);
-    expect(screen.getByRole("region", { name: /no excel skills needed/i })).toBeInTheDocument();
+    const section = await screen.findByRole("region", { name: /agents run the data work/i });
+    for (const step of ["Detect", "Analyze", "Suggest", "Approve"]) {
+      expect(within(section).getByText(step)).toBeInTheDocument();
+    }
   });
 
-  it("renders the comparison table with suanpan highlight", () => {
+  it("renders the comparison table with iTeamify highlight", async () => {
     renderPage(<LandingPage />);
-    const section = screen.getByRole("region", { name: /not excel\. not accounting software/i });
-    expect(within(section).getByText("Suanpan")).toBeInTheDocument();
-    expect(within(section).getByText("Manual")).toBeInTheDocument();
-    expect(within(section).getByText("Excel")).toBeInTheDocument();
+    const section = await screen.findByRole("region", { name: /not erp\. not bi/i });
+    expect(within(section).getByText("iTeamify")).toBeInTheDocument();
+    expect(within(section).getByText("ERP")).toBeInTheDocument();
+    expect(within(section).getByText("BI reports")).toBeInTheDocument();
   });
 
-  it("renders the testimonials section", () => {
+  it("renders the operating team use cases", async () => {
     renderPage(<LandingPage />);
-    expect(screen.getByRole("region", { name: /turned reconciliation from a 3-day nightmare/i })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: /give repetitive analysis to agents/i })).toBeInTheDocument();
   });
 
-  it("renders the three-tier pricing cards", () => {
+  it("renders the three pricing cards", async () => {
     renderPage(<LandingPage />);
-    const section = screen.getByRole("region", { name: /simple, transparent pricing/i });
-    expect(within(section).getByText("Free Trial")).toBeInTheDocument();
-    expect(within(section).getByText("Pro")).toBeInTheDocument();
+    const section = await screen.findByRole("region", { name: /start with one operating scene/i });
+    expect(within(section).getByText("Trial")).toBeInTheDocument();
+    expect(within(section).getByText("Team")).toBeInTheDocument();
     expect(within(section).getByText("Enterprise")).toBeInTheDocument();
   });
 
-  it("renders all 8 FAQ accordion triggers", () => {
+  it("renders all 8 FAQ accordion triggers", async () => {
     renderPage(<LandingPage />);
-    const faq = screen.getByRole("region", { name: /common questions/i });
+    const faq = await screen.findByRole("region", { name: /common questions/i });
     for (const question of [
-      /which platforms do you support/i,
-      /is my data secure/i,
-      /what if i don't know how to use/i,
-      /what payment methods/i,
-      /can i get a refund/i,
-      /is there an api/i,
-      /do i need to sign a contract/i,
-      /how is this different from hiring an accountant/i,
+      /is iteamify finance software/i,
+      /will agents take risky actions/i,
+      /connect every system at once/i,
+      /who is this for/i,
+      /how do agents learn/i,
+      /integrate with existing systems/i,
+      /how long does setup take/i,
+      /different from a chatbot/i,
     ]) {
       expect(within(faq).getByText(question)).toBeInTheDocument();
     }
@@ -107,14 +128,17 @@ describe("LandingPage", () => {
   it("renders the bottom CTA pointing to /signup", () => {
     renderPage(<LandingPage />);
     expect(
-      screen.getByRole("link", { name: /start free trial — no credit card required/i }),
-    ).toHaveAttribute("href", "/signup");
+      screen.getAllByRole("link", { name: /start trial/i }).some((link) => (
+        link.getAttribute("href") === "/signup"
+      )),
+    ).toBe(true);
   });
 
-  it("renders the footer marquee with benefit phrases", () => {
+  it("renders the footer marquee with agent phrases", () => {
     renderPage(<LandingPage />);
-    expect(screen.getAllByText("94% auto-match").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("14-day free trial").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Reconciliation agent").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Demand forecasting agent").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Compliance audit agent").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders the four-column footer with all link groups", () => {

@@ -7,20 +7,20 @@ import { LandingPage } from "@teamify/views/marketing";
 // inherited. Logged-in users with a last-workspace cookie are redirected
 // to /{slug}/issues by proxy.ts:79-83 before this page is ever rendered.
 export const metadata: Metadata = {
-  title: "Teamify — AI-native task management. Agents as teammates.",
+  title: "iTeamify — AI经营团队协作平台",
   description:
-    "Teamify turns coding agents into real teammates — with identities, memories, and initiative. Assign tasks, watch them work, and ship together. Open source, self-hostable, $20/mo per agent.",
+    "iTeamify 连接订单、资金、库存、采购和销售数据，让对账、采购建议、库存调拨、销量预测和经营分析在同一个 AI 经营团队协作平台里自动流转。",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Teamify — AI-native task management. Agents as teammates.",
+    title: "iTeamify — AI经营团队协作平台",
     description:
-      "Teamify turns coding agents into real teammates — with identities, memories, and initiative. Open source, self-hostable.",
+      "对账、采购、库存调拨、销量预测和经营分析，由一组 AI 智能体和你的团队一起完成。",
     url: "/",
   },
   twitter: {
-    title: "Teamify — AI-native task management. Agents as teammates.",
+    title: "iTeamify — AI经营团队协作平台",
     description:
-      "Teamify turns coding agents into real teammates — with identities, memories, and initiative. Open source, self-hostable.",
+      "让 AI 智能体和你的团队一起跑经营闭环。",
   },
 };
 

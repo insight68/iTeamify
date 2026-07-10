@@ -6,7 +6,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@teamify/ui/components/
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useQuery } from "@tanstack/react-query";
-import type { Issue, IssueStatus } from "@teamify/core/types";
+import type { Issue, IssueStatus, Project } from "@teamify/core/types";
 import { useWorkspaceId } from "@teamify/core/hooks";
 import { Button } from "@teamify/ui/components/ui/button";
 import {
@@ -25,6 +25,9 @@ import type { ChildProgress } from "./list-row";
 import { useT } from "../../i18n";
 
 const VISIBLE_LIMIT = 10;
+// Stable empty default so the projects-query loading window doesn't hand a
+// fresh `[]` to every board card on each render, busting their React.memo.
+const EMPTY_PROJECTS: Project[] = [];
 
 export function BoardColumn({
   status,
@@ -60,10 +63,10 @@ export function BoardColumn({
     [issueIds, issueMap],
   );
 
-  const storeProperties = useViewStore((s) => s.cardProperties);
-  const { data: projects = [] } = useQuery({
+  const showProject = useViewStore((s) => s.cardProperties.project);
+  const { data: projects = EMPTY_PROJECTS } = useQuery({
     ...projectListOptions(wsId),
-    enabled: storeProperties.project && resolvedIssues.some((i) => !!i.project_id),
+    enabled: showProject && resolvedIssues.some((i) => !!i.project_id),
   });
   const [showAll, setShowAll] = useState(false);
   // Reset showAll when issues shrink below the limit (e.g. after filtering)

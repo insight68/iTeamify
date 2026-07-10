@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeImage, Notification } from "electron";
+import { app, BrowserWindow, crashReporter, ipcMain, nativeImage, Notification } from "electron";
 import { homedir } from "os";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
@@ -37,6 +37,21 @@ if (process.platform !== "win32") {
 }
 
 const PROTOCOL = "teamify";
+
+// Main-process safety net. An unhandled exception or rejection in the main
+// process (daemon-manager spawn, auto-updater, deep-link parsing, IPC
+// handlers) would otherwise tear down the whole window with no breadcrumb.
+// We log and keep running — a transient rejection should never kill a
+// running session on a user's machine. crashReporter keeps a local minidump
+// for the unrecoverable native crashes this can't catch (uploadToServer off
+// so nothing leaves the machine without an explicit backend opt-in).
+crashReporter.start({ uploadToServer: false });
+process.on("uncaughtException", (error) => {
+  console.error("[main] uncaughtException:", error);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[main] unhandledRejection:", reason);
+});
 
 let mainWindow: BrowserWindow | null = null;
 let runtimeConfigResult: RuntimeConfigResult = {

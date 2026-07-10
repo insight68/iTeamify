@@ -50,7 +50,7 @@ import {
 import { useTheme } from "@teamify/ui/components/common/theme-provider";
 import { useNavigation } from "../navigation";
 import { useT } from "../i18n";
-import { useSearchStore } from "./search-store";
+import { useSearchStore } from "@teamify/core/search";
 
 function HighlightText({ text, query }: { text: string; query: string }) {
   const parts = useMemo(() => {

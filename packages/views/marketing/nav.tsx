@@ -4,8 +4,7 @@ import { useT } from "../i18n";
 import { AppLink } from "../navigation";
 
 /**
- * Sticky top nav for the suanpan landing page. Anchors jump to in-page
- * sections; the primary CTA opens signup.
+ * Sticky top nav for the operating-agent landing page.
  */
 export function LandingNav() {
   const { t } = useT("marketing");
@@ -30,6 +29,12 @@ export function LandingNav() {
           >
             {t(($) => $.nav.features)}
           </a>
+          <AppLink
+            href="/reconciliation"
+            className="transition-colors hover:text-foreground"
+          >
+            {t(($) => $.nav.reconciliation)}
+          </AppLink>
           <a
             href="#integrations"
             className="transition-colors hover:text-foreground"

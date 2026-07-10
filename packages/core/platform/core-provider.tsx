@@ -13,6 +13,7 @@ import {
 import { WSProvider } from "../realtime";
 import { QueryProvider } from "../provider";
 import { createLogger } from "../logger";
+import { captureException } from "../analytics";
 import { defaultStorage } from "./storage";
 import { AuthInitializer } from "./auth-initializer";
 import type { CoreProviderProps, ClientIdentity } from "./types";
@@ -41,7 +42,21 @@ function initCore(
     identity,
   });
   setApiInstance(api);
-  setSchemaLogger(createLogger("api-schema"));
+  // Schema-validation failures log to the console AND forward to telemetry,
+  // so a drifted API contract surfaces in PostHog instead of being visible
+  // only in a renderer console nobody is watching on an installed build.
+  const schemaConsoleLogger = createLogger("api-schema");
+  setSchemaLogger({
+    ...schemaConsoleLogger,
+    warn(msg: string, ...data: unknown[]) {
+      schemaConsoleLogger.warn(msg, ...data);
+      const detail = data[0];
+      captureException(new Error(msg), {
+        source: "api-schema",
+        ...(detail && typeof detail === "object" ? detail : {}),
+      });
+    },
+  });
 
   // In token mode, hydrate token from storage.
   if (!cookieAuth) {

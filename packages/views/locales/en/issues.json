@@ -228,7 +228,8 @@
     "status_running": "Working",
     "status_completed": "Completed",
     "status_failed": "Failed",
-    "status_cancelled": "Cancelled"
+    "status_cancelled": "Cancelled",
+    "status_unknown": "Unknown status"
   },
   "batch": {
     "selected": "{{count}} selected",

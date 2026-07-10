@@ -3,7 +3,7 @@
 import { Search } from "lucide-react";
 import { SidebarMenuButton } from "@teamify/ui/components/ui/sidebar";
 import { isMac, formatShortcut, modKey } from "@teamify/core/platform";
-import { useSearchStore } from "./search-store";
+import { useSearchStore } from "@teamify/core/search";
 import { useT } from "../i18n";
 
 export function SearchTrigger() {

@@ -34,7 +34,6 @@ const FOOTER_COLUMNS: Record<
     { id: "docs", href: "/docs", kind: "route" },
     { id: "blog", href: "/blog", kind: "route" },
     { id: "api", href: "/docs/api", kind: "route" },
-    { id: "github", href: "https://github.com/teamify-ai/teamify", kind: "route" },
   ],
   company: [
     { id: "about", href: "/about", kind: "route" },
@@ -55,7 +54,7 @@ const FOOTER_COLUMNS: Record<
  *  present in that column's i18n bundle. */
 type LinkIdsFor<C extends ColumnKey> =
   C extends "product" ? "reconciliation" | "agents" | "integrations" | "pricing" :
-  C extends "resources" ? "docs" | "blog" | "api" | "github" :
+  C extends "resources" ? "docs" | "blog" | "api" :
   C extends "company" ? "about" | "contact" | "careers" | "privacy" :
   C extends "legal" ? "terms" | "privacy" | "license" :
   never;
@@ -82,7 +81,7 @@ export function LandingFooter() {
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 font-heading text-base font-semibold tracking-tight text-foreground">
               <img
-                src="/logo.svg"
+                src="/logo.png"
                 alt="Teamify"
                 className="h-7 w-7 rounded-md"
               />

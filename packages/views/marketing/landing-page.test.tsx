@@ -30,24 +30,22 @@ describe("LandingPage", () => {
     renderPage(<LandingPage />);
     expect(
       screen.getByRole("heading", { level: 1 }),
-    ).toHaveTextContent(/run your operating loop/i);
+    ).toHaveTextContent(/your AI operating team/i);
     expect(screen.getAllByText(/AI operating team collaboration platform/i).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders the operating hub with live agents", () => {
-    renderPage(<LandingPage />);
-    expect(screen.getByText(/operating agent hub/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/agents collaborating live/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/reconciliation agent/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/procurement agent/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/inventory transfer agent/i).length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("links the reconciliation entry to /reconciliation", () => {
+  it("renders the hero warehouse dashboard visual", () => {
     renderPage(<LandingPage />);
     expect(
-      screen.getByRole("link", { name: /view reconciliation flow/i }),
-    ).toHaveAttribute("href", "/reconciliation");
+      screen.getByAltText(/inventory operating dashboard in a warehouse/i),
+    ).toBeInTheDocument();
+  });
+
+  it("links the hero customer stories CTA to #customers", () => {
+    renderPage(<LandingPage />);
+    expect(
+      screen.getByRole("link", { name: /view customer stories/i }),
+    ).toHaveAttribute("href", "#customers");
   });
 
   it("renders the 6 operating agent cards", async () => {
@@ -63,6 +61,54 @@ describe("LandingPage", () => {
     ]) {
       expect(within(section).getAllByText(title).length).toBeGreaterThanOrEqual(1);
     }
+  });
+
+  it("renders the operating loop from forecast to audit", async () => {
+    renderPage(<LandingPage />);
+    const section = await screen.findByRole("region", {
+      name: /one closed loop from demand forecast to compliance audit/i,
+    });
+
+    for (const step of [
+      "Forecast demand",
+      "Plan purchasing",
+      "Move inventory",
+      "Reconcile cash",
+      "Explain operations",
+      "Audit compliance",
+    ]) {
+      expect(within(section).getByText(step)).toBeInTheDocument();
+    }
+  });
+
+  it("renders the real scene image and reconciliation video", async () => {
+    renderPage(<LandingPage />);
+    const section = await screen.findByRole("region", {
+      name: /show the warehouse, the workbench, and the demo/i,
+    });
+
+    expect(
+      within(section).getByAltText(/procurement assistant workbench comparing supplier quotes/i),
+    ).toHaveAttribute("src", "/marketing/procurement-assistant-workbench.jpg");
+    expect(
+      within(section).getByLabelText(/reconciliation agent demo video/i),
+    ).toHaveAttribute("poster", "/marketing/reconciliation-demo-poster.jpg");
+  });
+
+  it("renders the customer stories section", async () => {
+    renderPage(<LandingPage />);
+    const section = await screen.findByRole("region", {
+      name: /how real operating teams hand repetitive analysis to agents/i,
+    });
+
+    expect(within(section).getByText("Multi-channel commerce team")).toBeInTheDocument();
+    expect(within(section).getByText("Wholesale supply chain company")).toBeInTheDocument();
+    expect(
+      within(section).getByAltText(/procurement assistant workbench/i),
+    ).toHaveAttribute("src", "/marketing/procurement-assistant-workbench.jpg");
+    expect(
+      within(section).getByAltText(/inventory operating dashboard in a warehouse/i),
+    ).toHaveAttribute("src", "/marketing/hero-inventory-dashboard.webp");
   });
 
   it("renders grouped system integrations", async () => {

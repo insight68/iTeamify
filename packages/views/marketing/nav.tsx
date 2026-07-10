@@ -16,7 +16,7 @@ export function LandingNav() {
           className="flex items-center gap-2 font-heading text-base font-semibold tracking-tight text-foreground"
         >
           <img
-            src="/logo.svg"
+            src="/logo.png"
             alt="iTeamify"
             className="h-7 w-7 rounded-md"
           />

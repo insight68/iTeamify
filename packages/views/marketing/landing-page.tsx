@@ -11,6 +11,24 @@ import { LandingFooter } from "./footer";
 const FeatureCards = lazy(
   () => import("./feature-cards").then((m) => ({ default: m.FeatureCards })),
 );
+const OperatingLoopSection = lazy(
+  () =>
+    import("./operating-loop-section").then((m) => ({
+      default: m.OperatingLoopSection,
+    })),
+);
+const MediaProofSection = lazy(
+  () =>
+    import("./media-proof-section").then((m) => ({
+      default: m.MediaProofSection,
+    })),
+);
+const CustomerCasesSection = lazy(
+  () =>
+    import("./customer-cases-section").then((m) => ({
+      default: m.CustomerCasesSection,
+    })),
+);
 const IntegrationsSection = lazy(
   () =>
     import("./integrations-section").then((m) => ({
@@ -62,6 +80,9 @@ export function LandingPage() {
         <HeroSection />
         <Suspense fallback={null}>
           <FeatureCards />
+          <OperatingLoopSection />
+          <MediaProofSection />
+          <CustomerCasesSection />
           <IntegrationsSection />
           <ChatDemoSection />
           <ComparisonSection />

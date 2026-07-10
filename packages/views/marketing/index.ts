@@ -1,8 +1,12 @@
 export { LandingPage } from "./landing-page";
+export { CareersPage } from "./careers-page";
 export { LandingNav } from "./nav";
 export { LandingFooter } from "./footer";
 export { HeroSection } from "./hero-section";
 export { FeatureCards } from "./feature-cards";
+export { OperatingLoopSection } from "./operating-loop-section";
+export { MediaProofSection } from "./media-proof-section";
+export { CustomerCasesSection } from "./customer-cases-section";
 export { IntegrationsSection } from "./integrations-section";
 export { ChatDemoSection } from "./chat-demo-section";
 export { ComparisonSection } from "./comparison-section";

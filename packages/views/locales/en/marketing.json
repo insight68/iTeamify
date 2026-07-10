@@ -13,14 +13,31 @@
   },
   "hero": {
     "eyebrow": "AI operating team collaboration platform",
-    "headline": "Run your operating loop with AI agents and your team",
-    "sub_headline": "iTeamify connects orders, cash, inventory, procurement, and sales data so reconciliation, purchase planning, inventory transfers, demand forecasting, and operating analysis move through one shared workspace.",
+    "headline": "Your AI operating team for cash, stock, orders, and profit",
+    "sub_headline": "iTeamify turns reconciliation, procurement, transfers, forecasting, and analysis into one agent-led workflow with human approval.",
     "primary_cta": "Start trial",
-    "secondary_cta": "View reconciliation flow",
+    "secondary_cta": "View customer stories",
     "stats": {
       "platforms": "6 operating agents",
       "merchants": "Orders, cash, stock, profit",
       "accuracy": "Humans approve key actions"
+    },
+    "visual": {
+      "alt": "iTeamify inventory operating dashboard in a warehouse",
+      "signals": {
+        "stock": {
+          "title": "Inventory turns",
+          "body": "Spot shortages, slow movers, and movable stock"
+        },
+        "cash": {
+          "title": "Cash timing",
+          "body": "Connect reconciliation gaps, purchase payments, and payouts"
+        },
+        "audit": {
+          "title": "Approval trail",
+          "body": "Keep confirmation records for purchases, transfers, and write-offs"
+        }
+      }
     },
     "dashboard": {
       "title": "Operating agent hub",
@@ -139,6 +156,107 @@
         "input": "Rules / permissions / documents / logs",
         "output": "Risk list and audit trail",
         "human": "Approve exception handling"
+      }
+    }
+  },
+  "operating_loop": {
+    "eyebrow": "Operating loop",
+    "heading": "One closed loop from demand forecast to compliance audit",
+    "body": "First understand demand, then plan purchasing and inventory movement; then reconcile cash, explain results, and preserve the audit trail.",
+    "closing_note": "Every step carries the data source, owner, and approval status, so teams see the next action instead of scattered reports.",
+    "steps": {
+      "forecast": {
+        "phase": "Plan",
+        "title": "Forecast demand",
+        "body": "Read sales history, campaign rhythm, and seasonality to identify growth and risk products early.",
+        "signal": "Demand forecast with confidence"
+      },
+      "procurement": {
+        "phase": "Replenish",
+        "title": "Plan purchasing",
+        "body": "Combine forecasts, stock levels, safety stock, and lead times into replenishment and PO drafts.",
+        "signal": "Purchase suggestions with supplier evidence"
+      },
+      "transfer": {
+        "phase": "Fulfill",
+        "title": "Move inventory",
+        "body": "Compare warehouses, stores, channels, and in-transit stock so goods move where they can sell.",
+        "signal": "Transfer priorities"
+      },
+      "reconciliation": {
+        "phase": "Verify",
+        "title": "Reconcile cash",
+        "body": "Match orders, refunds, payouts, platform fees, and supplier statements to find differences.",
+        "signal": "Exception queue"
+      },
+      "analytics": {
+        "phase": "Review",
+        "title": "Explain operations",
+        "body": "Connect sales, margin, fees, stock, and exceptions to explain why the business moved.",
+        "signal": "Operating brief"
+      },
+      "compliance": {
+        "phase": "Audit",
+        "title": "Audit compliance",
+        "body": "Check permissions, approvals, rules, and operation logs before risks become surprises.",
+        "signal": "Risk list"
+      }
+    }
+  },
+  "media": {
+    "eyebrow": "Real operating scenes",
+    "heading": "Show the warehouse, the workbench, and the demo",
+    "body": "The homepage now uses a warehouse operating dashboard, a procurement assistant screenshot, and a reconciliation demo video so visitors can see the business scene, the agent workbench, and the actual workflow.",
+    "procurement": {
+      "label": "Procurement agent",
+      "title": "From supplier quotes to purchase suggestions",
+      "description": "The procurement assistant reads quotes, quantities, tax-inclusive prices, and purchase history so teams can compare suppliers, calculate replenishment, and confirm a purchase plan.",
+      "metric_1": "Supplier quote ranking",
+      "metric_2": "PO draft",
+      "image_alt": "Procurement assistant workbench comparing supplier quotes"
+    },
+    "reconciliation": {
+      "label": "Reconciliation agent",
+      "title": "Turn order files into an exception review queue",
+      "description": "The reconciliation demo shows file import, format recognition, and automatic comparison so finance and operations only handle the exceptions that need judgment.",
+      "metric_1": "File format recognition",
+      "metric_2": "Exception review",
+      "video_label": "Reconciliation agent demo video",
+      "video_badge": "Reconciliation flow demo",
+      "captions_label": "Reconciliation demo captions",
+      "captions_lang": "en"
+    }
+  },
+  "customers": {
+    "eyebrow": "Customer stories",
+    "heading": "How real operating teams hand repetitive analysis to agents",
+    "body": "From multi-channel commerce to wholesale supply chains, iTeamify turns reconciliation, procurement, transfers, forecasting, and analysis into workflows people can approve.",
+    "items": {
+      "commerce": {
+        "company": "Multi-channel commerce team",
+        "industry": "Retail and marketplace operations",
+        "tag_1": "Reconciliation automation",
+        "tag_2": "Purchase suggestions",
+        "tag_3": "Operating analysis",
+        "summary": "The team handles orders, refunds, payouts, and fee data from multiple platforms every day. iTeamify lets agents match records, explain differences, and organize purchase suggestions before people review them.",
+        "quote": "Reconciliation differences no longer wait until month-end. Agents queue the exceptions first, so we only judge the few items that need a person.",
+        "author": "Finance operations lead",
+        "author_initial": "F",
+        "role": "Finance and operations team",
+        "image_alt": "Procurement assistant workbench showing supplier quotes and purchase suggestions"
+      },
+      "supply_chain": {
+        "company": "Wholesale supply chain company",
+        "industry": "Wholesale distribution and warehousing",
+        "tag_1": "Demand forecasting",
+        "tag_2": "Inventory transfers",
+        "tag_3": "Compliance audit",
+        "summary": "Purchasing, inventory, and sales data were spread across sheets and systems, making replenishment depend too much on experience. iTeamify links forecasts, purchase suggestions, and transfer plans into one traceable operating loop.",
+        "quote": "Purchasing and transfers are no longer based only on experience. The system calculates demand, stock, and lead times before routing suggestions to the owner.",
+        "author": "Supply chain lead",
+        "author_initial": "S",
+        "role": "Procurement and warehouse team",
+        "image_alt": "Inventory operating dashboard in a warehouse"
       }
     }
   },

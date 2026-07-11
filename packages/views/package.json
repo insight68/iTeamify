@@ -45,6 +45,7 @@
     "./invitations": "./invitations/index.ts",
     "./onboarding": "./onboarding/index.ts",
     "./marketing": "./marketing/index.ts",
+    "./duizhang": "./duizhang/index.ts",
     "./workflows": "./workflows/index.ts",
     "./platform": "./platform/index.ts",
     "./i18n": "./i18n/index.ts",

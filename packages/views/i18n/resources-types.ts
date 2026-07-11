@@ -22,6 +22,7 @@ import type runtimes from "../locales/en/runtimes.json";
 import type layout from "../locales/en/layout.json";
 import type org from "../locales/en/org.json";
 import type marketing from "../locales/en/marketing.json";
+import type duizhang from "../locales/en/duizhang.json";
 import type workflows from "../locales/en/workflows.json";
 
 // Module augmentation enables i18next v26 selector API across the monorepo:
@@ -59,6 +60,7 @@ declare module "i18next" {
       layout: typeof layout;
       org: typeof org;
       marketing: typeof marketing;
+      duizhang: typeof duizhang;
       workflows: typeof workflows;
     };
     enableSelector: true;

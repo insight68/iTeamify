@@ -22,6 +22,7 @@ import zhHansRuntimes from "./zh-Hans/runtimes.json";
 import zhHansLayout from "./zh-Hans/layout.json";
 import zhHansOrg from "./zh-Hans/org.json";
 import zhHansMarketing from "./zh-Hans/marketing.json";
+import zhHansDuizhang from "./zh-Hans/duizhang.json";
 import zhHansWorkflows from "./zh-Hans/workflows.json";
 
 export const zhHans: LocaleResources = {
@@ -48,5 +49,6 @@ export const zhHans: LocaleResources = {
   layout: zhHansLayout,
   org: zhHansOrg,
   marketing: zhHansMarketing,
+  duizhang: zhHansDuizhang,
   workflows: zhHansWorkflows,
 };

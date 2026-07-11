@@ -22,6 +22,7 @@ import enRuntimes from "./en/runtimes.json";
 import enLayout from "./en/layout.json";
 import enOrg from "./en/org.json";
 import enMarketing from "./en/marketing.json";
+import enDuizhang from "./en/duizhang.json";
 import enWorkflows from "./en/workflows.json";
 import zhHansCommon from "./zh-Hans/common.json";
 import zhHansAuth from "./zh-Hans/auth.json";
@@ -46,6 +47,7 @@ import zhHansRuntimes from "./zh-Hans/runtimes.json";
 import zhHansLayout from "./zh-Hans/layout.json";
 import zhHansOrg from "./zh-Hans/org.json";
 import zhHansMarketing from "./zh-Hans/marketing.json";
+import zhHansDuizhang from "./zh-Hans/duizhang.json";
 import zhHansWorkflows from "./zh-Hans/workflows.json";
 
 // Single source of truth for the resource bundle. Both apps (web layout +
@@ -81,6 +83,7 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     layout: enLayout,
     org: enOrg,
     marketing: enMarketing,
+    duizhang: enDuizhang,
     workflows: enWorkflows,
   },
   "zh-Hans": {
@@ -107,6 +110,7 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     layout: zhHansLayout,
     org: zhHansOrg,
     marketing: zhHansMarketing,
+    duizhang: zhHansDuizhang,
     workflows: zhHansWorkflows,
   },
 };

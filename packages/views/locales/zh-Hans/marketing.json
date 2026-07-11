@@ -1,13 +1,11 @@
 {
   "nav": {
-    "features": "智能体",
-    "integrations": "连接系统",
-    "chat_demo": "协作方式",
-    "comparison": "对比",
-    "testimonials": "客户场景",
+    "home": "首页",
     "pricing": "价格",
     "faq": "常见问题",
-    "reconciliation": "对账",
+    "reconciliation": "对账助理",
+    "primary_navigation": "主导航",
+    "open_menu": "打开导航菜单",
     "sign_in": "登录",
     "sign_up": "开始试用"
   },
@@ -342,7 +340,7 @@
   },
   "comparison": {
     "eyebrow": "为什么是协作平台",
-    "heading": "不是 ERP，不是 BI，也不是单个聊天机器人",
+    "heading": "不是 ERP，不是 BI，是企业经营操作系统",
     "columns": {
       "iteamify": "iTeamify",
       "erp": "ERP",

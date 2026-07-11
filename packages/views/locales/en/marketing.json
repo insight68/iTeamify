@@ -1,13 +1,11 @@
 {
   "nav": {
-    "features": "Agents",
-    "integrations": "Systems",
-    "chat_demo": "Collaboration",
-    "comparison": "Compare",
-    "testimonials": "Use cases",
+    "home": "Home",
     "pricing": "Pricing",
     "faq": "FAQ",
-    "reconciliation": "Reconciliation",
+    "reconciliation": "Reconciliation assistant",
+    "primary_navigation": "Primary navigation",
+    "open_menu": "Open navigation menu",
     "sign_in": "Sign in",
     "sign_up": "Start trial"
   },

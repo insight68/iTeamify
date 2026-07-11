@@ -1,5 +1,9 @@
-import { redirect } from "next/navigation";
+import { WorkflowDetailPage } from "@teamify/views/workflows";
 
 export default function ReconciliationPage() {
-  redirect("/workflows/demo-procurement?step=step-9");
+  return (
+    <div className="h-svh overflow-y-auto bg-background text-foreground">
+      <WorkflowDetailPage workflowId="demo-procurement" activeStepId="step-9" />
+    </div>
+  );
 }

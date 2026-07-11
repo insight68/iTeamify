@@ -22,6 +22,7 @@ import enRuntimes from "./en/runtimes.json";
 import enLayout from "./en/layout.json";
 import enOrg from "./en/org.json";
 import enMarketing from "./en/marketing.json";
+import enDuizhang from "./en/duizhang.json";
 import enWorkflows from "./en/workflows.json";
 
 export const en: LocaleResources = {
@@ -48,5 +49,6 @@ export const en: LocaleResources = {
   layout: enLayout,
   org: enOrg,
   marketing: enMarketing,
+  duizhang: enDuizhang,
   workflows: enWorkflows,
 };

@@ -1,0 +1,307 @@
+{
+  "nav": {
+    "features": "功能",
+    "integrations": "集成",
+    "chat_demo": "对话演示",
+    "comparison": "对比",
+    "testimonials": "用户评价",
+    "pricing": "价格",
+    "faq": "常见问题",
+    "sign_in": "登录",
+    "sign_up": "免费试用"
+  },
+  "hero": {
+    "eyebrow": "电商专用的 AI 对账工具",
+    "headline": "月度对账，从 3 天到 30 分钟",
+    "sub_headline": "iTeamify自动化 94% 的对账工作。零漏单、零差错。",
+    "primary_cta": "免费试用 — 上传第一个订单",
+    "secondary_cta": "看看真实案例",
+    "stats": {
+      "platforms": "12+ 电商平台支持",
+      "merchants": "5,000+ 商家正在使用",
+      "accuracy": "准确率 99.9%"
+    },
+    "chat_preview": {
+      "user": "帮我对一下上月抖音店铺的订单和到账",
+      "assistant": "已核对 2,847 笔订单，发现 3 笔异常，需要我详细说明吗？"
+    }
+  },
+  "features": {
+    "eyebrow": "iTeamify能做什么",
+    "heading": "4 大核心能力，搞定电商对账",
+    "items": {
+      "order_reconciliation": {
+        "title": "订单对账",
+        "description": "多平台订单自动匹配，从天猫到抖音，一个不少。"
+      },
+      "fee_verification": {
+        "title": "费用核对",
+        "description": "平台佣金、推广费、物流费，逐笔核对不漏。"
+      },
+      "profit_analysis": {
+        "title": "利润分析",
+        "description": "自动计算店铺真实利润，一眼看清赚了多少。"
+      },
+      "anomaly_monitoring": {
+        "title": "异常监控",
+        "description": "24/7 监控差异，漏单、错账第一时间提醒。"
+      }
+    }
+  },
+  "integrations": {
+    "eyebrow": "全平台覆盖",
+    "heading": "连接你卖货的所有平台",
+    "tools": {
+      "taobao": "淘宝/天猫",
+      "douyin": "抖音电商",
+      "pinduoduo": "拼多多",
+      "jd": "京东",
+      "kuaishou": "快手",
+      "xiaohongshu": "小红书",
+      "weishop": "微信小店",
+      "bilibili": "哔哩哔哩",
+      "shopify": "Shopify",
+      "amazon": "亚马逊",
+      "lazada": "Lazada",
+      "shopee": "Shopee"
+    }
+  },
+  "chat_demo": {
+    "eyebrow": "用对话，完成对账",
+    "heading": "不懂 Excel，不用学。你会说话，就会用iTeamify。",
+    "subtitle": "90% 的对账工作，用自然语言就能完成",
+    "footer_note": "iTeamify是 24/7 待命的 AI 对账搭档，从不会累，从不会错。",
+    "messages": {
+      "user_1": "帮我查下为什么上月利润下降了？",
+      "assistant_1": "上月利润下降 12%。正在分析原因...",
+      "assistant_2": "发现 3 个主要原因：\n1. 抖音佣金率从 15% 涨到 18%，多支出 ¥4,200\n2. 退货率上升 3%，损失 ¥2,100\n3. 物流费用增加 ¥1,500\n需要我导出详细明细吗？"
+    }
+  },
+  "comparison": {
+    "eyebrow": "为什么选iTeamify",
+    "heading": "不是 Excel，不是财务软件，是懂电商的 AI",
+    "columns": {
+      "suanpan": "iTeamify",
+      "manual": "人工",
+      "excel": "Excel",
+      "software": "财务软件"
+    },
+    "rows": {
+      "monthly_time": {
+        "label": "月度耗时",
+        "suanpan": "30分钟",
+        "manual": "3天",
+        "excel": "1天",
+        "software": "2天"
+      },
+      "auto_match": {
+        "label": "自动匹配",
+        "suanpan": "94%",
+        "manual": "0%",
+        "excel": "需要公式",
+        "software": "60%"
+      },
+      "missing_rate": {
+        "label": "漏单率",
+        "suanpan": "0%",
+        "manual": "5%",
+        "excel": "10%",
+        "software": "3%"
+      },
+      "alert_speed": {
+        "label": "异常提醒",
+        "suanpan": "实时",
+        "manual": "月底",
+        "excel": "需自查",
+        "software": "滞后"
+      },
+      "monthly_cost": {
+        "label": "月度成本",
+        "suanpan": "¥199起",
+        "manual": "¥5,000+",
+        "excel": "免费",
+        "software": "¥2,000+"
+      }
+    }
+  },
+  "testimonials": {
+    "eyebrow": "5,000+ 商家正在使用",
+    "heading": "他们用iTeamify，把对账变成了 30 分钟的事",
+    "items": {
+      "live_stream": {
+        "segment": "直播电商",
+        "quote": "以前月底对账要熬通宵，现在iTeamify 30 分钟就搞定。异常订单还自动标出来，省心太多了。",
+        "author": "李先生",
+        "author_initial": "李",
+        "role": "抖音美妆店，月 GMV ¥80 万"
+      },
+      "multi_platform": {
+        "segment": "多平台卖家",
+        "quote": "淘宝+抖音+拼多多，三个平台的对账以前是个噩梦。iTeamify统一管理，再也不用切来切去了。",
+        "author": "王女士",
+        "author_initial": "王",
+        "role": "服装电商，4 平台同步运营"
+      },
+      "agency": {
+        "segment": "代运营公司",
+        "quote": "我们管理 15 家店铺，iTeamify批量对账，每家 5 分钟出报告。客户都说我们专业度高了不少。",
+        "author": "赵总",
+        "author_initial": "赵",
+        "role": "电商代运营，服务 15+ 品牌"
+      }
+    }
+  },
+  "pricing": {
+    "heading": "简单、透明的定价",
+    "subtitle": "免费试用 14 天，满意再付费",
+    "recommended": "推荐",
+    "tiers": {
+      "free": {
+        "name": "免费试用",
+        "price": "¥0",
+        "period": "14天",
+        "description": "体验iTeamify的全部核心功能",
+        "features": [
+          "1 个店铺绑定",
+          "1,000 笔订单对账",
+          "基础对账报告",
+          "邮件支持"
+        ],
+        "cta": "开始试用"
+      },
+      "pro": {
+        "name": "专业版",
+        "price": "¥199",
+        "period": "/店铺/月",
+        "description": "适合成长中的电商卖家",
+        "features": [
+          "5 个店铺绑定",
+          "无限订单对账",
+          "高级利润分析",
+          "API 接口",
+          "优先技术支持"
+        ],
+        "cta": "开始试用"
+      },
+      "enterprise": {
+        "name": "企业版",
+        "price": "定制",
+        "period": "",
+        "description": "适合大型团队和代运营公司",
+        "features": [
+          "无限店铺绑定",
+          "定制功能开发",
+          "专属客户经理",
+          "私有部署选项",
+          "SLA 保障"
+        ],
+        "cta": "联系销售"
+      }
+    }
+  },
+  "faq": {
+    "heading": "常见问题",
+    "items": {
+      "platforms": {
+        "question": "支持哪些电商平台？",
+        "answer": "支持淘宝/天猫、抖音电商、拼多多、京东、快手、小红书、微信小店、哔哩哔哩、Shopify、亚马逊、Lazada、Shopee 等 12+ 平台，持续增加中。"
+      },
+      "security": {
+        "question": "数据安全吗？",
+        "answer": "我们采用银行级 AES-256 加密，通过 ISO27001 安全认证。你的数据仅用于对账服务，绝不外泄，可随时导出删除。"
+      },
+      "learning": {
+        "question": "不会用怎么办？",
+        "answer": "不用学。会上网、会打字，就会用iTeamify。第一次使用有引导教程，遇到问题随时联系客服，我们会在 10 分钟内响应。"
+      },
+      "payment": {
+        "question": "支持哪些支付方式？",
+        "answer": "支持支付宝、微信支付、企业对公转账。企业版支持年付优惠，具体请联系销售。"
+      },
+      "refund": {
+        "question": "可以退款吗？",
+        "answer": "专业版和企业版均支持 7 天无理由退款。只要对账数据未产生，即可申请全额退款。"
+      },
+      "api": {
+        "question": "有 API 接口吗？",
+        "answer": "专业版及以上提供 REST API 接口，支持订单数据推送、对账结果查询、webhook 回调等功能。"
+      },
+      "contract": {
+        "question": "需要签合同吗？",
+        "answer": "企业版需要签署正式合同，可开具增值税专用发票。专业版可直接在线购买，发票在订单完成后开具。"
+      },
+      "compare": {
+        "question": "和代账公司有什么区别？",
+        "answer": "iTeamify是自动化工具，不是人工服务。我们帮你把 90% 的对账工作自动化，剩下的 10% 复杂情况你可以自己处理或找代账公司确认。很多代账公司也在用iTeamify提高效率。"
+      }
+    }
+  },
+  "cta": {
+    "heading": "第一次对账，30 分钟搞定",
+    "body": "上传你的第一个订单，让iTeamify开始工作。免费试用 14 天，满意再付费。",
+    "button": "免费试用 — 无需信用卡"
+  },
+  "footer": {
+    "brand_blurb": "iTeamify，你的 24/7 AI 对账搭档。每笔订单、每分钱、对得清清楚楚。",
+    "marquee": {
+      "row1": {
+        "phrase_1": "自动匹配 94%",
+        "phrase_2": "零漏单保证",
+        "phrase_3": "12+ 平台",
+        "phrase_4": "24/7 监控",
+        "phrase_5": "30 分钟完成",
+        "phrase_6": "准确率 99.9%",
+        "phrase_7": "实时异常提醒",
+        "phrase_8": "无需学 Excel"
+      },
+      "row2": {
+        "phrase_1": "免费试用 14 天",
+        "phrase_2": "从 ¥199/月",
+        "phrase_3": "API 接口",
+        "phrase_4": "私有部署",
+        "phrase_5": "银行级加密",
+        "phrase_6": "ISO27001",
+        "phrase_7": "7 天退款",
+        "phrase_8": "随时导出"
+      }
+    },
+    "columns": {
+      "product": {
+        "title": "产品",
+        "links": {
+          "features": "功能",
+          "how_it_works": "使用方式",
+          "pricing": "价格",
+          "changelog": "更新日志"
+        }
+      },
+      "resources": {
+        "title": "资源",
+        "links": {
+          "docs": "文档",
+          "blog": "博客",
+          "api": "API 文档",
+          "github": "GitHub"
+        }
+      },
+      "company": {
+        "title": "公司",
+        "links": {
+          "about": "关于我们",
+          "contact": "联系我们",
+          "careers": "招聘",
+          "privacy": "隐私政策"
+        }
+      },
+      "legal": {
+        "title": "法律",
+        "links": {
+          "terms": "服务条款",
+          "privacy": "隐私政策",
+          "license": "许可证"
+        }
+      }
+    },
+    "copyright": "© {{year}} iTeamify. 基于对账，不止于对账。"
+  }
+}

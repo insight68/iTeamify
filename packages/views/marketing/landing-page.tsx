@@ -81,9 +81,9 @@ export function LandingPage() {
         <Suspense fallback={null}>
           <FeatureCards />
           <OperatingLoopSection />
+          <IntegrationsSection />
           <MediaProofSection />
           <CustomerCasesSection />
-          <IntegrationsSection />
           <ChatDemoSection />
           <ComparisonSection />
           <TestimonialsSection />

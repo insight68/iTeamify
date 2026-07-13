@@ -259,48 +259,95 @@
     }
   },
   "integrations": {
-    "eyebrow": "连接你已经在用的系统",
-    "heading": "把经营数据接进同一个协作平台",
+    "eyebrow": "系统连接",
+    "heading": "连接现有系统，让智能体直接参与经营",
+    "body": "无需替换现有 ERP，也不用重建数据体系。iTeamify 连接订单、资金、库存和采购数据，让多个经营智能体在统一上下文中协作。",
+    "support_badge": "支持按企业场景对接",
+    "capability_1": "Excel 文件导入",
+    "capability_2": "API 数据接入",
+    "capability_3": "权限与字段映射",
+    "source_label": "企业正在使用的业务系统",
+    "connector_label": "数据标准化与权限同步",
     "groups": {
-      "orders": {
-        "title": "订单与渠道",
-        "description": "淘宝/天猫、抖音、拼多多、京东、Shopify、亚马逊",
-        "item_1": "订单明细",
-        "item_2": "退款售后",
-        "item_3": "活动数据",
-        "item_4": "商品 SKU"
+      "erp": {
+        "title": "ERP 系统"
       },
-      "finance": {
-        "title": "资金与费用",
-        "description": "平台账单、支付流水、佣金、推广费、物流费、发票",
-        "item_1": "到账流水",
-        "item_2": "平台费用",
-        "item_3": "供应商账单",
-        "item_4": "财务凭证"
+      "commerce": {
+        "title": "电商平台"
       },
-      "inventory": {
-        "title": "库存与仓配",
-        "description": "仓库库存、在途库存、调拨记录、物流履约状态",
-        "item_1": "库存水位",
-        "item_2": "在途数量",
-        "item_3": "仓库分布",
-        "item_4": "调拨记录"
+      "collaboration": {
+        "title": "数据与协同"
+      }
+    },
+    "systems": {
+      "kingdee": {
+        "code": "KD",
+        "name": "金蝶"
       },
-      "procurement": {
-        "title": "采购与供应商",
-        "description": "采购需求、报价、合同、交期、验收、付款状态",
-        "item_1": "采购需求",
-        "item_2": "供应商报价",
-        "item_3": "采购合同",
-        "item_4": "交付周期"
+      "wangdiantong": {
+        "code": "WDT",
+        "name": "旺店通"
       },
-      "analysis": {
-        "title": "报表与知识库",
-        "description": "Excel、ERP、BI、飞书/钉钉、企业知识库和历史经营报告",
-        "item_1": "Excel 上传",
-        "item_2": "ERP 数据",
-        "item_3": "经营报表",
-        "item_4": "团队知识"
+      "yonyou": {
+        "code": "YON",
+        "name": "用友"
+      },
+      "jushuitan": {
+        "code": "JST",
+        "name": "聚水潭"
+      },
+      "taobao": {
+        "code": "TB",
+        "name": "淘宝/天猫"
+      },
+      "jd": {
+        "code": "JD",
+        "name": "京东"
+      },
+      "douyin": {
+        "code": "DY",
+        "name": "抖音电商"
+      },
+      "pinduoduo": {
+        "code": "PDD",
+        "name": "拼多多"
+      },
+      "excel": {
+        "code": "XLS",
+        "name": "Excel"
+      },
+      "lark": {
+        "code": "LARK",
+        "name": "飞书"
+      },
+      "dingtalk": {
+        "code": "DT",
+        "name": "钉钉"
+      },
+      "api": {
+        "code": "API",
+        "name": "开放 API"
+      }
+    },
+    "hub": {
+      "eyebrow": "统一连接层",
+      "title": "一处连接，六个智能体共享经营上下文",
+      "body": "系统数据经过字段映射、权限校验和口径统一后，成为智能体可理解、可追踪的经营数据。",
+      "data_label": "统一经营数据",
+      "data": {
+        "orders": "订单与渠道",
+        "cash": "资金与费用",
+        "inventory": "库存与仓配",
+        "procurement": "采购与供应商"
+      },
+      "agents_label": "驱动 AI 经营团队",
+      "agents": {
+        "reconciliation": "对账",
+        "procurement": "采购",
+        "transfer": "库存调拨",
+        "forecast": "销量预测",
+        "analysis": "经营分析",
+        "audit": "合规审计"
       }
     }
   },

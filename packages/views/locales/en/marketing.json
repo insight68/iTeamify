@@ -259,48 +259,95 @@
     }
   },
   "integrations": {
-    "eyebrow": "Works with the systems you already run",
-    "heading": "Bring operating data into one collaborative workspace",
+    "eyebrow": "System connectivity",
+    "heading": "Connect the systems you use. Put agents to work.",
+    "body": "Keep your current ERP and data stack. iTeamify connects orders, cash, inventory, and procurement data so operating agents can collaborate with shared context.",
+    "support_badge": "Available for scenario-based integration",
+    "capability_1": "Excel file import",
+    "capability_2": "API data access",
+    "capability_3": "Permission and field mapping",
+    "source_label": "Systems your business already uses",
+    "connector_label": "Data standardization and permission sync",
     "groups": {
-      "orders": {
-        "title": "Orders and channels",
-        "description": "Taobao/Tmall, Douyin, Pinduoduo, JD, Shopify, Amazon",
-        "item_1": "Order lines",
-        "item_2": "Refunds",
-        "item_3": "Campaign data",
-        "item_4": "Product SKUs"
+      "erp": {
+        "title": "ERP systems"
       },
-      "finance": {
-        "title": "Cash and fees",
-        "description": "Marketplace bills, payment statements, commissions, ad spend, shipping fees, invoices",
-        "item_1": "Payouts",
-        "item_2": "Platform fees",
-        "item_3": "Supplier statements",
-        "item_4": "Finance proof"
+      "commerce": {
+        "title": "Commerce platforms"
       },
-      "inventory": {
-        "title": "Inventory and logistics",
-        "description": "Warehouse stock, in-transit stock, transfer records, delivery status",
-        "item_1": "Stock levels",
-        "item_2": "In-transit units",
-        "item_3": "Warehouse split",
-        "item_4": "Transfer history"
+      "collaboration": {
+        "title": "Data and collaboration"
+      }
+    },
+    "systems": {
+      "kingdee": {
+        "code": "KD",
+        "name": "Kingdee"
       },
-      "procurement": {
-        "title": "Procurement and suppliers",
-        "description": "Purchase requests, quotes, contracts, lead times, receiving, payment status",
-        "item_1": "Purchase demand",
-        "item_2": "Supplier quotes",
-        "item_3": "Purchase contracts",
-        "item_4": "Lead times"
+      "wangdiantong": {
+        "code": "WDT",
+        "name": "Wangdiantong"
       },
-      "analysis": {
-        "title": "Reports and knowledge",
-        "description": "Excel, ERP, BI, Lark/DingTalk, company knowledge bases, and historical operating reports",
-        "item_1": "Excel uploads",
-        "item_2": "ERP data",
-        "item_3": "Operating reports",
-        "item_4": "Team knowledge"
+      "yonyou": {
+        "code": "YON",
+        "name": "Yonyou"
+      },
+      "jushuitan": {
+        "code": "JST",
+        "name": "Jushuitan"
+      },
+      "taobao": {
+        "code": "TB",
+        "name": "Taobao/Tmall"
+      },
+      "jd": {
+        "code": "JD",
+        "name": "JD"
+      },
+      "douyin": {
+        "code": "DY",
+        "name": "Douyin"
+      },
+      "pinduoduo": {
+        "code": "PDD",
+        "name": "Pinduoduo"
+      },
+      "excel": {
+        "code": "XLS",
+        "name": "Excel"
+      },
+      "lark": {
+        "code": "LARK",
+        "name": "Lark"
+      },
+      "dingtalk": {
+        "code": "DT",
+        "name": "DingTalk"
+      },
+      "api": {
+        "code": "API",
+        "name": "Open API"
+      }
+    },
+    "hub": {
+      "eyebrow": "Unified connection layer",
+      "title": "Connect once. Give six agents shared operating context.",
+      "body": "Field mapping, permission checks, and consistent definitions turn system data into operating context agents can understand and trace.",
+      "data_label": "Unified operating data",
+      "data": {
+        "orders": "Orders and channels",
+        "cash": "Cash and fees",
+        "inventory": "Inventory and logistics",
+        "procurement": "Procurement and suppliers"
+      },
+      "agents_label": "Powers your AI operating team",
+      "agents": {
+        "reconciliation": "Reconciliation",
+        "procurement": "Procurement",
+        "transfer": "Inventory transfers",
+        "forecast": "Demand forecasting",
+        "analysis": "Operating analysis",
+        "audit": "Compliance audit"
       }
     }
   },

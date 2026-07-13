@@ -111,18 +111,20 @@ describe("LandingPage", () => {
     ).toHaveAttribute("src", "/marketing/hero-inventory-dashboard.webp");
   });
 
-  it("renders grouped system integrations", async () => {
+  it("renders the systems integration map", async () => {
     renderPage(<LandingPage />);
-    const section = await screen.findByRole("region", { name: /bring operating data/i });
-    for (const group of [
-      "Orders and channels",
-      "Cash and fees",
-      "Inventory and logistics",
-      "Procurement and suppliers",
-      "Reports and knowledge",
+    const section = await screen.findByRole("region", { name: /connect the systems you use/i });
+    for (const system of [
+      "Kingdee",
+      "Wangdiantong",
+      "Yonyou",
+      "Jushuitan",
+      "Taobao/Tmall",
+      "DingTalk",
     ]) {
-      expect(within(section).getByText(group)).toBeInTheDocument();
+      expect(within(section).getByText(system)).toBeInTheDocument();
     }
+    expect(within(section).getByText(/give six agents shared operating context/i)).toBeInTheDocument();
   });
 
   it("renders the collaboration workflow", async () => {

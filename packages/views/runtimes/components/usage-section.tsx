@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, useMemo, useState, Suspense } from "react";
+import { useMemo, useState } from "react";
 import { BarChart3, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@teamify/ui/components/ui/skeleton";
@@ -26,17 +26,12 @@ import {
 } from "../utils";
 import { KpiCard } from "./shared";
 import { ActorAvatar } from "../../common/actor-avatar";
+import {
+  DailyCostChart,
+  HourlyActivityChart,
+  ActivityHeatmap,
+} from "./charts";
 import { useT } from "../../i18n";
-
-const DailyCostChart = lazy(() =>
-  import("./charts/daily-cost-chart").then((m) => ({ default: m.DailyCostChart })),
-);
-const HourlyActivityChart = lazy(() =>
-  import("./charts/hourly-activity-chart").then((m) => ({ default: m.HourlyActivityChart })),
-);
-const ActivityHeatmap = lazy(() =>
-  import("./charts/activity-heatmap").then((m) => ({ default: m.ActivityHeatmap })),
-);
 
 // Single source of truth for the period selector. KPIs, the When-chart, the
 // Cost-by tabs, and the CSV export all read from the same `days` value so
@@ -300,21 +295,9 @@ function WhenChart({
           switching never collapses or stretches the card vertically (and
           the right-rail / lower sections never reflow as a side effect). */}
       <div className="min-h-[260px]">
-        {tab === "daily" && (
-          <Suspense fallback={<Skeleton className="h-[260px] rounded-md" />}>
-            <DailyTab data={dailyCostStack} usage={filtered} />
-          </Suspense>
-        )}
-        {tab === "hourly" && (
-          <Suspense fallback={<Skeleton className="h-[260px] rounded-md" />}>
-            <HourlyTab data={hourlyCost} usage={filtered} />
-          </Suspense>
-        )}
-        {tab === "heatmap" && (
-          <Suspense fallback={<Skeleton className="h-[260px] rounded-md" />}>
-            <ActivityHeatmap usage={usage} />
-          </Suspense>
-        )}
+        {tab === "daily" && <DailyTab data={dailyCostStack} usage={filtered} />}
+        {tab === "hourly" && <HourlyTab data={hourlyCost} usage={filtered} />}
+        {tab === "heatmap" && <ActivityHeatmap usage={usage} />}
       </div>
     </div>
   );

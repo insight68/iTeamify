@@ -6,11 +6,14 @@ import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
 import type { AnimateLayoutChanges } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
-import type { Issue, Project, UpdateIssueRequest } from "@teamify/core/types";
+import type { Issue, UpdateIssueRequest } from "@teamify/core/types";
 import { CalendarDays } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { useUpdateIssue } from "@teamify/core/issues/mutations";
 import { useWorkspacePaths } from "@teamify/core/paths";
+import { useWorkspaceId } from "@teamify/core/hooks";
+import { projectListOptions } from "@teamify/core/projects/queries";
 import { ProjectIcon } from "../../projects/components/project-icon";
 import { PriorityIcon } from "./priority-icon";
 import { PriorityPicker, AssigneePicker, DueDatePicker } from "./pickers";
@@ -46,26 +49,20 @@ export const BoardCardContent = memo(function BoardCardContent({
   issue,
   editable = false,
   childProgress,
-  projects,
 }: {
   issue: Issue;
   editable?: boolean;
   childProgress?: ChildProgress;
-  projects?: Project[];
 }) {
   const { t } = useT("issues");
-  // Atomic selectors so toggling one card property only re-renders the cards
-  // that read it, not every card on the board (the store rebuilds the whole
-  // cardProperties object on any toggle).
-  const propPriority = useViewStore((s) => s.cardProperties.priority);
-  const propDescription = useViewStore((s) => s.cardProperties.description);
-  const propAssignee = useViewStore((s) => s.cardProperties.assignee);
-  const propDueDate = useViewStore((s) => s.cardProperties.dueDate);
-  const propProject = useViewStore((s) => s.cardProperties.project);
-  const propChildProgress = useViewStore((s) => s.cardProperties.childProgress);
-  const propLabels = useViewStore((s) => s.cardProperties.labels);
+  const storeProperties = useViewStore((s) => s.cardProperties);
   const priorityCfg = PRIORITY_CONFIG[issue.priority];
-  const project = issue.project_id ? projects?.find((p) => p.id === issue.project_id) : undefined;
+  const wsId = useWorkspaceId();
+  const { data: projects = [] } = useQuery({
+    ...projectListOptions(wsId),
+    enabled: storeProperties.project && !!issue.project_id,
+  });
+  const project = issue.project_id ? projects.find((p) => p.id === issue.project_id) : undefined;
   const labels = issue.labels ?? [];
 
   const updateIssueMutation = useUpdateIssue();
@@ -79,13 +76,13 @@ export const BoardCardContent = memo(function BoardCardContent({
     [issue.id, updateIssueMutation, t],
   );
 
-  const showPriority = propPriority;
-  const showDescription = propDescription && issue.description;
-  const showAssignee = propAssignee && issue.assignee_type && issue.assignee_id;
-  const showDueDate = propDueDate && issue.due_date;
-  const showProject = propProject && project;
-  const showChildProgress = propChildProgress && childProgress;
-  const showLabels = propLabels && labels.length > 0;
+  const showPriority = storeProperties.priority;
+  const showDescription = storeProperties.description && issue.description;
+  const showAssignee = storeProperties.assignee && issue.assignee_type && issue.assignee_id;
+  const showDueDate = storeProperties.dueDate && issue.due_date;
+  const showProject = storeProperties.project && project;
+  const showChildProgress = storeProperties.childProgress && childProgress;
+  const showLabels = storeProperties.labels && labels.length > 0;
 
   return (
     <div className="rounded-lg border-[0.5px] border-border bg-card py-3 px-2.5 shadow-[0_3px_6px_-2px_rgba(0,0,0,0.02),0_1px_1px_0_rgba(0,0,0,0.04)] transition-colors group-hover/card:border-accent group-hover/card:bg-accent group-data-[popup-open]/card:border-accent group-data-[popup-open]/card:bg-accent">
@@ -222,7 +219,7 @@ const animateLayoutChanges: AnimateLayoutChanges = (args) => {
   return defaultAnimateLayoutChanges(args);
 };
 
-export const DraggableBoardCard = memo(function DraggableBoardCard({ issue, childProgress, projects }: { issue: Issue; childProgress?: ChildProgress; projects?: Project[] }) {
+export const DraggableBoardCard = memo(function DraggableBoardCard({ issue, childProgress }: { issue: Issue; childProgress?: ChildProgress }) {
   const p = useWorkspacePaths();
   const {
     attributes,
@@ -255,7 +252,7 @@ export const DraggableBoardCard = memo(function DraggableBoardCard({ issue, chil
           href={p.issueDetail(issue.id)}
           className={`group block transition-colors ${isDragging ? "pointer-events-none" : ""}`}
         >
-          <BoardCardContent issue={issue} editable childProgress={childProgress} projects={projects} />
+          <BoardCardContent issue={issue} editable childProgress={childProgress} />
         </AppLink>
       </div>
     </IssueActionsContextMenu>

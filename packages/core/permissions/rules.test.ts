@@ -279,13 +279,13 @@ describe("workspace-level rules", () => {
     expect(canDeleteWorkspace({ userId: ALICE, role: "member" }).allowed)
       .toBe(false);
   });
-  it("owner+admin can update settings, member cannot", () => {
+  it("only owner can update settings", () => {
     expect(
       canUpdateWorkspaceSettings({ userId: ALICE, role: "owner" }).allowed,
     ).toBe(true);
     expect(
       canUpdateWorkspaceSettings({ userId: ALICE, role: "admin" }).allowed,
-    ).toBe(true);
+    ).toBe(false);
     expect(
       canUpdateWorkspaceSettings({ userId: ALICE, role: "member" }).allowed,
     ).toBe(false);

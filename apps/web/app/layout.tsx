@@ -5,12 +5,13 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@teamify/ui/components/ui/sonner";
 import { cn } from "@teamify/ui/lib/utils";
 import { WebProviders } from "@/components/web-providers";
+import { AIPipeSdk } from "@/components/aipipe-sdk";
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@teamify/core/i18n";
-import { loadResources } from "@teamify/views/locales";
+import { RESOURCES } from "@teamify/views/locales";
 import "./globals.css";
 
 // Font stack: Inter for Latin UI text + system Chinese fonts for zh content.
@@ -126,9 +127,7 @@ export default async function RootLayout({
   const locale: SupportedLocale = isSupportedLocale(headerLocale)
     ? headerLocale
     : DEFAULT_LOCALE;
-  // Only the active locale's translations are bundled — saves ~172KB (gzipped
-  // ~50-70KB) vs. eagerly importing both en + zh-Hans.
-  const resources = { [locale]: await loadResources(locale) };
+  const resources = { [locale]: RESOURCES[locale] };
 
   return (
     <html
@@ -137,6 +136,7 @@ export default async function RootLayout({
       className={cn("antialiased font-sans h-full", inter.variable, geistMono.variable, sourceSerif.variable)}
     >
       <body className="h-full overflow-hidden">
+        <AIPipeSdk />
         <ThemeProvider>
           <WebProviders locale={locale} resources={resources}>
             {children}

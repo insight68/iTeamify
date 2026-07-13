@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, memo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@teamify/ui/lib/utils";
 import { Skeleton } from "@teamify/ui/components/ui/skeleton";
 import { Button } from "@teamify/ui/components/ui/button";
@@ -19,8 +19,9 @@ import {
 import { ChevronRight, ChevronDown, Brain, AlertCircle, AlertTriangle, Copy } from "lucide-react";
 import { useScrollFade } from "@teamify/ui/hooks/use-scroll-fade";
 import { useAutoScroll } from "@teamify/ui/hooks/use-auto-scroll";
-import { taskMessagesOptions } from "@teamify/core/chat/queries";
-import { MemoizedMarkdown } from "@teamify/views/common/markdown";
+import { taskMessagesOptions, chatKeys } from "@teamify/core/chat/queries";
+import { useChatStore } from "@teamify/core/chat";
+import { Markdown } from "@teamify/views/common/markdown";
 import { copyMarkdown } from "../../editor";
 import type { AgentAvailability } from "@teamify/core/agents";
 import type { ChatMessage, ChatPendingTask, TaskMessagePayload, TaskFailureReason } from "@teamify/core/types";
@@ -49,7 +50,81 @@ export function ChatMessageList({ messages, pendingTask, availability }: ChatMes
   const fadeStyle = useScrollFade(scrollRef);
   useAutoScroll(scrollRef);
 
+  // Scroll position save/restore on session switch
+  const activeSessionId = useChatStore((s) => s.activeSessionId);
+  const scrollPositions = useChatStore((s) => s.scrollPositions);
+  const setScrollPosition = useChatStore((s) => s.setScrollPosition);
+
+  // Restore scroll position when switching back to a session.
+  // Only restore if the user was scrolled up (not at bottom) —
+  // useAutoScroll handles the "at bottom" case.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !activeSessionId) return;
+    const savedPosition = scrollPositions[activeSessionId];
+    if (
+      savedPosition !== undefined &&
+      savedPosition > 0 &&
+      savedPosition < el.scrollHeight - el.clientHeight - 50
+    ) {
+      requestAnimationFrame(() => {
+        el.scrollTop = savedPosition;
+      });
+    }
+  }, [activeSessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // scrollPositions intentionally excluded — we only want this to fire on
+  // session change, not every time we save a position.
+
+  // Save scroll position on scroll (debounced to avoid excessive updates)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !activeSessionId) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const onScroll = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        setScrollPosition(activeSessionId, el.scrollTop);
+      }, 150);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      clearTimeout(timer);
+    };
+  }, [activeSessionId, setScrollPosition]);
+
+  const qc = useQueryClient();
   const pendingTaskId = pendingTask?.task_id ?? null;
+
+  // Track the last non-null pendingTaskId so we can detect the
+  // streaming→completed transition even after the cache is cleared.
+  const lastPendingTaskIdRef = useRef<string | null>(null);
+  if (pendingTaskId) {
+    lastPendingTaskIdRef.current = pendingTaskId;
+  }
+
+  // Defensive refetch: when the pending task clears but the corresponding
+  // assistant message hasn't landed in the messages array, force a refetch
+  // after a short grace period. This covers the race window between
+  // chat:done/task:completed WS events and the messages cache refetch.
+  useEffect(() => {
+    const lastTaskId = lastPendingTaskIdRef.current;
+    if (!pendingTask && lastTaskId && activeSessionId) {
+      const hasAssistant = messages.some(
+        (m) => m.role === "assistant" && m.task_id === lastTaskId,
+      );
+      if (!hasAssistant) {
+        const timer = setTimeout(() => {
+          qc.refetchQueries({ queryKey: chatKeys.messages(activeSessionId) });
+        }, 800);
+        return () => clearTimeout(timer);
+      }
+      // Assistant message landed — clear the ref so we don't re-fire on
+      // subsequent re-renders.
+      lastPendingTaskIdRef.current = null;
+    }
+    return undefined;
+  }, [pendingTask, messages, activeSessionId, qc]);
 
   // Once the assistant message for this pending task has landed in the
   // messages list, AssistantMessage owns its rendering — suppress the live
@@ -76,7 +151,7 @@ export function ChatMessageList({ messages, pendingTask, availability }: ChatMes
   const showStatusPill = !!pendingTaskId && !pendingAlreadyPersisted && !!pendingTask;
 
   return (
-    <div ref={scrollRef} style={fadeStyle} className="flex-1">
+    <div ref={scrollRef} style={{ ...fadeStyle, scrollbarGutter: "stable" }} className="flex-1">
       {/* Inner container matches issue / project detail width convention
        *  (max-w-4xl + mx-auto) so switching between chat and content
        *  views doesn't jolt the reading width. px-5 is a touch tighter
@@ -159,12 +234,7 @@ function toTimelineItem(m: TaskMessagePayload): ChatTimelineItem {
 
 // ─── Message bubbles ─────────────────────────────────────────────────────
 
-// Memoized so a streaming token (which mutates only the in-flight task's
-// ["task-messages"] cache, read inside AssistantMessage) doesn't re-render —
-// or re-run the per-message useQuery in — every prior bubble. `message`
-// references are stable across renders (cache array identity), so the default
-// shallow prop compare bails out for everything except the active task.
-const MessageBubble = memo(function MessageBubble({
+function MessageBubble({
   message,
   isPending,
 }: {
@@ -180,7 +250,7 @@ const MessageBubble = memo(function MessageBubble({
            * Neutralise prose's leading/trailing margin so single-line
            * bubbles stay as compact as the plain-text version used to. */}
           <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-            <MemoizedMarkdown id={message.id}>{message.content}</MemoizedMarkdown>
+            <Markdown>{message.content}</Markdown>
           </div>
         </div>
       </div>
@@ -188,7 +258,7 @@ const MessageBubble = memo(function MessageBubble({
   }
 
   return <AssistantMessage message={message} isPending={isPending} />;
-});
+}
 
 function AssistantMessage({
   message,
@@ -230,7 +300,7 @@ function AssistantMessage({
         <TimelineView items={timeline} />
       ) : (
         <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none">
-          <MemoizedMarkdown id={message.id}>{message.content}</MemoizedMarkdown>
+          <Markdown>{message.content}</Markdown>
         </div>
       )}
       <MessageFooter
@@ -419,7 +489,7 @@ function TimelineView({
       )}
       {final.length > 0 && (
         <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none">
-          <MemoizedMarkdown>{final.map((t) => t.content ?? "").join("")}</MemoizedMarkdown>
+          <Markdown>{final.map((t) => t.content ?? "").join("")}</Markdown>
         </div>
       )}
     </>
@@ -470,7 +540,7 @@ function OuterProcessFold({
 function MiddleTextRow({ item }: { item: ChatTimelineItem }) {
   return (
     <div className="py-0.5 text-xs text-muted-foreground prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-      <MemoizedMarkdown>{item.content ?? ""}</MemoizedMarkdown>
+      <Markdown>{item.content ?? ""}</Markdown>
     </div>
   );
 }

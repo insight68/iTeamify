@@ -1,6 +1,39 @@
 {
+  "header": {
+    "title": "Organization",
+    "subtitle": "Manage companies, departments, teams, and data permission entry points"
+  },
   "tree": {
     "empty": "No organization nodes yet"
+  },
+  "create_dialog": {
+    "trigger": "New node",
+    "title": "New organization node",
+    "name_placeholder": "Node name",
+    "description_placeholder": "Description",
+    "types": {
+      "company": "Company",
+      "department": "Department",
+      "team": "Team"
+    },
+    "parent_none": "No parent",
+    "submit": "Create"
+  },
+  "detail": {
+    "empty": "Select a node on the left to view details",
+    "no_description": "No description",
+    "sort_order": "Sort order",
+    "parent": "Parent",
+    "parent_none": "None",
+    "tabs": {
+      "permissions": "Permissions",
+      "meta": "Metadata"
+    },
+    "meta": {
+      "id": "ID: {{value}}",
+      "created_at": "Created: {{value}}",
+      "updated_at": "Updated: {{value}}"
+    }
   },
   "permissions": {
     "columns": {

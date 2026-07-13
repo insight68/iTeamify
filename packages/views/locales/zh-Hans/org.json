@@ -1,6 +1,39 @@
 {
+  "header": {
+    "title": "组织架构",
+    "subtitle": "管理公司、部门、团队与数据权限入口"
+  },
   "tree": {
     "empty": "暂无组织节点"
+  },
+  "create_dialog": {
+    "trigger": "新建节点",
+    "title": "新建组织节点",
+    "name_placeholder": "节点名称",
+    "description_placeholder": "描述",
+    "types": {
+      "company": "公司",
+      "department": "部门",
+      "team": "团队"
+    },
+    "parent_none": "无父级",
+    "submit": "创建"
+  },
+  "detail": {
+    "empty": "选择左侧节点查看详情",
+    "no_description": "暂无描述",
+    "sort_order": "排序",
+    "parent": "父级",
+    "parent_none": "无",
+    "tabs": {
+      "permissions": "权限",
+      "meta": "元信息"
+    },
+    "meta": {
+      "id": "ID：{{value}}",
+      "created_at": "创建：{{value}}",
+      "updated_at": "更新：{{value}}"
+    }
   },
   "permissions": {
     "columns": {

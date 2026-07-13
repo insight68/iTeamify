@@ -1,5 +1,6 @@
-import type { WSMessage, WSEventType } from "../types/events";
+import type { WSMessage, WSEventPayloadMap, WSEventType } from "../types/events";
 import { type Logger, noopLogger } from "../logger";
+import { parseWSFrame } from "./ws-schema";
 
 type EventHandler = (payload: unknown, actorId?: string) => void;
 
@@ -79,20 +80,33 @@ export class WSClient {
     };
 
     this.ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data as string) as WSMessage;
-      if ((msg as any).type === "auth_ack") {
+      const parsed = parseWSFrame(event.data);
+      if (!parsed) {
+        this.logger.warn("ws ignored malformed or unknown message");
+        return;
+      }
+      if (parsed.kind === "auth_ack") {
         this.onAuthenticated();
         return;
       }
+      const msg = parsed.message;
       this.logger.debug("received", msg.type);
       const eventHandlers = this.handlers.get(msg.type);
       if (eventHandlers) {
         for (const handler of eventHandlers) {
-          handler(msg.payload, msg.actor_id);
+          try {
+            handler(msg.payload, msg.actor_id);
+          } catch (error) {
+            this.logger.warn("ws event handler failed", msg.type, error);
+          }
         }
       }
       for (const handler of this.anyHandlers) {
-        handler(msg);
+        try {
+          handler(msg);
+        } catch (error) {
+          this.logger.warn("ws wildcard handler failed", msg.type, error);
+        }
       }
     };
 
@@ -158,7 +172,22 @@ export class WSClient {
     this.onReconnectCallbacks.clear();
   }
 
-  on(event: WSEventType, handler: EventHandler) {
+  on<K extends keyof WSEventPayloadMap>(
+    event: K,
+    handler: (payload: WSEventPayloadMap[K], actorId?: string) => void,
+  ) {
+    if (!this.handlers.has(event)) {
+      this.handlers.set(event, new Set());
+    }
+    const untypedHandler: EventHandler = (payload, actorId) =>
+      handler(payload as WSEventPayloadMap[K], actorId);
+    this.handlers.get(event)!.add(untypedHandler);
+    return () => {
+      this.handlers.get(event)?.delete(untypedHandler);
+    };
+  }
+
+  onUntyped(event: WSEventType, handler: EventHandler) {
     if (!this.handlers.has(event)) {
       this.handlers.set(event, new Set());
     }

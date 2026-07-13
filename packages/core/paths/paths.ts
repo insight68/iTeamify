@@ -38,6 +38,9 @@ function workspaceScoped(slug: string) {
     settings: () => `${ws}/settings`,
     org: () => `${ws}/org`,
     datasources: () => `${ws}/datasources`,
+    reconciliation: () => `${ws}/reconciliation`,
+    reconciliationDetail: (batchNo: string) => `${ws}/reconciliation/${encode(batchNo)}`,
+    inventory: () => `${ws}/inventory`,
   };
 }
 
@@ -46,7 +49,6 @@ export const paths = {
 
   // Global (pre-workspace) routes
   login: () => "/login",
-  signup: () => "/signup",
   newWorkspace: () => "/workspaces/new",
   invite: (id: string) => `/invite/${encode(id)}`,
   invitations: () => "/invitations",

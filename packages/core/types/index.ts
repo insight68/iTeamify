@@ -42,8 +42,16 @@ export type {
   ImportHermesProfileRequest,
   RuntimeHermesProfileResult,
   IssueUsageSummary,
+  ChatTableConfig,
+  ChatTableMcpTool,
+  ChatTableColumn,
+  ChatTableFilter,
+  ReconciliationConfig,
+  InventoryConfig,
+  ConfirmStatus,
+  ReconciliationSummaryResponse,
 } from "./agent";
-export type { Workspace, WorkspaceRepo, Member, MemberRole, User, MemberWithUser, Invitation, InvitationPreview } from "./workspace";
+export type { Workspace, WorkspaceRepo, WorkspaceMcpConfig, WorkspaceMcpServerConfig, WorkspaceImportReport, WorkspaceImportCounts, WorkspaceImportApply, Member, MemberRole, User, MemberWithUser, Invitation, InvitationPreview } from "./workspace";
 export type { InboxItem, InboxSeverity, InboxItemType } from "./inbox";
 export type { NotificationGroupKey, NotificationGroupValue, NotificationPreferences, NotificationPreferenceResponse } from "./notification-preference";
 export type { Comment, CommentType, CommentAuthorType, Reaction } from "./comment";

@@ -88,7 +88,10 @@ export function AgentDetailPage({ agentId }: AgentDetailPageProps) {
 
   const handleUpdate = async (id: string, data: Record<string, unknown>) => {
     try {
-      await api.updateAgent(id, data as UpdateAgentRequest);
+      const updated = await api.updateAgent(id, data as UpdateAgentRequest);
+      qc.setQueryData<Agent[]>(workspaceKeys.agents(wsId), (current) =>
+        current?.map((item) => (item.id === updated.id ? updated : item)) ?? current,
+      );
       qc.invalidateQueries({ queryKey: workspaceKeys.agents(wsId) });
       toast.success(t(($) => $.detail.agent_updated_toast));
     } catch (e) {

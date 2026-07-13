@@ -152,10 +152,10 @@ export function canDeleteRuntime(
 // ---- Workspace -------------------------------------------------------------
 
 export function canUpdateWorkspaceSettings(ctx: PermissionContext): Decision {
-  if (isAdminLike(ctx.role)) return ALLOW;
+  if (ctx.role === "owner") return ALLOW;
   return deny(
-    "not_admin_role",
-    "Only workspace owners and admins can update workspace settings.",
+    "not_owner_role",
+    "Only workspace owners can update workspace settings.",
   );
 }
 

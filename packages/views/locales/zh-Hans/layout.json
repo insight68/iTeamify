@@ -1,13 +1,16 @@
 {
   "nav": {
-    "inbox": "重要事项",
+    "inbox": "关注的任务",
     "my_issues": "我的事项",
     "issues": "事项",
     "projects": "项目",
+    "reconciliation": "对账确认",
+    "inventory": "库存调拨",
     "autopilots": "自动化",
     "org": "组织架构",
     "datasources": "数据源",
     "agents": "智能体",
+    "mcp": "MCP 管理",
     "runtimes": "运行时",
     "tokens": "令牌",
     "skills": "Skill",

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, lazy } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { ChevronRight, ListTodo } from "lucide-react";
 import type { IssueStatus } from "@teamify/core/types";
@@ -19,14 +19,12 @@ import { useUpdateIssue } from "@teamify/core/issues/mutations";
 import { useIssueSelectionStore } from "@teamify/core/issues/stores/selection-store";
 import { PageHeader } from "../../layout/page-header";
 import { IssuesHeader } from "./issues-header";
-const BoardView = lazy(() =>
-  import("./board-view").then((m) => ({ default: m.BoardView })),
-);
-import { BatchActionToolbar } from "./batch-action-toolbar";
+import { BoardView } from "./board-view";
 import { ListView } from "./list-view";
+import { BatchActionToolbar } from "./batch-action-toolbar";
 import { useT } from "../../i18n";
 
-export const IssuesPage = memo(function IssuesPage() {
+export function IssuesPage() {
   const { t } = useT("issues");
   const wsId = useWorkspaceId();
   const { data: allIssues = [], isLoading: loading } = useQuery(issueListOptions(wsId));
@@ -176,4 +174,4 @@ export const IssuesPage = memo(function IssuesPage() {
       </ViewStoreProvider>
     </div>
   );
-});
+}

@@ -38,6 +38,8 @@ interface DataTableProps<TData> extends React.ComponentProps<"div"> {
   // a detail page on row click without nesting an <a> around <tr>,
   // which is invalid HTML.
   onRowClick?: (row: Row<TData>) => void;
+  /** Optional function to compute per-row inline styles. Use for dynamic row styling like conditional backgrounds. */
+  getRowStyle?: (row: Row<TData>) => React.CSSProperties | undefined;
 }
 
 // Headless data-table shell — adapted from Dice UI's data-table
@@ -62,6 +64,7 @@ export function DataTable<TData>({
   actionBar,
   emptyMessage = "No results.",
   onRowClick,
+  getRowStyle,
   className,
   ...props
 }: DataTableProps<TData>) {
@@ -159,10 +162,10 @@ export function DataTable<TData>({
 
   return (
     <div
-      className={cn("flex min-h-0 flex-1 flex-col", className)}
+      className={cn("flex min-h-0 min-w-0 flex-1 flex-col", className)}
       {...props}
     >
-      <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-background">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-background">
         <table
           className="w-full table-fixed caption-bottom text-sm"
           style={{ minWidth: `${table.getTotalSize()}px` }}
@@ -254,6 +257,7 @@ export function DataTable<TData>({
                   onClick={
                     onRowClick ? () => onRowClick(row) : undefined
                   }
+                  style={getRowStyle?.(row)}
                   // `group` lets pinned cells track row hover via
                   // group-hover (their bg is in className, not on the
                   // row, so they stay opaque enough to cover content

@@ -6,6 +6,8 @@ import {
   ChevronsUpDown,
   ChevronUp,
   EyeOff,
+  Pin,
+  PinOff,
   X,
 } from "lucide-react";
 import type * as React from "react";
@@ -25,19 +27,19 @@ interface DataTableColumnHeaderProps<TData, TValue>
   label: string;
 }
 
-// Sort/hide-aware column header, adapted from Dice UI
+// Sort/hide/pin-aware column header, adapted from Dice UI
 // (https://diceui.com/r/data-table). Renders the label as plain text when
-// the column has neither sorting nor hiding enabled (so non-interactive
-// columns don't expose a useless dropdown). Otherwise wraps the label in
-// a dropdown-menu trigger that toggles sort direction and hides the
-// column on demand.
+// the column has neither sorting, hiding, nor pinning enabled (so
+// non-interactive columns don't expose a useless dropdown). Otherwise wraps
+// the label in a dropdown-menu trigger that toggles sort direction, hides
+// the column, and pins/unpins on demand.
 export function DataTableColumnHeader<TData, TValue>({
   column,
   label,
   className,
   ...props
 }: DataTableColumnHeaderProps<TData, TValue>) {
-  if (!column.getCanSort() && !column.getCanHide()) {
+  if (!column.getCanSort() && !column.getCanHide() && !column.getCanPin()) {
     return <div className={cn(className)}>{label}</div>;
   }
 
@@ -60,7 +62,7 @@ export function DataTableColumnHeader<TData, TValue>({
             <ChevronsUpDown />
           ))}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-28">
+      <DropdownMenuContent align="start" className="w-36">
         {column.getCanSort() && (
           <>
             <DropdownMenuCheckboxItem
@@ -99,6 +101,37 @@ export function DataTableColumnHeader<TData, TValue>({
             <EyeOff />
             Hide
           </DropdownMenuCheckboxItem>
+        )}
+        {column.getCanPin() && (
+          <>
+            {column.getIsPinned() !== "left" && (
+              <DropdownMenuItem
+                className="pl-2 [&_svg]:text-muted-foreground"
+                onClick={() => column.pin("left")}
+              >
+                <Pin />
+                Pin left
+              </DropdownMenuItem>
+            )}
+            {column.getIsPinned() !== "right" && (
+              <DropdownMenuItem
+                className="pl-2 [&_svg]:text-muted-foreground"
+                onClick={() => column.pin("right")}
+              >
+                <Pin />
+                Pin right
+              </DropdownMenuItem>
+            )}
+            {column.getIsPinned() && (
+              <DropdownMenuItem
+                className="pl-2 [&_svg]:text-muted-foreground"
+                onClick={() => column.pin(false)}
+              >
+                <PinOff />
+                Unpin
+              </DropdownMenuItem>
+            )}
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

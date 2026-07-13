@@ -15,8 +15,10 @@ import {
 import { Input } from "@teamify/ui/components/ui/input";
 import { Textarea } from "@teamify/ui/components/ui/textarea";
 import { Plus } from "lucide-react";
+import { useT } from "../../i18n";
 
 export function OrgCreateDialog({ orgUnits }: { orgUnits: OrgUnitResponse[] }) {
+  const { t } = useT("org");
   const createOrgUnit = useCreateOrgUnit();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -58,35 +60,35 @@ export function OrgCreateDialog({ orgUnits }: { orgUnits: OrgUnitResponse[] }) {
         render={
           <Button size="sm" className="gap-1.5">
             <Plus className="size-4" />
-            新建节点
+            {t(($) => $.create_dialog.trigger)}
           </Button>
         }
       />
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>新建组织节点</DialogTitle>
+          <DialogTitle>{t(($) => $.create_dialog.title)}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <Input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="节点名称"
+            placeholder={t(($) => $.create_dialog.name_placeholder)}
           />
           <select
             value={type}
             onChange={(event) => setType(event.target.value as OrgUnitType)}
             className="h-9 w-full rounded-md border bg-background px-3 text-sm"
           >
-            <option value="company">公司</option>
-            <option value="department">部门</option>
-            <option value="team">团队</option>
+            <option value="company">{t(($) => $.create_dialog.types.company)}</option>
+            <option value="department">{t(($) => $.create_dialog.types.department)}</option>
+            <option value="team">{t(($) => $.create_dialog.types.team)}</option>
           </select>
           <select
             value={parentId}
             onChange={(event) => setParentId(event.target.value)}
             className="h-9 w-full rounded-md border bg-background px-3 text-sm"
           >
-            <option value="">无父级</option>
+            <option value="">{t(($) => $.create_dialog.parent_none)}</option>
             {parentOptions.map((unit) => (
               <option key={unit.id} value={unit.id}>
                 {unit.name}
@@ -96,7 +98,7 @@ export function OrgCreateDialog({ orgUnits }: { orgUnits: OrgUnitResponse[] }) {
           <Textarea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="描述"
+            placeholder={t(($) => $.create_dialog.description_placeholder)}
             rows={3}
           />
         </div>
@@ -106,7 +108,7 @@ export function OrgCreateDialog({ orgUnits }: { orgUnits: OrgUnitResponse[] }) {
             onClick={submit}
             disabled={!name.trim() || createOrgUnit.isPending}
           >
-            创建
+            {t(($) => $.create_dialog.submit)}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -90,13 +90,6 @@ vi.mock("@teamify/core/api", () => ({
   },
 }));
 
-// Mock marketing components (LandingNav / LandingFooter) — the login shell
-// renders them but they are not the subject under test.
-vi.mock("@teamify/views/marketing", () => ({
-  LandingNav: () => null,
-  LandingFooter: () => null,
-}));
-
 import LoginPage from "./page";
 
 describe("LoginPage", () => {
@@ -107,32 +100,32 @@ describe("LoginPage", () => {
     authStateRef.state.isLoading = false;
   });
 
-  it("renders login form with email input and log in button (password default)", () => {
+  it("renders login form with phone input and continue button (SMS code default)", () => {
     render(<LoginPage />, { wrapper: createWrapper() });
 
     expect(screen.getByText("Sign in to Teamify")).toBeInTheDocument();
-    expect(screen.getByText("Enter your email and password to sign in")).toBeInTheDocument();
-    expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Log in" })
+      screen.getByText("Enter your phone number to get an SMS code"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Phone")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Continue" }),
     ).toBeInTheDocument();
   });
 
-  it("does not call sendCode when email is empty", async () => {
+  it("does not call sendCode when phone is empty", async () => {
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    await user.click(screen.getByRole("button", { name: "Log in" }));
+    await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(mockSendCode).not.toHaveBeenCalled();
   });
 
-  it("calls sendCode with email after switching to code then email code mode", async () => {
+  it("calls sendCode with email after switching to email code mode", async () => {
     mockSendCode.mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    // Switch to code mode (defaults to SMS channel), then pick Email code
-    await user.click(screen.getByRole("button", { name: /use code/i }));
     await user.click(screen.getByRole("button", { name: "Email code" }));
     await user.type(screen.getByLabelText("Email"), "test@teamify.world");
     await user.click(screen.getByRole("button", { name: "Continue" }));
@@ -150,8 +143,6 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    // Switch to code mode — SMS is the default channel
-    await user.click(screen.getByRole("button", { name: /use code/i }));
     await user.type(screen.getByLabelText("Phone"), "+1 555 010 1234");
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
@@ -168,6 +159,7 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
+    await user.click(screen.getByRole("button", { name: /use password/i }));
     await user.type(screen.getByLabelText("Email"), "test@teamify.world");
     await user.type(screen.getByLabelText("Password"), "password123");
     await user.click(screen.getByRole("button", { name: "Log in" }));
@@ -177,13 +169,11 @@ describe("LoginPage", () => {
     });
   });
 
-  it("shows verification code step after switching to code mode and sending", async () => {
+  it("shows verification code step after switching to email code mode and sending", async () => {
     mockSendCode.mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    // Switch to code mode (defaults to SMS channel), then pick Email code
-    await user.click(screen.getByRole("button", { name: /use code/i }));
     await user.click(screen.getByRole("button", { name: "Email code" }));
     await user.type(screen.getByLabelText("Email"), "test@teamify.world");
     await user.click(screen.getByRole("button", { name: "Continue" }));
@@ -199,6 +189,7 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
+    await user.click(screen.getByRole("button", { name: /use password/i }));
     await user.type(screen.getByLabelText("Email"), "test@teamify.world");
     await user.type(screen.getByLabelText("Password"), "wrongpass1");
     await user.click(screen.getByRole("button", { name: "Log in" }));

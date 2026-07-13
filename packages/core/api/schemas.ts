@@ -135,3 +135,233 @@ export const SubscribersListSchema = z.array(SubscriberSchema);
 export const ChildIssuesResponseSchema = z.object({
   issues: z.array(IssueSchema).default([]),
 }).loose();
+
+// ── Chat table config ──
+
+const TableOptionSchema = z.object({
+  label: z.string(),
+  value: z.string(),
+});
+
+const TableColumnSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  type: z.string(),
+  editable: z.boolean().default(false),
+  visible: z.boolean().default(true),
+  width: z.number().optional(),
+  grow: z.boolean().optional(),
+  options: z.array(TableOptionSchema).optional(),
+}).loose();
+
+const TableFilterSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  type: z.string(),
+  options: z.array(TableOptionSchema).optional(),
+  default_value: z.unknown().optional(),
+}).loose();
+
+const TableDataSourceSchema = z.object({
+  tool_name: z.string(),
+  tool_params: z.record(z.string(), z.unknown()).default({}),
+  response_data_path: z.string(),
+  save_tool_name: z.string().optional(),
+  create_tool_name: z.string().optional(),
+  delete_tool_name: z.string().optional(),
+  save_params_mapping: z.record(z.string(), z.string()).optional(),
+}).loose();
+
+export const ChatTableConfigSchema = z.object({
+  enabled: z.boolean().default(false),
+  title: z.string().default(""),
+  data_source_id: z.string().optional(),
+  data_table_name: z.string().optional(),
+  mcp_tool: TableDataSourceSchema.optional(),
+  columns: z.array(TableColumnSchema).default([]),
+  filters: z.array(TableFilterSchema).default([]),
+  page_size: z.number().default(20),
+  default_sort: z.object({
+    column: z.string(),
+    direction: z.string(),
+  }).optional(),
+}).loose();
+
+// ── Agent table data (POST /api/agents/{id}/table-data) ──
+
+export const AgentTableDataResponseSchema = z.object({
+  rows: z.array(z.record(z.string(), z.unknown())).default([]),
+  total: z.number().default(0),
+}).loose();
+
+export const EMPTY_AGENT_TABLE_DATA = {
+  rows: [] as Record<string, unknown>[],
+  total: 0,
+};
+
+// ── Agent table save (PUT /api/agents/{id}/table-data) ──
+
+export const AgentTableSaveResponseSchema = z.object({
+  success: z.boolean().default(false),
+  row: z.record(z.string(), z.unknown()).optional(),
+  error: z.string().optional(),
+}).loose();
+
+export const EMPTY_AGENT_TABLE_SAVE: {
+  success: boolean;
+  row?: Record<string, unknown>;
+  error?: string;
+} = {
+  success: false,
+  error: "schema validation failed — falling back to empty response",
+};
+
+import type { ChatTableConfig, ReconciliationConfig } from "../types/agent";
+
+export const EMPTY_CHAT_TABLE_CONFIG: ChatTableConfig = {
+  enabled: false,
+  title: "",
+  columns: [],
+  filters: [],
+  page_size: 20,
+};
+
+// ── Reconciliation summary (POST /api/agents/{id}/reconciliation/summary) ──
+
+export const ConfirmStatusSchema = z.object({
+  confirmed: z.boolean().default(false),
+  confirmed_by: z.string().optional(),
+  confirmed_at: z.string().optional(),
+  locked: z.boolean().default(false),
+  locked_at: z.string().optional(),
+  locked_by: z.string().optional(),
+  status: z.string().optional(),
+  unlockable: z.boolean().optional(),
+}).loose();
+
+export const ReconciliationSummaryResponseSchema = z.object({
+  rows: z.array(z.record(z.string(), z.unknown())).default([]),
+  total: z.number().default(0),
+  confirmation_status: z.record(z.string(), ConfirmStatusSchema).default({}),
+}).loose();
+
+export const EMPTY_RECONCILIATION_SUMMARY = {
+  rows: [] as Record<string, unknown>[],
+  total: 0,
+  confirmation_status: {} as Record<string, {
+    confirmed: boolean;
+    confirmed_by?: string;
+    confirmed_at?: string;
+    locked: boolean;
+    locked_at?: string;
+    locked_by?: string;
+    status?: string;
+    unlockable?: boolean;
+  }>,
+};
+
+export const ReconciliationConfirmFailureSchema = z.object({
+  batch_no: z.string().default(""),
+  code: z.string().default("unknown"),
+  message: z.string().default("Confirmation failed"),
+}).loose();
+
+export const ReconciliationConfirmResponseSchema = z.object({
+  success: z.boolean().default(false),
+  confirmed: z.array(z.string()).default([]),
+  // Optional for compatibility with older servers.
+  failed: z.array(ReconciliationConfirmFailureSchema).default([]),
+}).loose();
+
+export const EMPTY_RECONCILIATION_CONFIRM = {
+  success: false,
+  confirmed: [] as string[],
+  failed: [{
+    batch_no: "",
+    code: "invalid_response",
+    message: "The server returned an invalid confirmation response",
+  }],
+};
+
+export const EMPTY_RECONCILIATION_CONFIG: ReconciliationConfig = {
+  enabled: false,
+  title: "",
+  batch_no_column: "batch_no",
+  confirmable: false,
+  columns: [],
+  filters: [],
+  page_size: 20,
+};
+
+export const InventoryDashboardResponseSchema = z.object({
+  batch: z.object({
+    id: z.string().default(""),
+    batch_no: z.string().default(""),
+    snapshot_at: z.string().default(""),
+    expected_next_at: z.string().optional(),
+    delayed: z.boolean().default(false),
+  }).loose(),
+  metrics: z.object({
+    total_recommendations: z.number().default(0),
+    critical_count: z.number().default(0),
+    shortage_count: z.number().default(0),
+    pending_count: z.number().default(0),
+    total_suggested_qty: z.number().default(0),
+    estimated_saved_sales_qty: z.number().default(0),
+    estimated_benefit_amount: z.number().default(0),
+  }).loose(),
+  rows: z.array(z.record(z.string(), z.unknown())).default([]),
+  total: z.number().default(0),
+}).loose();
+
+export const EMPTY_INVENTORY_DASHBOARD = {
+  batch: { id: "", batch_no: "", snapshot_at: "", delayed: false },
+  metrics: {
+    total_recommendations: 0, critical_count: 0, shortage_count: 0,
+    pending_count: 0, total_suggested_qty: 0,
+    estimated_saved_sales_qty: 0, estimated_benefit_amount: 0,
+  },
+  rows: [] as Record<string, unknown>[],
+  total: 0,
+};
+
+const InventorySalesTrendSummarySchema = z.object({
+  net_sales_qty: z.number().default(0),
+  average_daily_qty: z.number().default(0),
+  previous_change_rate: z.number().nullable().optional(),
+  refund_rate: z.number().default(0),
+}).loose();
+
+export const InventorySalesTrendResponseSchema = z.object({
+  mode: z.string().default("overall"),
+  latest_stat_date: z.string().default(""),
+  latest_partial: z.boolean().default(false),
+  summary: InventorySalesTrendSummarySchema.default({
+    net_sales_qty: 0, average_daily_qty: 0, refund_rate: 0,
+  }),
+  series_summary: z.record(z.string(), InventorySalesTrendSummarySchema).default({}),
+  points: z.array(z.object({
+    stat_date: z.string(),
+    series_key: z.string(),
+    series_name: z.string().default(""),
+    sales_qty: z.number().default(0),
+    refund_qty: z.number().default(0),
+    net_sales_qty: z.number().default(0),
+    sales_count: z.number().default(0),
+    moving_average_7d: z.number().default(0),
+    partial: z.boolean().default(false),
+  }).loose()).default([]),
+}).loose();
+
+export const EMPTY_INVENTORY_SALES_TREND = {
+  mode: "overall",
+  latest_stat_date: "",
+  latest_partial: false,
+  summary: { net_sales_qty: 0, average_daily_qty: 0, previous_change_rate: null as number | null, refund_rate: 0 },
+  series_summary: {} as Record<string, { net_sales_qty: number; average_daily_qty: number; previous_change_rate?: number | null; refund_rate: number }>,
+  points: [] as Array<{
+    stat_date: string; series_key: string; series_name: string;
+    sales_qty: number; refund_qty: number; net_sales_qty: number;
+    sales_count: number; moving_average_7d: number; partial: boolean;
+  }>,
+};

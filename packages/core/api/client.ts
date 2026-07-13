@@ -22,6 +22,8 @@ import type {
   Reaction,
   IssueReaction,
   Workspace,
+  WorkspaceImportReport,
+  WorkspaceMcpConfig,
   WorkspaceRepo,
   MemberWithUser,
   User,
@@ -98,6 +100,8 @@ import type {
   CreateDataTableRequest,
   UpdateDataTableRequest,
   AllPermissionsResponse,
+  ChatTableColumn,
+  ChatTableFilter,
 } from "../types";
 import type { OnboardingCompletionPath } from "../onboarding/types";
 import { type Logger, noopLogger } from "../logger";
@@ -112,6 +116,18 @@ import {
   ListIssuesResponseSchema,
   SubscribersListSchema,
   TimelineEntriesSchema,
+  AgentTableDataResponseSchema,
+  EMPTY_AGENT_TABLE_DATA,
+  AgentTableSaveResponseSchema,
+  EMPTY_AGENT_TABLE_SAVE,
+  ReconciliationSummaryResponseSchema,
+  EMPTY_RECONCILIATION_SUMMARY,
+  ReconciliationConfirmResponseSchema,
+  EMPTY_RECONCILIATION_CONFIRM,
+  InventoryDashboardResponseSchema,
+  EMPTY_INVENTORY_DASHBOARD,
+  InventorySalesTrendResponseSchema,
+  EMPTY_INVENTORY_SALES_TREND,
 } from "./schemas";
 
 /** Identifies the calling client to the server.
@@ -137,6 +153,17 @@ export interface ApiClientOptions {
 export interface LoginResponse {
   token: string;
   user: User;
+}
+
+export interface DirectUploadResponse {
+  attachment: Attachment;
+  upload: {
+    method: "PUT";
+    upload_url: string;
+    public_url: string;
+    headers: Record<string, string>;
+    expires_at: string;
+  };
 }
 
 // --- Starter content (post-onboarding import) -----------------------------
@@ -302,9 +329,7 @@ export class ApiClient {
       let logLevel: "error" | "warn" | "info" = "error";
       if (res.status === 404) {
         logLevel = "warn";
-      } else if (res.status === 401) {
-        // 401s are expected for unauthenticated or expired sessions and are
-        // handled gracefully by handleUnauthorized() + onAuthFailure().
+      } else if (res.status === 401 && path === "/me") {
         logLevel = "warn";
       }
       this.logger[logLevel](`← ${res.status} ${path}`, { rid, duration: `${Date.now() - start}ms`, error: message });
@@ -321,10 +346,36 @@ export class ApiClient {
     return res.json() as Promise<T>;
   }
 
+  /** Like {@link fetch} but returns the raw Response for endpoints that stream
+   *  non-JSON bodies (e.g. CSV export). The caller is responsible for reading
+   *  the body (`.blob()`, `.text()`, etc.). */
+  private async fetchRaw(path: string, init?: RequestInit): Promise<Response> {
+    const rid = createRequestId();
+    const method = init?.method ?? "GET";
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "X-Request-ID": rid,
+      ...this.authHeaders(),
+      ...((init?.headers as Record<string, string>) ?? {}),
+    };
+    this.logger.info(`→ ${method} ${path}`, { rid });
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      ...init,
+      headers,
+      credentials: "include",
+    });
+    if (!res.ok) {
+      if (res.status === 401) this.handleUnauthorized();
+      const { message, body } = await this.parseErrorBody(res, `API error: ${res.status} ${res.statusText}`);
+      this.logger.error(`← ${res.status} ${path}`, { rid, error: message });
+      throw new ApiError(message, res.status, res.statusText, body);
+    }
+    this.logger.info(`← ${res.status} ${path}`, { rid });
+    return res;
+  }
+
   // Auth
-  async sendCode(
-    contact: string | { email?: string; phone?: string; channel?: "email" | "sms" },
-  ): Promise<void> {
+  async sendCode(contact: string | { email?: string; phone?: string; channel?: "email" | "sms" }): Promise<void> {
     const body = typeof contact === "string" ? { email: contact } : contact;
     await this.fetch("/auth/send-code", {
       method: "POST",
@@ -336,8 +387,7 @@ export class ApiClient {
     contact: string | { email?: string; phone?: string; channel?: "email" | "sms" },
     code: string,
   ): Promise<LoginResponse> {
-    const body =
-      typeof contact === "string" ? { email: contact, code } : { ...contact, code };
+    const body = typeof contact === "string" ? { email: contact, code } : { ...contact, code };
     return this.fetch("/auth/verify-code", {
       method: "POST",
       body: JSON.stringify(body),
@@ -698,6 +748,250 @@ export class ApiClient {
     return this.fetch(`/api/agents/${id}/restore`, { method: "POST" });
   }
 
+  // ── Table data (agent chat table) ──
+
+  async fetchAgentTableData(
+    agentId: string,
+    params?: { filters?: Record<string, unknown>; page?: number; pageSize?: number },
+  ): Promise<{ rows: Record<string, unknown>[]; total: number }> {
+    const raw = await this.fetch<unknown>(`/api/agents/${agentId}/table-data`, {
+      method: "POST",
+      body: JSON.stringify({
+        filters: params?.filters ?? {},
+        page: params?.page ?? 1,
+        page_size: params?.pageSize ?? 20,
+      }),
+    });
+    return parseWithFallback(raw, AgentTableDataResponseSchema, EMPTY_AGENT_TABLE_DATA, {
+      endpoint: "POST /api/agents/{id}/table-data",
+    });
+  }
+
+  async saveAgentTableData(
+    agentId: string,
+    payload: { action: string; row: Record<string, unknown>; rowKey?: string },
+  ): Promise<{ success: boolean; row?: Record<string, unknown>; error?: string }> {
+    const raw = await this.fetch<unknown>(`/api/agents/${agentId}/table-data`, {
+      method: "PUT",
+      body: JSON.stringify({
+        action: payload.action,
+        row: payload.row,
+        row_key: payload.rowKey ?? "",
+      }),
+    });
+    return parseWithFallback(raw, AgentTableSaveResponseSchema, EMPTY_AGENT_TABLE_SAVE, {
+      endpoint: "PUT /api/agents/{id}/table-data",
+    });
+  }
+
+  // ── Reconciliation (standalone reconciliation page) ──
+
+  async fetchReconciliationSummary(
+    agentId: string,
+    params?: { filters?: Record<string, unknown>; page?: number; pageSize?: number },
+  ): Promise<{
+    rows: Record<string, unknown>[];
+    total: number;
+    confirmation_status: Record<string, { confirmed: boolean; confirmed_by?: string; confirmed_at?: string; locked: boolean; locked_at?: string; locked_by?: string; status?: string; unlockable?: boolean }>;
+  }> {
+    const raw = await this.fetch<unknown>(`/api/agents/${agentId}/reconciliation/summary`, {
+      method: "POST",
+      body: JSON.stringify({
+        filters: params?.filters ?? {},
+        page: params?.page ?? 1,
+        page_size: params?.pageSize ?? 20,
+      }),
+    });
+    return parseWithFallback(raw, ReconciliationSummaryResponseSchema, EMPTY_RECONCILIATION_SUMMARY, {
+      endpoint: "POST /api/agents/{id}/reconciliation/summary",
+    });
+  }
+
+  async fetchReconciliationDetails(
+    agentId: string,
+    params: { batchNo: string; filters?: Record<string, unknown>; page?: number; pageSize?: number },
+  ): Promise<{ rows: Record<string, unknown>[]; total: number }> {
+    const raw = await this.fetch<unknown>(`/api/agents/${agentId}/reconciliation/details`, {
+      method: "POST",
+      body: JSON.stringify({
+        batch_no: params.batchNo,
+        filters: params.filters ?? {},
+        page: params.page ?? 1,
+        page_size: params.pageSize ?? 50,
+      }),
+    });
+    return parseWithFallback(raw, AgentTableDataResponseSchema, EMPTY_AGENT_TABLE_DATA, {
+      endpoint: "POST /api/agents/{id}/reconciliation/details",
+    });
+  }
+
+  async confirmReconciliation(
+    agentId: string,
+    batchNos: string[],
+  ) {
+    const raw = await this.fetch<unknown>(`/api/agents/${agentId}/reconciliation/confirm`, {
+      method: "POST",
+      body: JSON.stringify({ batch_nos: batchNos }),
+    });
+    return parseWithFallback(raw, ReconciliationConfirmResponseSchema, EMPTY_RECONCILIATION_CONFIRM, {
+      endpoint: "POST /api/agents/{id}/reconciliation/confirm",
+    });
+  }
+
+  async unlockReconciliation(
+    agentId: string,
+    batchNo: string,
+    unlockReason?: string,
+  ): Promise<{ success: boolean }> {
+    return this.fetch(`/api/agents/${agentId}/reconciliation/unlock`, {
+      method: "POST",
+      body: JSON.stringify({ batch_no: batchNo, unlock_reason: unlockReason }),
+    });
+  }
+
+  async exportReconciliation(
+    agentId: string,
+    filters?: Record<string, unknown>,
+  ): Promise<Blob> {
+    const response = await this.fetchRaw(`/api/agents/${agentId}/reconciliation/export`, {
+      method: "POST",
+      body: JSON.stringify({ filters: filters ?? {} }),
+    });
+    return response.blob();
+  }
+
+  // ── Workspace-level reconciliation (standalone /reconciliation route) ──
+  //
+  // These hit /api/workspaces/{id}/reconciliation/* — no agent context. The
+  // backend prefers explicit workspace table metadata, then falls back to the
+  // server-level DATASOURCE_URL business datasource, then legacy workspace
+  // database sources.
+
+  async fetchWorkspaceReconciliationConfig(
+    wsId: string,
+  ): Promise<{
+    source_kind?: string;
+    source_name?: string;
+    data_source_id?: string;
+    summary_table_name: string;
+    detail_table_name: string;
+    batch_no_column: string;
+    columns: ChatTableColumn[];
+    detail_columns: ChatTableColumn[];
+    filters: ChatTableFilter[];
+    page_size: number;
+  }> {
+    return this.fetch(`/api/workspaces/${wsId}/reconciliation/config`);
+  }
+
+  async fetchWorkspaceReconciliationSummary(
+    wsId: string,
+    params?: { filters?: Record<string, unknown>; page?: number; pageSize?: number },
+  ): Promise<{
+    rows: Record<string, unknown>[];
+    total: number;
+    confirmation_status: Record<string, { confirmed: boolean; confirmed_by?: string; confirmed_at?: string; locked: boolean; locked_at?: string; locked_by?: string; status?: string; unlockable?: boolean }>;
+  }> {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/reconciliation/summary`, {
+      method: "POST",
+      body: JSON.stringify({
+        filters: params?.filters ?? {},
+        page: params?.page ?? 1,
+        page_size: params?.pageSize ?? 20,
+      }),
+    });
+    return parseWithFallback(raw, ReconciliationSummaryResponseSchema, EMPTY_RECONCILIATION_SUMMARY, {
+      endpoint: "POST /api/workspaces/{id}/reconciliation/summary",
+    });
+  }
+
+  async fetchWorkspaceReconciliationDetails(
+    wsId: string,
+    params: { batchNo: string; filters?: Record<string, unknown>; page?: number; pageSize?: number },
+  ): Promise<{ rows: Record<string, unknown>[]; total: number }> {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/reconciliation/details`, {
+      method: "POST",
+      body: JSON.stringify({
+        batch_no: params.batchNo,
+        filters: params.filters ?? {},
+        page: params.page ?? 1,
+        page_size: params.pageSize ?? 50,
+      }),
+    });
+    return parseWithFallback(raw, AgentTableDataResponseSchema, EMPTY_AGENT_TABLE_DATA, {
+      endpoint: "POST /api/workspaces/{id}/reconciliation/details",
+    });
+  }
+
+  async confirmWorkspaceReconciliation(
+    wsId: string,
+    batchNos: string[],
+  ) {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/reconciliation/confirm`, {
+      method: "POST",
+      body: JSON.stringify({ batch_nos: batchNos }),
+    });
+    return parseWithFallback(raw, ReconciliationConfirmResponseSchema, EMPTY_RECONCILIATION_CONFIRM, {
+      endpoint: "POST /api/workspaces/{id}/reconciliation/confirm",
+    });
+  }
+
+  async unlockWorkspaceReconciliation(
+    wsId: string,
+    batchNo: string,
+    unlockReason?: string,
+  ): Promise<{ success: boolean }> {
+    return this.fetch(`/api/workspaces/${wsId}/reconciliation/unlock`, {
+      method: "POST",
+      body: JSON.stringify({ batch_no: batchNo, unlock_reason: unlockReason }),
+    });
+  }
+
+  async exportWorkspaceReconciliation(
+    wsId: string,
+    filters?: Record<string, unknown>,
+  ): Promise<Blob> {
+    const response = await this.fetchRaw(`/api/workspaces/${wsId}/reconciliation/export`, {
+      method: "POST",
+      body: JSON.stringify({ filters: filters ?? {} }),
+    });
+    return response.blob();
+  }
+
+  async fetchWorkspaceInventoryDashboard(
+    wsId: string,
+    params?: { filters?: Record<string, unknown>; page?: number; pageSize?: number },
+  ) {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/inventory/dashboard`, {
+      method: "POST",
+      body: JSON.stringify({
+        filters: params?.filters ?? {},
+        page: params?.page ?? 1,
+        page_size: params?.pageSize ?? 30,
+      }),
+    });
+    return parseWithFallback(raw, InventoryDashboardResponseSchema, EMPTY_INVENTORY_DASHBOARD, {
+      endpoint: "POST /api/workspaces/{id}/inventory/dashboard",
+    });
+  }
+
+  async fetchWorkspaceInventorySalesTrend(
+    wsId: string,
+    params: { days: 7 | 30 | 90; productCode?: string; warehouseCodes?: string[] },
+  ) {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/inventory/sales-trend`, {
+      method: "POST",
+      body: JSON.stringify({
+        days: params.days,
+        product_code: params.productCode ?? "",
+        warehouse_codes: params.warehouseCodes ?? [],
+      }),
+    });
+    return parseWithFallback(raw, InventorySalesTrendResponseSchema, EMPTY_INVENTORY_SALES_TREND, {
+      endpoint: "POST /api/workspaces/{id}/inventory/sales-trend",
+    });
+  }
+
   // Bulk-cancel every active task (queued/dispatched/running) for the agent.
   // Permission: agent owner or workspace admin/owner. Server returns the
   // count of cancelled rows; broadcasts task:cancelled for each so other
@@ -965,7 +1259,7 @@ export class ApiClient {
     });
   }
 
-  async updateWorkspace(id: string, data: { name?: string; description?: string; context?: string; settings?: Record<string, unknown>; repos?: WorkspaceRepo[] }): Promise<Workspace> {
+  async updateWorkspace(id: string, data: { name?: string; description?: string; context?: string; settings?: Record<string, unknown>; repos?: WorkspaceRepo[]; mcp_config?: WorkspaceMcpConfig }): Promise<Workspace> {
     return this.fetch(`/api/workspaces/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
@@ -1049,6 +1343,19 @@ export class ApiClient {
     await this.fetch(`/api/workspaces/${workspaceId}`, {
       method: "DELETE",
     });
+  }
+
+  // Copies runtime / agent / skill / workspace-MCP config from `sourceId`
+  // into `targetId`. Backend skips entities by name collision rather than
+  // overwriting (see WorkspaceImportReport in workspace_import.go).
+  async importWorkspaceConfig(
+    targetId: string,
+    sourceId: string,
+  ): Promise<WorkspaceImportReport> {
+    return this.fetch(
+      `/api/workspaces/${targetId}/import-from/${sourceId}`,
+      { method: "POST" },
+    );
   }
 
   // Skills
@@ -1139,6 +1446,56 @@ export class ApiClient {
 
     this.logger.info(`← ${res.status} /api/upload-file`, { rid, duration: `${Date.now() - start}ms` });
     return res.json() as Promise<Attachment>;
+  }
+
+  async uploadFileDirect(file: File, opts?: { issueId?: string; commentId?: string }): Promise<Attachment> {
+    const rid = createRequestId();
+    const start = Date.now();
+    this.logger.info("→ POST /api/uploads/direct", { rid });
+
+    const direct = await this.fetch<DirectUploadResponse>("/api/uploads/direct", {
+      method: "POST",
+      body: JSON.stringify({
+        filename: file.name,
+        content_type: file.type || "application/octet-stream",
+        size_bytes: file.size,
+        issue_id: opts?.issueId,
+        comment_id: opts?.commentId,
+      }),
+    });
+
+    this.logger.info("→ PUT OSS direct upload", { rid, attachmentId: direct.attachment.id });
+    const uploadRes = await fetch(direct.upload.upload_url, {
+      method: direct.upload.method,
+      headers: direct.upload.headers,
+      body: file,
+    });
+
+    if (!uploadRes.ok) {
+      this.logger.error("← OSS direct upload failed", {
+        rid,
+        attachmentId: direct.attachment.id,
+        status: uploadRes.status,
+        duration: `${Date.now() - start}ms`,
+      });
+      try {
+        await this.deleteAttachment(direct.attachment.id);
+      } catch (cleanupErr) {
+        this.logger.warn("direct upload attachment cleanup failed", {
+          rid,
+          attachmentId: direct.attachment.id,
+          err: cleanupErr,
+        });
+      }
+      throw new Error(`Upload failed: ${uploadRes.status}`);
+    }
+
+    this.logger.info("← OSS direct upload complete", {
+      rid,
+      attachmentId: direct.attachment.id,
+      duration: `${Date.now() - start}ms`,
+    });
+    return direct.attachment;
   }
 
   // Chat Sessions
@@ -1480,6 +1837,22 @@ export class ApiClient {
 
   async deleteDataTable(id: string): Promise<void> {
     await this.fetch(`/api/data-tables/${id}`, { method: "DELETE" });
+  }
+
+  /**
+   * Introspect the columns of a data table by connecting to the external database
+   * and reading information_schema.columns. Returns columns ready for ChatTableConfig.
+   */
+  async fetchTableColumns(dataTableId: string): Promise<{
+    columns: Array<{
+      key: string;
+      label: string;
+      type: "text" | "number" | "date" | "boolean" | "select";
+      editable: boolean;
+      visible: boolean;
+    }>;
+  }> {
+    return this.fetch(`/api/table-columns/${dataTableId}`);
   }
 
   // ---------------------------------------------------------------------------

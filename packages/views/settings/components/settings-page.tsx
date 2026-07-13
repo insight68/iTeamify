@@ -1,6 +1,6 @@
 "use client";
 
-import React, { lazy, Suspense } from "react";
+import React from "react";
 import {
   User,
   SlidersHorizontal,
@@ -10,39 +10,25 @@ import {
   FolderGit2,
   Bell,
   Bot,
+  Server,
+  Download,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@teamify/ui/components/ui/tabs";
-import { Skeleton } from "@teamify/ui/components/ui/skeleton";
 import { useCurrentWorkspace } from "@teamify/core/paths";
 import { useIsOwner } from "@teamify/core/permissions";
 import { useWorkspaceId } from "@teamify/core";
 import { useNavigation } from "../../navigation";
+import { AccountTab } from "./account-tab";
+import { PreferencesTab } from "./preferences-tab";
+import { TokensTab } from "./tokens-tab";
+import { WorkspaceTab } from "./workspace-tab";
+import { MembersTab } from "./members-tab";
+import { RepositoriesTab } from "./repositories-tab";
+import { NotificationsTab } from "./notifications-tab";
+import { AgentsTab } from "./agents-tab";
+import { ImportTab } from "./import-tab";
+import { McpTab } from "./mcp-tab";
 import { useT } from "../../i18n";
-
-const AccountTab = lazy(() =>
-  import("./account-tab").then((m) => ({ default: m.AccountTab })),
-);
-const PreferencesTab = lazy(() =>
-  import("./preferences-tab").then((m) => ({ default: m.PreferencesTab })),
-);
-const TokensTab = lazy(() =>
-  import("./tokens-tab").then((m) => ({ default: m.TokensTab })),
-);
-const WorkspaceTab = lazy(() =>
-  import("./workspace-tab").then((m) => ({ default: m.WorkspaceTab })),
-);
-const MembersTab = lazy(() =>
-  import("./members-tab").then((m) => ({ default: m.MembersTab })),
-);
-const RepositoriesTab = lazy(() =>
-  import("./repositories-tab").then((m) => ({ default: m.RepositoriesTab })),
-);
-const NotificationsTab = lazy(() =>
-  import("./notifications-tab").then((m) => ({ default: m.NotificationsTab })),
-);
-const AgentsTab = lazy(() =>
-  import("./agents-tab").then((m) => ({ default: m.AgentsTab })),
-);
 
 const ACCOUNT_TAB_KEYS = ["profile", "preferences", "notifications", "tokens"] as const;
 const ACCOUNT_TAB_ICONS = {
@@ -52,18 +38,22 @@ const ACCOUNT_TAB_ICONS = {
   tokens: Key,
 } as const;
 
-const BASE_WORKSPACE_TAB_KEYS = ["general", "repositories", "members", "agents"] as const;
+const BASE_WORKSPACE_TAB_KEYS = ["general", "repositories", "members", "agents", "mcp", "import"] as const;
 const WORKSPACE_TAB_VALUES = {
   general: "workspace",
   repositories: "repositories",
   members: "members",
   agents: "agents",
+  mcp: "mcp",
+  import: "import",
 } as const;
 const WORKSPACE_TAB_ICONS = {
   general: Settings,
   repositories: FolderGit2,
   members: Users,
   agents: Bot,
+  mcp: Server,
+  import: Download,
 } as const;
 
 const DEFAULT_TAB = "profile";
@@ -102,12 +92,14 @@ export function SettingsPage({ extraAccountTabs }: SettingsPageProps = {}) {
     [extraAccountTabs, isOwner],
   );
 
-  // Repositories tab is owner-only — hide from non-owners.
+  // Repositories / MCP / Import tabs are owner-only — hide from non-owners.
   const visibleWorkspaceKeys = React.useMemo(
     () =>
       isOwner
         ? BASE_WORKSPACE_TAB_KEYS
-        : BASE_WORKSPACE_TAB_KEYS.filter((k) => k !== "repositories"),
+        : BASE_WORKSPACE_TAB_KEYS.filter(
+            (k) => k !== "repositories" && k !== "mcp" && k !== "import",
+          ),
     [isOwner],
   );
 
@@ -186,14 +178,16 @@ export function SettingsPage({ extraAccountTabs }: SettingsPageProps = {}) {
       {/* Right content */}
       <div className="flex-1 min-w-0 md:overflow-y-auto">
         <div className="w-full max-w-3xl mx-auto p-4 md:p-6">
-          <TabsContent value="profile"><Suspense fallback={<Skeleton className="h-96" />}><AccountTab /></Suspense></TabsContent>
-          <TabsContent value="preferences"><Suspense fallback={<Skeleton className="h-96" />}><PreferencesTab /></Suspense></TabsContent>
-          <TabsContent value="notifications"><Suspense fallback={<Skeleton className="h-96" />}><NotificationsTab /></Suspense></TabsContent>
-          <TabsContent value="tokens"><Suspense fallback={<Skeleton className="h-96" />}><TokensTab /></Suspense></TabsContent>
-          <TabsContent value="workspace"><Suspense fallback={<Skeleton className="h-96" />}><WorkspaceTab /></Suspense></TabsContent>
-          <TabsContent value="repositories"><Suspense fallback={<Skeleton className="h-96" />}><RepositoriesTab /></Suspense></TabsContent>
-          <TabsContent value="members"><Suspense fallback={<Skeleton className="h-96" />}><MembersTab /></Suspense></TabsContent>
-          <TabsContent value="agents"><Suspense fallback={<Skeleton className="h-96" />}><AgentsTab /></Suspense></TabsContent>
+          <TabsContent value="profile"><AccountTab /></TabsContent>
+          <TabsContent value="preferences"><PreferencesTab /></TabsContent>
+          <TabsContent value="notifications"><NotificationsTab /></TabsContent>
+          <TabsContent value="tokens"><TokensTab /></TabsContent>
+          <TabsContent value="workspace"><WorkspaceTab /></TabsContent>
+          <TabsContent value="repositories"><RepositoriesTab /></TabsContent>
+          <TabsContent value="members"><MembersTab /></TabsContent>
+          <TabsContent value="agents"><AgentsTab /></TabsContent>
+          <TabsContent value="mcp"><McpTab /></TabsContent>
+          <TabsContent value="import"><ImportTab /></TabsContent>
           {visibleExtraTabs?.map((tab) => (
             <TabsContent key={tab.value} value={tab.value}>{tab.content}</TabsContent>
           ))}

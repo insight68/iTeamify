@@ -1,5 +1,24 @@
 export { createChatStore, DRAFT_NEW_SESSION } from "./store";
 export type { ChatStoreOptions, ChatState, ChatTimelineItem, ContextAnchor } from "./store";
+export { useAgentTableFilterStore } from "./filter-store";
+export type { AgentTableFilterState } from "./filter-store";
+export {
+  getAgentTableRowBackground,
+  getAgentTableRowColor,
+  getTableCellValue,
+  normalizeHexColor,
+} from "./table-colors";
+export {
+  buildAgentTableExportModel,
+  buildAgentTableExportFileName,
+} from "./table-export";
+export type {
+  AgentTableExportCell,
+  AgentTableExportColumn,
+  AgentTableExportInput,
+  AgentTableExportModel,
+  AgentTableExportRow,
+} from "./table-export";
 
 import type { createChatStore as CreateChatStoreFn } from "./store";
 

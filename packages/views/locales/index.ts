@@ -21,9 +21,8 @@ import enModals from "./en/modals.json";
 import enRuntimes from "./en/runtimes.json";
 import enLayout from "./en/layout.json";
 import enOrg from "./en/org.json";
-import enMarketing from "./en/marketing.json";
-import enDuizhang from "./en/duizhang.json";
-import enWorkflows from "./en/workflows.json";
+import enDatasources from "./en/datasources.json";
+import enInventory from "./en/inventory.json";
 import zhHansCommon from "./zh-Hans/common.json";
 import zhHansAuth from "./zh-Hans/auth.json";
 import zhHansSettings from "./zh-Hans/settings.json";
@@ -46,18 +45,12 @@ import zhHansModals from "./zh-Hans/modals.json";
 import zhHansRuntimes from "./zh-Hans/runtimes.json";
 import zhHansLayout from "./zh-Hans/layout.json";
 import zhHansOrg from "./zh-Hans/org.json";
-import zhHansMarketing from "./zh-Hans/marketing.json";
-import zhHansDuizhang from "./zh-Hans/duizhang.json";
-import zhHansWorkflows from "./zh-Hans/workflows.json";
+import zhHansDatasources from "./zh-Hans/datasources.json";
+import zhHansInventory from "./zh-Hans/inventory.json";
 
 // Single source of truth for the resource bundle. Both apps (web layout +
 // desktop App.tsx) import from here so adding a locale or namespace happens
 // in exactly one place.
-//
-// Prefer `loadResources(locale)` for production code — it only imports the
-// locale that is actually needed, saving ~172 KB (gzipped ~50–70 KB) for
-// users of the non-default language. Static RESOURCES is retained for tests
-// and Electron (where bundle size matters less).
 export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
   en: {
     common: enCommon,
@@ -82,9 +75,8 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     runtimes: enRuntimes,
     layout: enLayout,
     org: enOrg,
-    marketing: enMarketing,
-    duizhang: enDuizhang,
-    workflows: enWorkflows,
+    datasources: enDatasources,
+    inventory: enInventory,
   },
   "zh-Hans": {
     common: zhHansCommon,
@@ -109,22 +101,7 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     runtimes: zhHansRuntimes,
     layout: zhHansLayout,
     org: zhHansOrg,
-    marketing: zhHansMarketing,
-    duizhang: zhHansDuizhang,
-    workflows: zhHansWorkflows,
+    datasources: zhHansDatasources,
+    inventory: zhHansInventory,
   },
 };
-
-/**
- * Async locale loader — imports only the requested locale's namespace bundle.
- * Use this in app entry points (Next.js RSC layout) to avoid bundling both
- * en + zh-Hans translations into every initial JS payload.
- */
-export async function loadResources(
-  locale: SupportedLocale,
-): Promise<LocaleResources> {
-  if (locale === "zh-Hans") {
-    return (await import("./zh-Hans")).zhHans;
-  }
-  return (await import("./en")).en;
-}

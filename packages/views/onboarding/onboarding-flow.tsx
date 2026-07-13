@@ -131,7 +131,7 @@ export function OnboardingFlow({
       return;
     }
     onComplete(workspaces[0] ?? undefined);
-  }, [workspaces, onComplete]);
+  }, [workspaces, onComplete, t]);
 
   const handleQuestionnaireSubmit = useCallback(
     async (answers: QuestionnaireAnswers) => {

@@ -2,23 +2,31 @@ packages:
   - apps/*
   - packages/*
 
+onlyBuiltDependencies:
+  - esbuild
+  - electron
+
+overrides:
+  '@types/react': ^19.2.14
+  '@types/react-dom': ^19.2.3
+
 catalog:
   '@formatjs/intl-localematcher': ^0.8.4
   '@tailwindcss/postcss': ^4.3.0
   '@tailwindcss/vite': ^4
   '@tanstack/react-query': ^5.96.2
   '@tanstack/react-table': ^8.21.3
-  '@tanstack/react-virtual': ^3.14.2
   '@testing-library/jest-dom': ^6.9.1
   '@testing-library/react': ^16.3.2
   '@testing-library/user-event': ^14.6.1
-  '@types/node': ^25.9.2
+  '@types/node': ^25.0.10
   '@types/react': ^19.2.14
   '@types/react-dom': ^19.2.3
   '@vitejs/plugin-react': ^6.0.1
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
   eslint-plugin-i18next: ^6.1.4
+  exceljs: ^4.4.0
   i18next: ^26.0.8
   jsdom: ^29.0.1
   katex: ^0.16.45
@@ -35,6 +43,15 @@ catalog:
   typescript: ^6.0.3
   unicode-animations: ^1.0.3
   vitest: ^4.1.5
-  xlsx: ^0.18.5
   zod: ^4.1.5
   zustand: ^5.0.0
+
+allowBuilds:
+  core-js: set this to true or false
+  electron: set this to true or false
+  electron-winstaller: set this to true or false
+  esbuild: set this to true or false
+  msw: set this to true or false
+  protobufjs: set this to true or false
+  sharp: set this to true or false
+  unicode-animations: set this to true or false

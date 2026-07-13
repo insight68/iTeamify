@@ -123,7 +123,7 @@ export function WSProvider({
   const subscribe = useCallback(
     (event: WSEventType, handler: EventHandler) => {
       if (!wsClient) return () => {};
-      return wsClient.on(event, handler);
+      return wsClient.onUntyped(event, handler);
     },
     [wsClient],
   );

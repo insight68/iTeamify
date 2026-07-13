@@ -63,14 +63,6 @@ interface LoginPageProps {
   extra?: ReactNode;
   /** Initial login mode. Defaults to "code". */
   defaultMode?: "code" | "password";
-  /** Initial verification-code channel. Defaults to "sms" for sign-in parity. */
-  defaultCodeChannel?: "email" | "sms";
-  /** Which verification-code channels are available. Defaults to email + SMS. */
-  codeChannels?: ReadonlyArray<"email" | "sms">;
-  /** Whether password mode is available. Defaults to true. */
-  allowPasswordMode?: boolean;
-  /** Copy variant. Signup still uses the same verify-code backend flow. */
-  intent?: "signin" | "signup";
   /** When false, omits the outer min-h-svh centered wrapper. Defaults to true. */
   fullPage?: boolean;
   /** Called when user clicks "Forgot password?". Omit to hide the link. */
@@ -112,7 +104,6 @@ export function validateCliCallback(cliCallback: string): boolean {
 // ---------------------------------------------------------------------------
 
 const DEFAULT_CODE_CHANNEL: "email" | "sms" = "sms";
-const DEFAULT_CODE_CHANNELS = ["email", "sms"] as const;
 
 export function LoginPage({
   logo,
@@ -123,27 +114,14 @@ export function LoginPage({
   onGoogleLogin,
   extra,
   defaultMode,
-  defaultCodeChannel,
-  codeChannels = DEFAULT_CODE_CHANNELS,
-  allowPasswordMode = true,
-  intent = "signin",
   fullPage = true,
   onForgotPassword,
 }: LoginPageProps) {
   const { t } = useT("auth");
   const qc = useQueryClient();
   const [step, setStep] = useState<"email" | "code" | "cli_confirm">("email");
-  const initialCodeChannel =
-    defaultCodeChannel && codeChannels.includes(defaultCodeChannel)
-      ? defaultCodeChannel
-      : codeChannels.includes(DEFAULT_CODE_CHANNEL)
-        ? DEFAULT_CODE_CHANNEL
-        : codeChannels[0] ?? "email";
-  const [loginMode, setLoginMode] = useState<"code" | "password">(
-    allowPasswordMode ? (defaultMode ?? "code") : "code",
-  );
-  const [codeChannel, setCodeChannel] =
-    useState<"email" | "sms">(initialCodeChannel);
+  const [loginMode, setLoginMode] = useState<"code" | "password">(defaultMode ?? "code");
+  const [codeChannel, setCodeChannel] = useState<"email" | "sms">(DEFAULT_CODE_CHANNEL);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
@@ -159,7 +137,6 @@ export function LoginPage({
     ? { phone: phone.trim(), channel: "sms" as const }
     : { email: email.trim(), channel: "email" as const };
   const codeContactValue = codeChannel === "sms" ? phone.trim() : email.trim();
-  const isSignup = intent === "signup";
 
   // Check for existing session when CLI callback is present.
   // Prioritises cookie auth (= current browser session) to avoid authorising
@@ -372,10 +349,10 @@ export function LoginPage({
 
   if (step === "cli_confirm" && existingUser) {
     return wrapContent(
-        <Card className="w-full max-w-sm shadow-sm ring-1 ring-foreground/5">
+        <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             {logo && <div className="mx-auto mb-4">{logo}</div>}
-            <CardTitle className="text-2xl font-semibold">
+            <CardTitle className="text-2xl">
               {t(($) => $.cli.title)}
             </CardTitle>
             <CardDescription>
@@ -414,10 +391,10 @@ export function LoginPage({
 
   if (step === "code") {
     return wrapContent(
-        <Card className="w-full max-w-sm shadow-sm ring-1 ring-foreground/5">
+        <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             {logo && <div className="mx-auto mb-4">{logo}</div>}
-            <CardTitle className="text-2xl font-semibold">
+            <CardTitle className="text-2xl">
               {t(($) => $.verify.title)}
             </CardTitle>
             <CardDescription>
@@ -480,56 +457,48 @@ export function LoginPage({
   }
 
   // -------------------------------------------------------------------------
-  // Email step
+  // Contact step
   // -------------------------------------------------------------------------
 
   return wrapContent(
-      <Card className="w-full max-w-sm shadow-sm ring-1 ring-foreground/5">
+      <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           {logo && <div className="mx-auto mb-4">{logo}</div>}
-          <CardTitle className="text-2xl font-semibold">
-            {isSignup ? t(($) => $.signup.title) : t(($) => $.signin.title)}
+          <CardTitle className="text-2xl">
+            {t(($) => $.signin.title)}
           </CardTitle>
           <CardDescription>
-            {isSignup
-              ? codeChannel === "sms"
-                ? t(($) => $.signup.description_sms)
-                : t(($) => $.signup.description)
-              : loginMode === "password"
-                ? t(($) => $.signin.description_password)
-                : codeChannel === "sms"
-                  ? t(($) => $.signin.description_sms)
-                  : t(($) => $.signin.description)}
+            {loginMode === "password"
+              ? t(($) => $.signin.description_password)
+              : codeChannel === "sms"
+                ? t(($) => $.signin.description_sms)
+                : t(($) => $.signin.description)}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form id="login-form" onSubmit={handleSendCode} className="space-y-4">
-            {loginMode === "code" && codeChannels.length > 1 && (
+            {loginMode === "code" && (
               <div className="grid grid-cols-2 gap-2">
-                {codeChannels.includes("email") && (
-                  <Button
-                    type="button"
-                    variant={codeChannel === "email" ? "default" : "outline"}
-                    onClick={() => {
-                      setCodeChannel("email");
-                      setError("");
-                    }}
-                  >
-                    {t(($) => $.signin.email_code)}
-                  </Button>
-                )}
-                {codeChannels.includes("sms") && (
-                  <Button
-                    type="button"
-                    variant={codeChannel === "sms" ? "default" : "outline"}
-                    onClick={() => {
-                      setCodeChannel("sms");
-                      setError("");
-                    }}
-                  >
-                    {t(($) => $.signin.sms_code)}
-                  </Button>
-                )}
+                <Button
+                  type="button"
+                  variant={codeChannel === "email" ? "default" : "outline"}
+                  onClick={() => {
+                    setCodeChannel("email");
+                    setError("");
+                  }}
+                >
+                  {t(($) => $.signin.email_code)}
+                </Button>
+                <Button
+                  type="button"
+                  variant={codeChannel === "sms" ? "default" : "outline"}
+                  onClick={() => {
+                    setCodeChannel("sms");
+                    setError("");
+                  }}
+                >
+                  {t(($) => $.signin.sms_code)}
+                </Button>
               </div>
             )}
 
@@ -595,57 +564,49 @@ export function LoginPage({
               <p className="text-sm text-destructive">{error}</p>
             )}
 
-            <Button
-              type="submit"
-              form="login-form"
-              className="w-full"
-              size="lg"
-              disabled={
-                loading ||
-                (loginMode === "password" && (!email || !password)) ||
-                (loginMode === "code" && !codeContactValue)
-              }
-            >
-              {loading
-                ? (loginMode === "password"
-                    ? t(($) => $.signin.logging_in)
-                    : isSignup
-                      ? t(($) => $.signup.sending)
+            <div className="flex gap-2">
+              <Button
+                type="submit"
+                form="login-form"
+                className="flex-1"
+                size="lg"
+                disabled={
+                  loading ||
+                  (loginMode === "password" && (!email || !password)) ||
+                  (loginMode === "code" && !codeContactValue)
+                }
+              >
+                {loading
+                  ? (loginMode === "password"
+                      ? t(($) => $.signin.logging_in)
                       : t(($) => $.signin.sending))
-                : (loginMode === "password"
-                    ? t(($) => $.signin.login)
-                    : isSignup
-                      ? t(($) => $.signup.continue)
+                  : (loginMode === "password"
+                      ? t(($) => $.signin.login)
                       : t(($) => $.signin.continue))}
-            </Button>
+              </Button>
+            </div>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3 bg-transparent">
+        <CardFooter className="flex flex-col gap-3">
           {/* Login mode toggle */}
-          {allowPasswordMode && (
-            <div className="flex w-full items-center justify-center gap-2 text-sm">
-              <span className="text-muted-foreground">
-                {loginMode === "code"
-                  ? t(($) => $.signin.password_login_prompt)
-                  : t(($) => $.signin.code_login_prompt)}
-              </span>
-              <button
-                type="button"
-                className="text-primary underline-offset-4 hover:underline"
-                onClick={() => {
-                  setLoginMode(loginMode === "code" ? "password" : "code");
-                  setCodeChannel(initialCodeChannel);
-                  setError("");
-                  setPassword("");
-                  setCode("");
-                }}
-              >
-                {loginMode === "code"
-                  ? t(($) => $.signin.use_password)
-                  : t(($) => $.signin.use_code)}
-              </button>
-            </div>
-          )}
+          <div className="flex w-full items-center justify-center gap-2 text-sm">
+            <span className="text-muted-foreground">
+              {loginMode === "code" ? t(($) => $.signin.password_login_prompt) : t(($) => $.signin.code_login_prompt)}
+            </span>
+            <button
+              type="button"
+              className="text-primary underline-offset-4 hover:underline"
+              onClick={() => {
+                setLoginMode(loginMode === "code" ? "password" : "code");
+                setCodeChannel(DEFAULT_CODE_CHANNEL);
+                setError("");
+                setPassword("");
+                setCode("");
+              }}
+            >
+              {loginMode === "code" ? t(($) => $.signin.use_password) : t(($) => $.signin.use_code)}
+            </button>
+          </div>
 
           {(google || onGoogleLogin) && (
             <>
@@ -654,7 +615,7 @@ export function LoginPage({
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
+                  <span className="bg-card px-2 text-muted-foreground">
                     {t(($) => $.signin.divider)}
                   </span>
                 </div>

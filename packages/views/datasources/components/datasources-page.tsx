@@ -7,12 +7,14 @@ import { useWorkspaceId } from "@teamify/core/hooks";
 import { Skeleton } from "@teamify/ui/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@teamify/ui/components/ui/tabs";
 import { PageHeader } from "../../layout/page-header";
+import { useT } from "../../i18n";
 import { DataSourceCard } from "./datasource-card";
 import { DataSourceCreateDialog } from "./datasource-create-dialog";
 import { DataSourceDetail } from "./datasource-detail";
 import { PermissionMatrix } from "./permission-matrix";
 
 export function DataSourcesPage() {
+  const { t } = useT("datasources");
   const wsId = useWorkspaceId();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data: dataSources = [], isLoading } = useQuery(dataSourceListOptions(wsId));
@@ -25,8 +27,8 @@ export function DataSourcesPage() {
     <div className="flex h-full flex-col bg-background">
       <PageHeader className="justify-between px-5">
         <div>
-          <h1 className="text-sm font-semibold">数据源</h1>
-          <p className="text-xs text-muted-foreground">登记数据源、数据表，并查看组织权限矩阵</p>
+          <h1 className="text-sm font-semibold">{t(($) => $.header.title)}</h1>
+          <p className="text-xs text-muted-foreground">{t(($) => $.header.subtitle)}</p>
         </div>
         <DataSourceCreateDialog />
       </PageHeader>
@@ -39,7 +41,7 @@ export function DataSourcesPage() {
             </>
           ) : dataSources.length === 0 ? (
             <div className="flex h-40 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
-              暂无数据源
+              {t(($) => $.empty)}
             </div>
           ) : (
             dataSources.map((dataSource) => (
@@ -55,8 +57,8 @@ export function DataSourcesPage() {
         <section className="min-w-0">
           <Tabs defaultValue="detail">
             <TabsList>
-              <TabsTrigger value="detail">详情</TabsTrigger>
-              <TabsTrigger value="permissions">权限矩阵</TabsTrigger>
+              <TabsTrigger value="detail">{t(($) => $.tabs.detail)}</TabsTrigger>
+              <TabsTrigger value="permissions">{t(($) => $.tabs.permissions)}</TabsTrigger>
             </TabsList>
             <TabsContent value="detail" className="mt-3">
               <DataSourceDetail dataSource={selected} />

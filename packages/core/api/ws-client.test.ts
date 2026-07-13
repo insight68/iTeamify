@@ -161,4 +161,36 @@ describe("WSClient", () => {
 
     ws.disconnect();
   });
+
+  it("ignores malformed frames and still dispatches the next valid frame", () => {
+    const handler = vi.fn();
+    const ws = new WSClient("ws://example.test/ws", { cookieAuth: true });
+    ws.setAuth("tok", "acme");
+    ws.connect();
+    ws.on("issue:deleted", handler);
+
+    FakeWebSocket.lastInstance!.onmessage!({ data: "{" });
+    FakeWebSocket.lastInstance!.onmessage!({
+      data: JSON.stringify({ type: "issue:deleted", payload: { issue_id: "issue-1" } }),
+    });
+
+    expect(handler).toHaveBeenCalledWith({ issue_id: "issue-1" }, undefined);
+    ws.disconnect();
+  });
+
+  it("isolates a failing event handler from other subscribers", () => {
+    const secondHandler = vi.fn();
+    const ws = new WSClient("ws://example.test/ws", { cookieAuth: true });
+    ws.setAuth("tok", "acme");
+    ws.connect();
+    ws.on("issue:deleted", () => { throw new Error("boom"); });
+    ws.on("issue:deleted", secondHandler);
+
+    FakeWebSocket.lastInstance!.onmessage!({
+      data: JSON.stringify({ type: "issue:deleted", payload: { issue_id: "issue-1" } }),
+    });
+
+    expect(secondHandler).toHaveBeenCalledOnce();
+    ws.disconnect();
+  });
 });

@@ -7,3 +7,4 @@ export * from "./hermes-profiles";
 export * from "./types";
 export * from "./derive-health";
 export * from "./use-runtime-health";
+export * from "./releases";

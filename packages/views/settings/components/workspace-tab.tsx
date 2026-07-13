@@ -1,12 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, LogOut } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleUser,
+  FolderKanban,
+  Warehouse,
+  Inbox,
+  ListTodo,
+  LogOut,
+  Save,
+  Search,
+  SquarePen,
+} from "lucide-react";
 import { Input } from "@teamify/ui/components/ui/input";
 import { Textarea } from "@teamify/ui/components/ui/textarea";
 import { Label } from "@teamify/ui/components/ui/label";
 import { Button } from "@teamify/ui/components/ui/button";
 import { Card, CardContent } from "@teamify/ui/components/ui/card";
+import { Switch } from "@teamify/ui/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -34,10 +46,96 @@ import {
   useHasOnboarded,
 } from "@teamify/core/paths";
 import { setCurrentWorkspace } from "@teamify/core/platform";
+import {
+  getWorkspaceModuleNavVisibility,
+  type WorkspaceModuleKey,
+  withWorkspaceModuleNavVisibilityMap,
+} from "@teamify/core/workspace/modules";
+import {
+  getWorkspaceShortcutNavVisibility,
+  type WorkspaceShortcutNavKey,
+  withWorkspaceShortcutNavVisibilityMap,
+} from "@teamify/core/workspace/navigation";
 import type { Workspace } from "@teamify/core/types";
 import { useNavigation } from "../../navigation";
 import { DeleteWorkspaceDialog } from "./delete-workspace-dialog";
 import { useT } from "../../i18n";
+
+const moduleRows: {
+  key: WorkspaceModuleKey;
+  icon: typeof CheckCircle2;
+  titleKey: "issues_nav_title" | "projects_nav_title" | "reconciliation_nav_title" | "inventory_nav_title";
+  descriptionKey:
+    | "issues_nav_description"
+    | "projects_nav_description"
+    | "reconciliation_nav_description"
+    | "inventory_nav_description";
+}[] = [
+  {
+    key: "issues",
+    icon: ListTodo,
+    titleKey: "issues_nav_title",
+    descriptionKey: "issues_nav_description",
+  },
+  {
+    key: "projects",
+    icon: FolderKanban,
+    titleKey: "projects_nav_title",
+    descriptionKey: "projects_nav_description",
+  },
+  {
+    key: "reconciliation",
+    icon: CheckCircle2,
+    titleKey: "reconciliation_nav_title",
+    descriptionKey: "reconciliation_nav_description",
+  },
+  {
+    key: "inventory",
+    icon: Warehouse,
+    titleKey: "inventory_nav_title",
+    descriptionKey: "inventory_nav_description",
+  },
+];
+
+const shortcutRows: {
+  key: WorkspaceShortcutNavKey;
+  icon: typeof CheckCircle2;
+  titleKey:
+    | "inbox_nav_title"
+    | "my_issues_nav_title"
+    | "create_issue_nav_title"
+    | "search_nav_title";
+  descriptionKey:
+    | "inbox_nav_description"
+    | "my_issues_nav_description"
+    | "create_issue_nav_description"
+    | "search_nav_description";
+}[] = [
+  {
+    key: "inbox",
+    icon: Inbox,
+    titleKey: "inbox_nav_title",
+    descriptionKey: "inbox_nav_description",
+  },
+  {
+    key: "myIssues",
+    icon: CircleUser,
+    titleKey: "my_issues_nav_title",
+    descriptionKey: "my_issues_nav_description",
+  },
+  {
+    key: "createIssue",
+    icon: SquarePen,
+    titleKey: "create_issue_nav_title",
+    descriptionKey: "create_issue_nav_description",
+  },
+  {
+    key: "search",
+    icon: Search,
+    titleKey: "search_nav_title",
+    descriptionKey: "search_nav_description",
+  },
+];
 
 export function WorkspaceTab() {
   const { t } = useT("settings");
@@ -98,6 +196,12 @@ export function WorkspaceTab() {
   const [name, setName] = useState(workspace?.name ?? "");
   const [description, setDescription] = useState(workspace?.description ?? "");
   const [context, setContext] = useState(workspace?.context ?? "");
+  const [moduleNavVisibility, setModuleNavVisibility] = useState(
+    getWorkspaceModuleNavVisibility(workspace?.settings),
+  );
+  const [shortcutNavVisibility, setShortcutNavVisibility] = useState(
+    getWorkspaceShortcutNavVisibility(workspace?.settings),
+  );
   const [saving, setSaving] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
@@ -109,7 +213,7 @@ export function WorkspaceTab() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const currentMember = members.find((m) => m.user_id === user?.id) ?? null;
-  const canManageWorkspace = currentMember?.role === "owner" || currentMember?.role === "admin";
+  const canManageWorkspace = currentMember?.role === "owner";
   const isOwner = currentMember?.role === "owner";
   // Mirror the backend invariant (server/internal/handler/workspace.go:569):
   // a workspace must always have at least one owner, so the sole owner can't
@@ -123,9 +227,11 @@ export function WorkspaceTab() {
     setName(workspace?.name ?? "");
     setDescription(workspace?.description ?? "");
     setContext(workspace?.context ?? "");
+    setModuleNavVisibility(getWorkspaceModuleNavVisibility(workspace?.settings));
+    setShortcutNavVisibility(getWorkspaceShortcutNavVisibility(workspace?.settings));
   }, [workspace]);
 
-  const handleSave = async () => {
+  const handleSaveGeneral = async () => {
     if (!workspace) return;
     setSaving(true);
     try {
@@ -133,6 +239,31 @@ export function WorkspaceTab() {
         name,
         description,
         context,
+      });
+      qc.setQueryData(workspaceKeys.list(), (old: Workspace[] | undefined) =>
+        old?.map((ws) => (ws.id === updated.id ? updated : ws)),
+      );
+      toast.success(t(($) => $.workspace.toast_saved));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t(($) => $.workspace.toast_save_failed));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveNavigation = async () => {
+    if (!workspace) return;
+    setSaving(true);
+    try {
+      const nextSettingsWithModules = withWorkspaceModuleNavVisibilityMap(
+        workspace.settings,
+        moduleNavVisibility,
+      );
+      const updated = await api.updateWorkspace(workspace.id, {
+        settings: withWorkspaceShortcutNavVisibilityMap(
+          nextSettingsWithModules,
+          shortcutNavVisibility,
+        ),
       });
       qc.setQueryData(workspaceKeys.list(), (old: Workspace[] | undefined) =>
         old?.map((ws) => (ws.id === updated.id ? updated : ws)),
@@ -234,8 +365,113 @@ export function WorkspaceTab() {
             <div className="flex items-center justify-end gap-2 pt-1">
               <Button
                 size="sm"
-                onClick={handleSave}
+                onClick={handleSaveGeneral}
                 disabled={saving || !name.trim() || !canManageWorkspace}
+              >
+                <Save className="h-3 w-3" />
+                {saving ? t(($) => $.workspace.saving) : t(($) => $.workspace.save)}
+              </Button>
+            </div>
+            {!canManageWorkspace && (
+              <p className="text-xs text-muted-foreground">
+                {t(($) => $.workspace.manage_hint)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold">{t(($) => $.workspace.section_modules)}</h2>
+        </div>
+
+        <Card>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              {moduleRows.map((module) => {
+                const Icon = module.icon;
+                return (
+                  <div
+                    key={module.key}
+                    className="flex flex-col gap-3 rounded-md border bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex min-w-0 gap-3">
+                      <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 space-y-1">
+                        <Label className="text-sm font-medium">
+                          {t(($) => $.workspace[module.titleKey])}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {t(($) => $.workspace[module.descriptionKey])}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
+                      <span className="text-xs text-muted-foreground">
+                        {t(($) => $.workspace.module_nav_label)}
+                      </span>
+                      <Switch
+                        checked={moduleNavVisibility[module.key]}
+                        onCheckedChange={(checked) =>
+                          setModuleNavVisibility((current) => ({
+                            ...current,
+                            [module.key]: checked,
+                          }))
+                        }
+                        disabled={!canManageWorkspace}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {shortcutRows.map((shortcut) => {
+                const Icon = shortcut.icon;
+                return (
+                  <div
+                    key={shortcut.key}
+                    className="flex flex-col gap-3 rounded-md border bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex min-w-0 gap-3">
+                      <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 space-y-1">
+                        <Label className="text-sm font-medium">
+                          {t(($) => $.workspace[shortcut.titleKey])}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {t(($) => $.workspace[shortcut.descriptionKey])}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
+                      <span className="text-xs text-muted-foreground">
+                        {t(($) => $.workspace.module_nav_label)}
+                      </span>
+                      <Switch
+                        checked={shortcutNavVisibility[shortcut.key]}
+                        onCheckedChange={(checked) =>
+                          setShortcutNavVisibility((current) => ({
+                            ...current,
+                            [shortcut.key]: checked,
+                          }))
+                        }
+                        disabled={!canManageWorkspace}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <Button
+                size="sm"
+                onClick={handleSaveNavigation}
+                disabled={saving || !canManageWorkspace}
               >
                 <Save className="h-3 w-3" />
                 {saving ? t(($) => $.workspace.saving) : t(($) => $.workspace.save)}

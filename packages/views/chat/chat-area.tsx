@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Check } from "lucide-react";
 import {
@@ -18,6 +18,8 @@ import { agentListOptions, memberListOptions } from "@teamify/core/workspace/que
 import { canAssignAgentToIssue } from "@teamify/core/permissions";
 import { api } from "@teamify/core/api";
 import { useAgentPresenceDetail, useWorkspaceAgentAvailability } from "@teamify/core/agents";
+import { useDefaultLayout } from "react-resizable-panels";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@teamify/ui/components/ui/resizable";
 import { ActorAvatar } from "../common/actor-avatar";
 import { OfflineBanner } from "./components/offline-banner";
 import { NoAgentBanner } from "./components/no-agent-banner";
@@ -30,6 +32,9 @@ import { useCreateChatSession } from "@teamify/core/chat/mutations";
 import { useChatStore } from "@teamify/core/chat";
 import { ChatMessageList, ChatMessageSkeleton } from "./components/chat-message-list";
 import { ChatInput } from "./components/chat-input";
+import { AgentTablePanel } from "./components/agent-table-panel";
+import { AgentReconciliationPanel } from "./components/agent-reconciliation-panel";
+import { BrowserFullscreenFrame } from "./components/browser-fullscreen-frame";
 import {
   ContextAnchorButton,
   ContextAnchorCard,
@@ -57,6 +62,7 @@ export function ChatArea({
   onAgentSelected,
 }: ChatAreaProps) {
   const wsId = useWorkspaceId();
+  const { t } = useT("chat");
   const user = useAuthStore((s) => s.user);
   const setActiveSession = useChatStore((s) => s.setActiveSession);
 
@@ -103,7 +109,22 @@ export function ChatArea({
 
   const qc = useQueryClient();
   const createSession = useCreateChatSession();
-  const { uploadWithToast } = useFileUpload(api);
+  const { uploadWithToast } = useFileUpload(api, undefined, { direct: true });
+
+  // Polling backup: when a task is in-flight, periodically refetch messages
+  // and pending task status as a safety net for missed WS events. This covers
+  // the case where staleTime: Infinity prevents auto-refetch on reconnect,
+  // and any WS events (chat:done, task:completed) lost during disconnection.
+  useEffect(() => {
+    if (!pendingTaskId || !activeSessionId) return;
+
+    const intervalId = setInterval(() => {
+      qc.refetchQueries({ queryKey: chatKeys.messages(activeSessionId) });
+      qc.refetchQueries({ queryKey: chatKeys.pendingTask(activeSessionId) });
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [pendingTaskId, activeSessionId, qc]);
 
   const handleSend = useCallback(
     async (content: string, attachmentIds?: string[]) => {
@@ -155,7 +176,11 @@ export function ChatArea({
         // Preserve WS-updated status (e.g. "running"), only upgrade task_id
         return { ...old, task_id: result.task_id, created_at: result.created_at };
       });
-      qc.invalidateQueries({ queryKey: chatKeys.messages(sessionId) });
+      // Don't invalidate messages here — the optimistic user message is already
+      // in cache via setQueryData above, and the assistant reply hasn't been
+      // written yet. chat:done / task:completed WS events are the authoritative
+      // trigger for loading the full message list. Premature invalidation here
+      // races with those events and can leave the assistant message unloaded.
     },
     [activeSessionId, activeAgent, anchorCandidate, createSession, setActiveSession, onSessionCreated, qc],
   );
@@ -180,8 +205,36 @@ export function ChatArea({
   );
 
   const hasMessages = messages.length > 0 || !!pendingTaskId;
+  const tableConfig = activeAgent?.chat_table_config;
+  const tableEnabled = tableConfig?.enabled ?? false;
+  const reconciliationConfig = activeAgent?.reconciliation_config;
+  const reconciliationEnabled = reconciliationConfig?.enabled ?? false;
+  const toolPanelEnabled = !!activeAgent && (tableEnabled || reconciliationEnabled);
 
-  return (
+  // Per-agent resizable split persistence
+  const tableSplitLayoutId = activeAgent
+    ? `chat-table-split-${activeAgent.id}`
+    : "chat-table-split";
+  const {
+    defaultLayout: tableSplitLayout,
+    onLayoutChanged: onTableSplitLayoutChanged,
+  } = useDefaultLayout({ id: tableSplitLayoutId });
+
+  // Keyboard shortcut: Ctrl+Shift+ArrowUp focuses the table/chat resize handle
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "ArrowUp") {
+        e.preventDefault();
+        document.querySelector<HTMLElement>(
+          '[data-panel-group-direction="vertical"] [role="separator"]',
+        )?.focus();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const chatContent = (
     <div className="flex h-full flex-col bg-background">
       {/* Messages / skeleton / empty state */}
       <div className="flex-1 min-h-0 overflow-y-auto">
@@ -197,6 +250,7 @@ export function ChatArea({
           <EmptyState
             hasSessions={!!activeSessionId}
             agentName={activeAgent?.name}
+            chatEmptyStateTitle={activeAgent?.chat_empty_state_title}
             onPickPrompt={(text) => handleSend(text)}
           />
         )}
@@ -232,6 +286,64 @@ export function ChatArea({
       </div>
     </div>
   );
+
+  if (toolPanelEnabled && activeAgent) {
+    return (
+      <ResizablePanelGroup
+        id={tableSplitLayoutId}
+        orientation="vertical"
+        className="h-full"
+        defaultLayout={tableSplitLayout}
+        onLayoutChanged={onTableSplitLayoutChanged}
+      >
+        <ResizablePanel
+          id="table"
+          defaultSize="66.67%"
+          minSize="25%"
+          maxSize="85%"
+        >
+          <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden p-2 pb-0">
+            {reconciliationEnabled && reconciliationConfig && (
+              <BrowserFullscreenFrame
+                enterLabel={t(($) => $.window.expand_tooltip)}
+                exitLabel={t(($) => $.window.restore_tooltip)}
+                className="min-h-0 flex-1 rounded-lg bg-background data-[fullscreen=true]:rounded-none"
+              >
+                {(fullscreenControl) => (
+                  <AgentReconciliationPanel
+                    config={reconciliationConfig}
+                    fullscreenControl={fullscreenControl}
+                  />
+                )}
+              </BrowserFullscreenFrame>
+            )}
+            {tableEnabled && tableConfig && (
+              <BrowserFullscreenFrame
+                enterLabel={t(($) => $.window.expand_tooltip)}
+                exitLabel={t(($) => $.window.restore_tooltip)}
+                className="min-h-0 flex-1 rounded-lg border bg-card data-[fullscreen=true]:rounded-none data-[fullscreen=true]:border-0"
+              >
+                {(fullscreenControl) => (
+                  <AgentTablePanel
+                    config={tableConfig}
+                    agentId={activeAgent.id}
+                    sessionId={activeSessionId ?? ""}
+                    fullscreenControl={fullscreenControl}
+                  />
+                )}
+              </BrowserFullscreenFrame>
+            )}
+          </div>
+        </ResizablePanel>
+        <ResizableHandle aria-label="Resize table and chat panels" />
+        <ResizablePanel id="chat-content" minSize="15%">
+          <div className="h-full">{chatContent}</div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    );
+  }
+
+  return chatContent;
 }
 
 /**
@@ -351,19 +463,23 @@ const STARTER_ICONS: Record<(typeof STARTER_KEYS)[number], string> = {
 function EmptyState({
   hasSessions,
   agentName,
+  chatEmptyStateTitle,
   onPickPrompt,
 }: {
   hasSessions: boolean;
   agentName?: string;
+  chatEmptyStateTitle?: string;
   onPickPrompt: (text: string) => void;
 }) {
   const { t } = useT("chat");
+  const firstTimeTitle =
+    chatEmptyStateTitle?.trim() || t(($) => $.empty_state.first_time_title);
   if (!hasSessions) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-8">
         <div className="text-center space-y-3">
           <h3 className="text-base font-semibold">
-            {t(($) => $.empty_state.first_time_title)}
+            {firstTimeTitle}
           </h3>
           <p className="text-sm text-muted-foreground">
             {t(($) => $.empty_state.first_time_intro)}{" "}

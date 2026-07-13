@@ -8,11 +8,14 @@ import {
 
 describe("runtime config", () => {
   it("uses cloud defaults without a desktop.json file", () => {
+    // The cloud host is a single domain — apiUrl and appUrl match because
+    // `deriveAppUrl`'s `api.` stripping has no `api.` prefix to remove on
+    // `pub.niuwoai.com`.
     expect(DEFAULT_RUNTIME_CONFIG).toEqual({
       schemaVersion: 1,
-      apiUrl: "https://api.teamify.world",
-      wsUrl: "wss://api.teamify.world/ws",
-      appUrl: "https://teamify.world",
+      apiUrl: "https://pub.niuwoai.com",
+      wsUrl: "wss://pub.niuwoai.com/ws",
+      appUrl: "https://pub.niuwoai.com",
     });
   });
 

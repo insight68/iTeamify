@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from "react";
+import { useEffect } from "react";
 import {
   createMemoryRouter,
   Navigate,
@@ -6,68 +6,28 @@ import {
   useMatches,
 } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
-// Page-level routes are lazy-loaded so the renderer's initial bundle no
-// longer eagerly pulls every page (and its heavy transitive deps — TipTap,
-// recharts, dnd-kit) at cold start. react-router renders the Suspense
-// fallback in PageShell while a route's chunk loads. Named exports are
-// adapted to the default export React.lazy expects.
-const IssueDetailPage = lazy(() =>
-  import("./pages/issue-detail-page").then((m) => ({ default: m.IssueDetailPage })),
-);
-const ProjectDetailPage = lazy(() =>
-  import("./pages/project-detail-page").then((m) => ({ default: m.ProjectDetailPage })),
-);
-const AutopilotDetailPage = lazy(() =>
-  import("./pages/autopilot-detail-page").then((m) => ({ default: m.AutopilotDetailPage })),
-);
-const SkillDetailPage = lazy(() =>
-  import("./pages/skill-detail-page").then((m) => ({ default: m.SkillDetailPage })),
-);
-const AgentDetailPage = lazy(() =>
-  import("./pages/agent-detail-page").then((m) => ({ default: m.AgentDetailPage })),
-);
-const RuntimeDetailPage = lazy(() =>
-  import("./pages/runtime-detail-page").then((m) => ({ default: m.RuntimeDetailPage })),
-);
-const IssuesPage = lazy(() =>
-  import("@teamify/views/issues/components").then((m) => ({ default: m.IssuesPage })),
-);
-const ProjectsPage = lazy(() =>
-  import("@teamify/views/projects/components").then((m) => ({ default: m.ProjectsPage })),
-);
-const AutopilotsPage = lazy(() =>
-  import("@teamify/views/autopilots/components").then((m) => ({ default: m.AutopilotsPage })),
-);
-const OrgPage = lazy(() =>
-  import("@teamify/views/org").then((m) => ({ default: m.OrgPage })),
-);
-const DataSourcesPage = lazy(() =>
-  import("@teamify/views/datasources").then((m) => ({ default: m.DataSourcesPage })),
-);
-const MyIssuesPage = lazy(() =>
-  import("@teamify/views/my-issues").then((m) => ({ default: m.MyIssuesPage })),
-);
-const SkillsPage = lazy(() =>
-  import("@teamify/views/skills").then((m) => ({ default: m.SkillsPage })),
-);
-const DesktopRuntimesPage = lazy(() =>
-  import("./components/desktop-runtimes-page").then((m) => ({ default: m.DesktopRuntimesPage })),
-);
-const AgentsPage = lazy(() =>
-  import("@teamify/views/agents").then((m) => ({ default: m.AgentsPage })),
-);
-const ChatPage = lazy(() =>
-  import("@teamify/views/chat").then((m) => ({ default: m.ChatPage })),
-);
-const InboxPage = lazy(() =>
-  import("@teamify/views/inbox").then((m) => ({ default: m.InboxPage })),
-);
-const SettingsPage = lazy(() =>
-  import("@teamify/views/settings").then((m) => ({ default: m.SettingsPage })),
-);
+import { IssueDetailPage } from "./pages/issue-detail-page";
+import { ProjectDetailPage } from "./pages/project-detail-page";
+import { AutopilotDetailPage } from "./pages/autopilot-detail-page";
+import { SkillDetailPage } from "./pages/skill-detail-page";
+import { AgentDetailPage } from "./pages/agent-detail-page";
+import { RuntimeDetailPage } from "./pages/runtime-detail-page";
+import { ReconciliationDetailPage } from "./pages/reconciliation-detail-page";
+import { IssuesPage } from "@teamify/views/issues/components";
+import { ProjectsPage } from "@teamify/views/projects/components";
+import { AutopilotsPage } from "@teamify/views/autopilots/components";
+import { ReconciliationPage } from "@teamify/views/reconciliation";
+import { InventoryPage } from "@teamify/views/inventory";
+import { OrgPage } from "@teamify/views/org";
+import { DataSourcesPage } from "@teamify/views/datasources";
+import { MyIssuesPage } from "@teamify/views/my-issues";
+import { SkillsPage } from "@teamify/views/skills";
+import { DesktopRuntimesPage } from "./components/desktop-runtimes-page";
+import { AgentsPage } from "@teamify/views/agents";
+import { ChatPage } from "@teamify/views/chat";
+import { InboxPage } from "@teamify/views/inbox";
+import { SettingsPage } from "@teamify/views/settings";
 import { ErrorBoundary } from "@teamify/ui/components/common/error-boundary";
-import { TeamifyIcon } from "@teamify/ui/components/common/teamify-icon";
-import { captureException } from "@teamify/core/analytics";
 import { Download, Server } from "lucide-react";
 import { DaemonSettingsTab } from "./components/daemon-settings-tab";
 import { UpdatesSettingsTab } from "./components/updates-settings-tab";
@@ -99,26 +59,7 @@ function PageShell() {
   return (
     <>
       <TitleSync />
-      {/* Top-level backstop for every tab route. The narrower per-route
-       *  <ErrorBoundary> wrappers (issues / chats) catch first; this ensures
-       *  the ~12 routes without one (projects / agents / settings / inbox /
-       *  org / …) degrade to a recoverable panel instead of blanking the tab.
-       *  Desktop has no URL bar, so a white tab is unrecoverable without this. */}
-      <ErrorBoundary
-        onError={(error) =>
-          captureException(error, { source: "desktop-route-error" })
-        }
-      >
-        <Suspense
-          fallback={
-            <div className="flex h-full items-center justify-center">
-              <TeamifyIcon className="size-6 animate-pulse" />
-            </div>
-          }
-        >
-          <Outlet />
-        </Suspense>
-      </ErrorBoundary>
+      <Outlet />
     </>
   );
 }
@@ -168,6 +109,21 @@ export const appRoutes: RouteObject[] = [
             path: "projects",
             element: <ProjectsPage />,
             handle: { title: "Projects" },
+          },
+          {
+            path: "reconciliation",
+            element: <ErrorBoundary><ReconciliationPage /></ErrorBoundary>,
+            handle: { title: "Reconciliation" },
+          },
+          {
+            path: "inventory",
+            element: <ErrorBoundary><InventoryPage /></ErrorBoundary>,
+            handle: { title: "Inventory allocation" },
+          },
+          {
+            path: "reconciliation/:batchNo",
+            element: <ErrorBoundary><ReconciliationDetailPage /></ErrorBoundary>,
+            handle: { title: "Reconciliation" },
           },
           {
             path: "projects/:id",

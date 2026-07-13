@@ -81,8 +81,9 @@ export function CustomArgsTab({
   const launchHeader = runtimeDevice?.launch_header;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
+    <div className="flex h-full flex-col gap-4">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-2">
+        <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">
             {t(($) => $.tab_body.custom_args.intro)}
@@ -132,7 +133,9 @@ export function CustomArgsTab({
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-3">
+      </div>
+
+      <div className="flex shrink-0 items-center justify-end gap-3 border-t pt-4">
         {dirty && (
           <span className="text-xs text-muted-foreground">{t(($) => $.tab_body.common.unsaved_changes)}</span>
         )}

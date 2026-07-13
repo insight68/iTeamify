@@ -14,8 +14,10 @@ import {
 import { Input } from "@teamify/ui/components/ui/input";
 import { Textarea } from "@teamify/ui/components/ui/textarea";
 import { Plus } from "lucide-react";
+import { useT } from "../../i18n";
 
 export function DataTableCreateDialog({ dataSourceId }: { dataSourceId: string }) {
+  const { t } = useT("datasources");
   const createDataTable = useCreateDataTable();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -50,29 +52,29 @@ export function DataTableCreateDialog({ dataSourceId }: { dataSourceId: string }
         render={
           <Button size="sm" variant="outline" className="gap-1.5">
             <Plus className="size-4" />
-            添加数据表
+            {t(($) => $.table_dialog.trigger)}
           </Button>
         }
       />
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>添加数据表</DialogTitle>
+          <DialogTitle>{t(($) => $.table_dialog.title)}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <Input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="表名"
+            placeholder={t(($) => $.table_dialog.name_placeholder)}
           />
           <Input
             value={schemaName}
             onChange={(event) => setSchemaName(event.target.value)}
-            placeholder="Schema，可选"
+            placeholder={t(($) => $.table_dialog.schema_placeholder)}
           />
           <Textarea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="描述"
+            placeholder={t(($) => $.table_dialog.description_placeholder)}
             rows={3}
           />
         </div>
@@ -82,7 +84,7 @@ export function DataTableCreateDialog({ dataSourceId }: { dataSourceId: string }
             onClick={submit}
             disabled={!name.trim() || createDataTable.isPending}
           >
-            添加
+            {t(($) => $.table_dialog.submit)}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -2,6 +2,7 @@
   dev dev-web dev-desktop dev-mobile \
   build build-web build-desktop build-mobile \
   deploy_web deploy_web_preview deploy_desktop deploy_desktop_all \
+  sync-upstream sync-upstream-dry-run \
   check typecheck test lint \
   setup start stop \
   clean clean-web clean-desktop clean-mobile
@@ -65,6 +66,15 @@ deploy_desktop: ## Package desktop app (current platform)
 
 deploy_desktop_all: ## Package desktop app (all platforms)
 	pnpm --filter @teamify/desktop package:all
+
+# ══════════════════════════════════════════════════════════════════════════════
+##@ Upstream
+
+sync-upstream: ## Sync the Teamify frontend snapshot from GitHub
+	@bash scripts/sync-teamify-frontend.sh
+
+sync-upstream-dry-run: ## Preview the Teamify frontend snapshot sync
+	@bash scripts/sync-teamify-frontend.sh --dry-run
 
 # ══════════════════════════════════════════════════════════════════════════════
 ##@ Verification

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ==========================================================================
-# Frontend verification pipeline: typecheck → unit tests → lint
+# Frontend verification pipeline: tooling tests → typecheck → unit tests → lint
 # Usage: bash scripts/check.sh
 # ==========================================================================
 
@@ -20,21 +20,28 @@ cleanup() {
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------
-# Step 1: TypeScript typecheck
+# Step 1: Repository tooling tests
 # --------------------------------------------------------------------------
-echo "==> [1/3] TypeScript typecheck..."
+echo "==> [1/4] Repository tooling tests..."
+bash scripts/sync-teamify-frontend.test.sh || { EXIT_CODE=1; exit 1; }
+
+# --------------------------------------------------------------------------
+# Step 2: TypeScript typecheck
+# --------------------------------------------------------------------------
+echo ""
+echo "==> [2/4] TypeScript typecheck..."
 pnpm typecheck || { EXIT_CODE=1; exit 1; }
 
 # --------------------------------------------------------------------------
-# Step 2: TypeScript unit tests (Vitest)
+# Step 3: TypeScript unit tests (Vitest)
 # --------------------------------------------------------------------------
 echo ""
-echo "==> [2/3] TypeScript unit tests..."
+echo "==> [3/4] TypeScript unit tests..."
 pnpm test || { EXIT_CODE=1; exit 1; }
 
 # --------------------------------------------------------------------------
-# Step 3: Lint
+# Step 4: Lint
 # --------------------------------------------------------------------------
 echo ""
-echo "==> [3/3] Lint..."
+echo "==> [4/4] Lint..."
 pnpm lint || { EXIT_CODE=1; exit 1; }

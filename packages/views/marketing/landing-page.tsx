@@ -80,13 +80,13 @@ export function LandingPage() {
         <HeroSection />
         <Suspense fallback={null}>
           <FeatureCards />
+          <TestimonialsSection />
+          <MediaProofSection />
+          <ComparisonSection />
+          <CustomerCasesSection />
           <OperatingLoopSection />
           <IntegrationsSection />
-          <MediaProofSection />
-          <CustomerCasesSection />
           <ChatDemoSection />
-          <ComparisonSection />
-          <TestimonialsSection />
           <PricingSection />
           <FaqSection />
           <CtaSection />

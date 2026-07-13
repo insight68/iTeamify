@@ -84,7 +84,7 @@ describe("LandingPage", () => {
   it("renders the real scene image and reconciliation video", async () => {
     renderPage(<LandingPage />);
     const section = await screen.findByRole("region", {
-      name: /show the warehouse, the workbench, and the demo/i,
+      name: /from chasing spreadsheets to agent-generated action queues/i,
     });
 
     expect(
@@ -143,9 +143,30 @@ describe("LandingPage", () => {
     expect(within(section).getByText("BI reports")).toBeInTheDocument();
   });
 
-  it("renders the operating team use cases", async () => {
+  it("renders the operating problem scenarios", async () => {
     renderPage(<LandingPage />);
-    expect(await screen.findByRole("region", { name: /give repetitive analysis to agents/i })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: /data lives in systems/i })).toBeInTheDocument();
+  });
+
+  it("orders the homepage around the buyer decision journey", async () => {
+    renderPage(<LandingPage />);
+
+    const sections = await Promise.all([
+      screen.findByRole("region", { name: /each agent owns one operating motion/i }),
+      screen.findByRole("region", { name: /data lives in systems/i }),
+      screen.findByRole("region", { name: /from chasing spreadsheets/i }),
+      screen.findByRole("region", { name: /how real operating teams/i }),
+      screen.findByRole("region", { name: /one closed loop from demand forecast/i }),
+    ]);
+
+    for (let index = 1; index < sections.length; index += 1) {
+      const previousSection = sections[index - 1]!;
+      const currentSection = sections[index]!;
+      expect(
+        previousSection.compareDocumentPosition(currentSection) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
   });
 
   it("renders the three pricing cards", async () => {

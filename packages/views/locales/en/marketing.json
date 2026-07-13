@@ -202,9 +202,9 @@
     }
   },
   "media": {
-    "eyebrow": "Real operating scenes",
-    "heading": "Show the warehouse, the workbench, and the demo",
-    "body": "The homepage now uses a warehouse operating dashboard, a procurement assistant screenshot, and a reconciliation demo video so visitors can see the business scene, the agent workbench, and the actual workflow.",
+    "eyebrow": "Operating outcomes",
+    "heading": "From chasing spreadsheets to agent-generated action queues",
+    "body": "Purchase suggestions arrive earlier and reconciliation exceptions collect automatically. Teams stop searching through data and focus on the actions that need approval.",
     "procurement": {
       "label": "Procurement agent",
       "title": "From supplier quotes to purchase suggestions",
@@ -433,26 +433,26 @@
     }
   },
   "testimonials": {
-    "eyebrow": "Built for these operating teams",
-    "heading": "Give repetitive analysis to agents. Keep judgment with the team.",
+    "eyebrow": "Everyday operating problems",
+    "heading": "The data lives in systems. Moving the business forward still depends on people.",
     "items": {
       "finance": {
         "segment": "Finance and reconciliation",
-        "quote": "Month-end no longer means chasing every sheet. The agent lists the differences first, so finance reviews only the exceptions.",
+        "quote": "Orders, refunds, payouts, and platform fees live in separate sheets. Differences surface at month-end, leaving finance to chase the data.",
         "author": "Finance lead",
         "author_initial": "F",
         "role": "Multi-channel commerce team"
       },
       "supply_chain": {
         "segment": "Procurement and supply chain",
-        "quote": "Purchase suggestions no longer rely only on experience. Forecasts, stock levels, and lead times are calculated together.",
+        "quote": "Demand, inventory, and lead times sit in different systems. Purchasing and transfers rely on experience until shortages or excess stock appear.",
         "author": "Supply chain manager",
         "author_initial": "S",
         "role": "Retail brand supply chain"
       },
       "management": {
         "segment": "Operating management",
-        "quote": "The brief tells me which cash is missing, which stock should move, and which products need replenishment this week.",
+        "quote": "Reports show what happened, but rarely explain why or what to do next. Leaders still investigate causes and chase actions manually.",
         "author": "Business owner",
         "author_initial": "B",
         "role": "Brand operating team"

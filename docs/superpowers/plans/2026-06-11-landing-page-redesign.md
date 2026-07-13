@@ -659,7 +659,7 @@ git commit -m "feat(marketing): update landing page component order"
       },
       "monthly_cost": {
         "label": "月度成本",
-        "suanpan": "¥199起",
+        "suanpan": "¥1999起",
         "manual": "¥5,000+",
         "excel": "免费",
         "software": "¥2,000+"
@@ -712,7 +712,7 @@ git commit -m "feat(marketing): update landing page component order"
       },
       "pro": {
         "name": "专业版",
-        "price": "¥199",
+        "price": "¥1999",
         "period": "/店铺/月",
         "description": "适合成长中的电商卖家",
         "features": [
@@ -797,7 +797,7 @@ git commit -m "feat(marketing): update landing page component order"
       },
       "row2": {
         "phrase_1": "免费试用 14 天",
-        "phrase_2": "从 ¥199/月",
+        "phrase_2": "从 ¥1999/月",
         "phrase_3": "API 接口",
         "phrase_4": "私有部署",
         "phrase_5": "银行级加密",
@@ -984,7 +984,7 @@ git commit -m "feat(i18n): rewrite zh-Hans marketing copy for suanpan AI account
       },
       "monthly_cost": {
         "label": "Monthly cost",
-        "suanpan": "From ¥199",
+        "suanpan": "From ¥1999",
         "manual": "¥5,000+",
         "excel": "Free",
         "software": "¥2,000+"
@@ -1037,7 +1037,7 @@ git commit -m "feat(i18n): rewrite zh-Hans marketing copy for suanpan AI account
       },
       "pro": {
         "name": "Pro",
-        "price": "¥199",
+        "price": "¥1999",
         "period": "/store/month",
         "description": "For growing e-commerce sellers",
         "features": [
@@ -1122,7 +1122,7 @@ git commit -m "feat(i18n): rewrite zh-Hans marketing copy for suanpan AI account
       },
       "row2": {
         "phrase_1": "14-day free trial",
-        "phrase_2": "From ¥199/mo",
+        "phrase_2": "From ¥1999/mo",
         "phrase_3": "API access",
         "phrase_4": "Private deploy",
         "phrase_5": "Bank-grade crypto",
@@ -1335,7 +1335,7 @@ describe("LandingPage", () => {
 
   it("renders pricing", () => {
     render(<LandingPage />);
-    expect(screen.getByText(/¥199/i)).toBeInTheDocument();
+    expect(screen.getByText(/¥1999/i)).toBeInTheDocument();
   });
 });
 ```

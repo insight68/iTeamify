@@ -117,7 +117,7 @@
       },
       "monthly_cost": {
         "label": "月度成本",
-        "suanpan": "¥199起",
+        "suanpan": "¥1999起",
         "manual": "¥5,000+",
         "excel": "免费",
         "software": "¥2,000+"
@@ -171,7 +171,7 @@
       },
       "pro": {
         "name": "专业版",
-        "price": "¥199",
+        "price": "¥1999",
         "period": "/店铺/月",
         "description": "适合成长中的电商卖家",
         "features": [
@@ -256,7 +256,7 @@
       },
       "row2": {
         "phrase_1": "免费试用 14 天",
-        "phrase_2": "从 ¥199/月",
+        "phrase_2": "从 ¥1999/月",
         "phrase_3": "API 接口",
         "phrase_4": "私有部署",
         "phrase_5": "银行级加密",

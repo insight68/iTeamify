@@ -117,7 +117,7 @@
       },
       "monthly_cost": {
         "label": "Monthly cost",
-        "suanpan": "From ¥199",
+        "suanpan": "From ¥1999",
         "manual": "¥5,000+",
         "excel": "Free",
         "software": "¥2,000+"
@@ -171,7 +171,7 @@
       },
       "pro": {
         "name": "Pro",
-        "price": "¥199",
+        "price": "¥1999",
         "period": "/store/month",
         "description": "For growing e-commerce sellers",
         "features": [
@@ -256,7 +256,7 @@
       },
       "row2": {
         "phrase_1": "14-day free trial",
-        "phrase_2": "From ¥199/mo",
+        "phrase_2": "From ¥1999/mo",
         "phrase_3": "API access",
         "phrase_4": "Private deploy",
         "phrase_5": "Bank-grade crypto",

@@ -11,8 +11,8 @@
   },
   "hero": {
     "eyebrow": "AI经营团队协作平台",
-    "headline": "你的 AI 经营团队，自动推进货、单、钱、利",
-    "sub_headline": "iTeamify 让采购、调拨、对账、预测和经营分析在一个协作平台里流转。智能体先跑，团队确认关键动作。",
+    "headline": "Teamify AI 经营智能体，自动推进货、单、钱、利",
+    "sub_headline": "Teamify 让采购、调拨、对账、预测和经营分析在一个协作平台里流转。智能体先跑，团队确认关键动作。",
     "primary_cta": "开始试用",
     "secondary_cta": "查看客户案例",
     "stats": {
@@ -480,7 +480,7 @@
       },
       "pro": {
         "name": "团队版",
-        "price": "¥199",
+        "price": "¥1999",
         "period": "/智能体/月起",
         "description": "适合需要多人协作的经营团队",
         "features": [

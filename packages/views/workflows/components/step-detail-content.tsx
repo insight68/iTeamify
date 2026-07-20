@@ -30,7 +30,7 @@ export function StepDetailContent({ workflow, step }: StepDetailContentProps) {
     const firstStep = workflow.steps[0]
     if (!step && firstStep) {
       navigation.replace(
-        `/workflows/${workflow.id}?step=${firstStep.id}`,
+        `/source-ai/${workflow.id}?step=${firstStep.id}`,
       )
     }
   }, [step, workflow.id, workflow.steps, navigation])
@@ -52,7 +52,7 @@ export function StepDetailContent({ workflow, step }: StepDetailContentProps) {
               size="sm"
               className="cursor-pointer transition-shadow hover:ring-1 hover:ring-primary/30"
               onClick={() =>
-                navigation.replace(`/workflows/${workflow.id}?step=${s.id}`)
+                navigation.replace(`/source-ai/${workflow.id}?step=${s.id}`)
               }
             >
               <CardContent className="flex items-start gap-3 p-4">
@@ -234,7 +234,7 @@ export function StepDetailContent({ workflow, step }: StepDetailContentProps) {
             variant="ghost"
             size="sm"
             onClick={() =>
-              navigation.replace(`/workflows/${workflow.id}?step=${prevStep.id}`)
+              navigation.replace(`/source-ai/${workflow.id}?step=${prevStep.id}`)
             }
           >
             <ArrowRight className="size-3 rotate-180" />
@@ -251,7 +251,7 @@ export function StepDetailContent({ workflow, step }: StepDetailContentProps) {
             variant="ghost"
             size="sm"
             onClick={() =>
-              navigation.replace(`/workflows/${workflow.id}?step=${nextStep.id}`)
+              navigation.replace(`/source-ai/${workflow.id}?step=${nextStep.id}`)
             }
           >
             <span className="mr-1 max-w-[200px] truncate">{nextStep.name}</span>

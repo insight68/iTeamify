@@ -7,7 +7,7 @@ export default function Page() {
   const router = useRouter()
 
   useEffect(() => {
-    router.replace("/workflows/demo-procurement")
+    router.replace("/source-ai/demo-procurement")
   }, [router])
 
   return null

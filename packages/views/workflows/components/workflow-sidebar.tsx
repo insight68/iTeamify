@@ -19,11 +19,11 @@ export function WorkflowSidebar({ workflow, activeStepId }: WorkflowSidebarProps
   const effectiveActive = activeStepId ?? workflow.steps[0]?.id ?? ""
 
   const handleStepClick = (step: WorkflowStep) => {
-    navigation.replace(`/workflows/${workflow.id}?step=${step.id}`)
+    navigation.replace(`/source-ai/${workflow.id}?step=${step.id}`)
   }
 
   const handleBack = () => {
-    navigation.push("/workflows")
+    navigation.push("/source-ai")
   }
 
   const departments = new Set(workflow.steps.map((s) => s.department).filter(Boolean))

@@ -28,7 +28,7 @@ export function WorkflowDetailLayout({ workflowId, activeStepId }: WorkflowDetai
             <p className="text-lg font-medium">{t(($) => $.detail.notFound)}</p>
             <Button
               variant="link"
-              onClick={() => navigation.push("/workflows")}
+              onClick={() => navigation.push("/source-ai")}
               className="mt-2"
             >
               {t(($) => $.detail.backToList)}

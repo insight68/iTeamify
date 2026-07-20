@@ -75,7 +75,7 @@ export function WorkflowsListPage() {
                 key={wf.id}
                 size="sm"
                 className="cursor-pointer transition-shadow hover:ring-1 hover:ring-primary/30"
-                onClick={() => navigation.push(`/workflows/${wf.id}`)}
+                onClick={() => navigation.push(`/source-ai/${wf.id}`)}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4">

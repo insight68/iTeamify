@@ -14,7 +14,11 @@ interface BrowserFullscreenFrameProps {
   enterLabel: string;
   exitLabel: string;
   className?: string;
-  children: (fullscreenControl: React.ReactNode) => React.ReactNode;
+  children: (
+    fullscreenControl: React.ReactNode,
+    isFullscreen: boolean,
+    containerRef: React.RefObject<HTMLDivElement | null>,
+  ) => React.ReactNode;
 }
 
 export function BrowserFullscreenFrame({
@@ -79,13 +83,14 @@ export function BrowserFullscreenFrame({
   return (
     <div
       ref={containerRef}
+      data-slot="browser-fullscreen-frame"
       data-fullscreen={isFullscreen ? "true" : undefined}
       className={cn(
         "relative flex h-full w-full min-h-0 min-w-0 flex-col overflow-hidden bg-background data-[fullscreen=true]:h-screen data-[fullscreen=true]:w-screen data-[fullscreen=true]:p-2",
         className,
       )}
     >
-      {children(fullscreenControl)}
+      {children(fullscreenControl, isFullscreen, containerRef)}
     </div>
   );
 }

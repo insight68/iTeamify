@@ -34,6 +34,8 @@ import { chatKeys } from "../chat/queries";
 import { tableDataKeys } from "../chat/table-queries";
 import { useChatStore, useAgentTableFilterStore } from "../chat";
 import { useReconciliationFilterStore, reconciliationKeys } from "../reconciliation";
+import { inventoryKeys } from "../inventory";
+import { productCategoryKeys } from "../product-categories";
 import { resolvePostAuthDestination, useHasOnboarded } from "../paths";
 import type {
   TaskMessagePayload,
@@ -132,6 +134,13 @@ export function useRealtimeSync(
       autopilot: () => {
         const wsId = getCurrentWsId();
         if (wsId) qc.invalidateQueries({ queryKey: autopilotKeys.all(wsId) });
+      },
+      inventory: () => {
+        const wsId = getCurrentWsId();
+        if (wsId) {
+          qc.invalidateQueries({ queryKey: inventoryKeys.all(wsId) });
+          qc.invalidateQueries({ queryKey: productCategoryKeys.all(wsId) });
+        }
       },
       // Powers the agent presence cache: any task lifecycle change
       // (dispatch / completed / failed / cancelled) refreshes the
@@ -786,6 +795,8 @@ export function useRealtimeSync(
           qc.invalidateQueries({ queryKey: agentTaskSnapshotKeys.all(wsId) });
           qc.invalidateQueries({ queryKey: agentActivityKeys.all(wsId) });
           qc.invalidateQueries({ queryKey: agentRunCountsKeys.all(wsId) });
+          qc.invalidateQueries({ queryKey: inventoryKeys.all(wsId) });
+          qc.invalidateQueries({ queryKey: productCategoryKeys.all(wsId) });
           qc.invalidateQueries({ queryKey: ["chat"] });
         }
         qc.invalidateQueries({ queryKey: workspaceKeys.list() });

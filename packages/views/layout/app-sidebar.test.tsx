@@ -97,6 +97,9 @@ vi.mock("../i18n", () => ({
           issues: "Issues",
           projects: "Projects",
           reconciliation: "Reconciliation",
+          supply_reconciliation: "Supply Fee Reconciliation",
+          inventory: "Inventory",
+          product_categories: "Product Categories",
           autopilots: "Autopilot",
           org: "Org",
           datasources: "Data Sources",
@@ -146,6 +149,12 @@ vi.mock("@teamify/core/paths", () => ({
     projects: () => "/acme/projects",
     reconciliation: () => "/acme/reconciliation",
     reconciliationDetail: (batchNo: string) => `/acme/reconciliation/${batchNo}`,
+    supplyReconciliation: () => "/acme/supply-reconciliation",
+    supplyReconciliationBills: () => "/acme/supply-reconciliation/bills",
+    supplyReconciliationResults: () => "/acme/supply-reconciliation/results",
+    supplyReconciliationResult: (resultId: string) => `/acme/supply-reconciliation/results/${resultId}`,
+    inventory: () => "/acme/inventory",
+    productCategories: () => "/acme/product-categories",
     autopilots: () => "/acme/autopilots",
     org: () => "/acme/org",
     datasources: () => "/acme/datasources",
@@ -264,6 +273,7 @@ describe("PinRow", () => {
     expect(projects).toBeInTheDocument();
     expect(issues).toBeInTheDocument();
     expect(screen.queryByText("Reconciliation")).not.toBeInTheDocument();
+    expect(screen.queryByText("Product Categories")).not.toBeInTheDocument();
     expect(screen.queryByText("My Issues")).not.toBeInTheDocument();
     expect(screen.queryByText("New Issue")).not.toBeInTheDocument();
     expect(screen.queryByText("Search")).not.toBeInTheDocument();
@@ -331,6 +341,55 @@ describe("PinRow", () => {
     ).toBeTruthy();
     expect(
       chatsGroup.compareDocumentPosition(workspaceGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows product categories below inventory when workspace settings enable it", () => {
+    workspaceRef.current = {
+      ...workspaceRef.current,
+      settings: {
+        modules: {
+          inventory: { nav_visible: true },
+          productCategories: { nav_visible: true },
+        },
+      },
+    };
+
+    render(<AppSidebar />);
+
+    const inventory = screen.getByText("Inventory");
+    const productCategories = screen.getByText("Product Categories");
+    const autopilot = screen.getByText("Autopilot");
+    expect(
+      inventory.compareDocumentPosition(productCategories) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      productCategories.compareDocumentPosition(autopilot) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows the independent supply fee module when workspace settings enable it", () => {
+    workspaceRef.current = {
+      ...workspaceRef.current,
+      settings: {
+        modules: {
+          reconciliation: { nav_visible: true },
+          supplyReconciliation: { nav_visible: true },
+          inventory: { nav_visible: true },
+        },
+      },
+    };
+
+    render(<AppSidebar />);
+
+    const reconciliation = screen.getByText("Reconciliation");
+    const supply = screen.getByText("Supply Fee Reconciliation");
+    const inventory = screen.getByText("Inventory");
+    expect(
+      reconciliation.compareDocumentPosition(supply) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      supply.compareDocumentPosition(inventory) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 

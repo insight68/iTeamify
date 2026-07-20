@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, Boxes, CircleDollarSign, Clock3, RefreshCw, ShieldAlert, TrendingUp } from "lucide-react";
+import { useIsFetching, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, ArrowRight, Boxes, CircleDollarSign, Clock3, Database, RefreshCw, ShieldAlert, TrendingUp } from "lucide-react";
 import { useWorkspaceId } from "@teamify/core/hooks";
-import { workspaceInventoryDashboardOptions } from "@teamify/core/inventory";
+import { workspaceInventoryConfigOptions, workspaceInventoryDashboardOptions } from "@teamify/core/inventory";
 import { Badge } from "@teamify/ui/components/ui/badge";
 import { Button } from "@teamify/ui/components/ui/button";
 import { Input } from "@teamify/ui/components/ui/input";
@@ -13,11 +13,32 @@ import { Skeleton } from "@teamify/ui/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@teamify/ui/components/ui/table";
 import { cn } from "@teamify/ui/lib/utils";
 import { useT } from "../i18n";
+import { InventoryStockPanel, type InventoryStockAvailability } from "./components/inventory-stock-panel";
+import { InventorySectionNav } from "./components/inventory-section-nav";
 import { SalesTrendPanel, type SalesTrendSelection } from "./components/sales-trend-panel";
 
 const text = (row: Record<string, unknown>, key: string) => typeof row[key] === "string" ? row[key] as string : "—";
 const number = (row: Record<string, unknown>, key: string) => typeof row[key] === "number" ? row[key] as number : Number(row[key] ?? 0) || 0;
 const formatNumber = (value: number) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(value);
+const configurationReasons = new Set(["data_source_not_configured", "table_missing", "tables_missing"]);
+const isConfigurationReason = (reason?: string) => !!reason && configurationReasons.has(reason);
+const formatInventorySnapshotTime = (value?: string) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(date).map((part) => [part.type, part.value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
+};
 const formatMoney = (value: number, currency = "CNY") => {
   try { return new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 0 }).format(value); }
   catch { return formatNumber(value); }
@@ -48,6 +69,7 @@ function MetricCard({ label, value, note, icon: Icon, urgent }: { label: string;
 export function InventoryPage() {
   const wsId = useWorkspaceId();
   const queryClient = useQueryClient();
+  const inventoryFetchingCount = useIsFetching({ queryKey: ["inventory", wsId] });
   const { t } = useT("inventory");
   const [page, setPage] = useState(1);
   const [skuInput, setSkuInput] = useState("");
@@ -60,12 +82,43 @@ export function InventoryPage() {
     ...(risk !== "all" ? { risk_level: risk } : {}),
     ...(status !== "all" ? { status } : {}),
   }), [skuInput, risk, status]);
-  const query = useQuery(workspaceInventoryDashboardOptions(wsId, { filters, page, pageSize: 30 }));
-  const data = query.data;
+  const configQuery = useQuery(workspaceInventoryConfigOptions(wsId));
+  const inventoryConfig = configQuery.data;
+  const inventoryAvailable = inventoryConfig?.inventory_available === true;
+  const salesTrendAvailable = inventoryConfig?.sales_trend_available === true;
+  const allocationAvailable = inventoryConfig?.allocation_available === true;
+  const stockAvailability: InventoryStockAvailability = !inventoryConfig && configQuery.isLoading
+    ? "checking"
+    : inventoryAvailable
+      ? "available"
+      : inventoryConfig && isConfigurationReason(inventoryConfig.inventory_reason)
+        ? "not-configured"
+        : "unavailable";
+  const salesTrendAvailability = !inventoryConfig && configQuery.isLoading
+    ? "checking" as const
+    : salesTrendAvailable
+      ? "available" as const
+      : inventoryConfig && isConfigurationReason(inventoryConfig.sales_trend_reason)
+        ? "not-configured" as const
+        : "unavailable" as const;
+  const allocationNeedsConfiguration = !!inventoryConfig
+    && !allocationAvailable
+    && isConfigurationReason(inventoryConfig.allocation_reason);
+  const dashboardQuery = useQuery(workspaceInventoryDashboardOptions(wsId, {
+    filters,
+    page,
+    pageSize: 30,
+    enabled: allocationAvailable,
+  }));
+  const data = dashboardQuery.data;
   const metrics = data?.metrics;
   const batch = data?.batch;
   const rows = data?.rows ?? [];
   const pageCount = Math.max(1, Math.ceil((data?.total ?? 0) / 30));
+  const latestInventoryDate = inventoryConfig?.latest_inventory_date;
+  const latestInventoryTime = formatInventorySnapshotTime(
+    inventoryConfig?.latest_inventory_updated_at,
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
@@ -76,23 +129,65 @@ export function InventoryPage() {
             <p className="mt-1 text-sm text-muted-foreground">{t(($) => $.subtitle)}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {inventoryConfig?.inventory_stale === true && <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-destructive"><AlertTriangle className="mr-1 size-3" />{t(($) => $.inventory_data_stale)}</Badge>}
             {batch?.delayed && <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-destructive"><AlertTriangle className="mr-1 size-3" />{t(($) => $.delayed)}</Badge>}
-            <div className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-xs text-muted-foreground"><Clock3 className="size-3.5" /><span>{batch?.snapshot_at ? t(($) => $.updated_at, { time: new Date(batch.snapshot_at).toLocaleString() }) : t(($) => $.hourly)}</span></div>
-            <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["inventory", wsId] })} disabled={query.isFetching}><RefreshCw className={cn("size-3.5", query.isFetching && "animate-spin")} />{t(($) => $.refresh)}</Button>
+            <div className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-xs text-muted-foreground">
+              <Clock3 className="size-3.5" />
+              <span>
+                {latestInventoryTime
+                  ? t(($) => $.inventory_snapshot_time, { time: latestInventoryTime })
+                  : latestInventoryDate
+                    ? t(($) => $.inventory_snapshot_date, { date: latestInventoryDate })
+                    : batch?.snapshot_at
+                      ? t(($) => $.updated_at, { time: new Date(batch.snapshot_at).toLocaleString() })
+                      : configQuery.data?.latest_stat_date
+                        ? t(($) => $.sales_updated_through, { date: configQuery.data.latest_stat_date })
+                        : t(($) => $.hourly)}
+              </span>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["inventory", wsId] })} disabled={inventoryFetchingCount > 0}><RefreshCw className={cn("size-3.5", inventoryFetchingCount > 0 && "animate-spin")} />{t(($) => $.refresh)}</Button>
           </div>
         </div>
+        <InventorySectionNav />
       </header>
 
       <main className="min-h-0 flex-1 overflow-auto p-5 md:p-7">
         <div className="mx-auto max-w-[1680px] space-y-5">
-          {query.isLoading ? (
+          {configQuery.isRefetchError && inventoryConfig && (
+            <div className="flex items-center justify-between gap-4 rounded-lg border border-warning/30 bg-warning/5 p-4">
+              <div className="flex items-center gap-3"><AlertTriangle className="size-5 shrink-0 text-warning-foreground" /><div><p className="text-sm font-medium">{t(($) => $.capabilities_refresh_failed)}</p><p className="mt-0.5 text-xs text-muted-foreground">{t(($) => $.capabilities_refresh_failed_detail)}</p></div></div>
+              <Button size="sm" variant="outline" onClick={() => configQuery.refetch()}>{t(($) => $.refresh)}</Button>
+            </div>
+          )}
+
+          <InventoryStockPanel
+            wsId={wsId}
+            availability={stockAvailability}
+            onRetryAvailability={() => configQuery.refetch()}
+          />
+
+          {!inventoryConfig && configQuery.isLoading ? (
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               {Array.from({ length: 5 }, (_, index) => <Skeleton key={index} className="h-28" />)}
             </section>
-          ) : query.isError ? (
+          ) : (!inventoryConfig && configQuery.isError) || (!allocationAvailable && !allocationNeedsConfiguration) ? (
+            <div className="flex items-center justify-between gap-4 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+              <div className="flex items-center gap-3"><ShieldAlert className="size-5 shrink-0 text-destructive" /><div><p className="text-sm font-medium">{t(($) => $.capabilities_unavailable)}</p><p className="mt-0.5 text-xs text-muted-foreground">{t(($) => $.capabilities_unavailable_detail)}</p></div></div>
+              <Button size="sm" variant="outline" onClick={() => configQuery.refetch()}>{t(($) => $.refresh)}</Button>
+            </div>
+          ) : !allocationAvailable ? (
+            <div className="flex items-start gap-3 rounded-lg border border-dashed bg-muted/20 p-4">
+              <div className="rounded-md border bg-background p-2 text-muted-foreground"><Database className="size-4" /></div>
+              <div><p className="text-sm font-medium">{t(($) => $.allocation_not_configured)}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{t(($) => $.allocation_not_configured_detail)}</p></div>
+            </div>
+          ) : dashboardQuery.isLoading ? (
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              {Array.from({ length: 5 }, (_, index) => <Skeleton key={index} className="h-28" />)}
+            </section>
+          ) : dashboardQuery.isError ? (
             <div className="flex items-center justify-between gap-4 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
               <div className="flex items-center gap-3"><ShieldAlert className="size-5 shrink-0 text-destructive" /><div><p className="text-sm font-medium">{t(($) => $.unavailable)}</p><p className="mt-0.5 text-xs text-muted-foreground">{t(($) => $.dashboard_unavailable_detail)}</p></div></div>
-              <Button size="sm" variant="outline" onClick={() => query.refetch()}>{t(($) => $.refresh)}</Button>
+              <Button size="sm" variant="outline" onClick={() => dashboardQuery.refetch()}>{t(($) => $.refresh)}</Button>
             </div>
           ) : (
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -108,16 +203,19 @@ export function InventoryPage() {
             wsId={wsId}
             days={trendDays}
             onDaysChange={setTrendDays}
-            selection={selectedRecommendation}
+            selection={allocationAvailable ? selectedRecommendation : null}
             onClearSelection={() => setSelectedRecommendation(null)}
+            availability={salesTrendAvailability}
+            comparisonAvailable={allocationAvailable}
+            onRetryAvailability={() => configQuery.refetch()}
           />
 
-          {query.isLoading ? <Skeleton className="h-96" /> : query.isError ? null : (
+          {!allocationAvailable ? null : dashboardQuery.isLoading ? <Skeleton className="h-96" /> : dashboardQuery.isError ? null : (
             <section className="overflow-hidden rounded-lg border bg-card">
               <div className="flex flex-col gap-3 border-b p-4 md:flex-row md:items-center">
                 <Input className="md:w-64" value={skuInput} onChange={(event) => { setSkuInput(event.target.value); setPage(1); }} placeholder={t(($) => $.search_sku)} />
-                <Select value={risk} onValueChange={(value) => { setRisk(value ?? "all"); setPage(1); }}><SelectTrigger className="md:w-44"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{t(($) => $.all_risks)}</SelectItem><SelectItem value="critical">Critical</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="low">Low</SelectItem></SelectContent></Select>
-                <Select value={status} onValueChange={(value) => { setStatus(value ?? "all"); setPage(1); }}><SelectTrigger className="md:w-44"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{t(($) => $.all_statuses)}</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="pending_approval">Pending approval</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="rejected">Rejected</SelectItem></SelectContent></Select>
+                <Select value={risk} onValueChange={(value) => { setRisk(value ?? "all"); setPage(1); }}><SelectTrigger className="md:w-44"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{t(($) => $.all_risks)}</SelectItem><SelectItem value="critical">{t(($) => $.risk_options.critical)}</SelectItem><SelectItem value="high">{t(($) => $.risk_options.high)}</SelectItem><SelectItem value="medium">{t(($) => $.risk_options.medium)}</SelectItem><SelectItem value="low">{t(($) => $.risk_options.low)}</SelectItem></SelectContent></Select>
+                <Select value={status} onValueChange={(value) => { setStatus(value ?? "all"); setPage(1); }}><SelectTrigger className="md:w-44"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{t(($) => $.all_statuses)}</SelectItem><SelectItem value="pending">{t(($) => $.status_options.pending)}</SelectItem><SelectItem value="pending_approval">{t(($) => $.status_options.pending_approval)}</SelectItem><SelectItem value="approved">{t(($) => $.status_options.approved)}</SelectItem><SelectItem value="rejected">{t(($) => $.status_options.rejected)}</SelectItem></SelectContent></Select>
                 <div className="ml-auto font-mono text-xs text-muted-foreground">{batch?.batch_no || "—"}</div>
               </div>
               <div className="overflow-x-auto">

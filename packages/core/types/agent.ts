@@ -152,6 +152,8 @@ export interface ChatTableConfig {
   filters: ChatTableFilter[];
   page_size: number;
   default_sort?: { column: string; direction: "asc" | "desc" };
+  /** Optional unique row key used for stable ordering and update/delete identity. */
+  row_key?: string;
   /** Column key to use as row coloring source. Must reference a select-type column. */
   row_color_column?: string;
 }

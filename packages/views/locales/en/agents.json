@@ -164,6 +164,8 @@
     "runtime_owned_by": "owned by {{name}}",
     "runtime_empty": "No runtimes",
     "model_default": "Default",
+    "model_default_option": "Default model (follow runtime)",
+    "model_default_price": "Input {{input}} · Output {{output}} / million tokens",
     "model_tooltip": "Model · {{value}}",
     "model_managed_by_runtime": "Managed by runtime",
     "model_search_placeholder": "Search or type a model ID",

@@ -41,6 +41,8 @@ import {
   Settings,
   Users,
   Plug,
+  Tags,
+  Scale,
 } from "lucide-react";
 import { WorkspaceAvatar } from "../workspace/workspace-avatar";
 import { ActorAvatar } from "@teamify/ui/components/common/actor-avatar";
@@ -125,7 +127,9 @@ type NavKey =
   | "issues"
   | "projects"
   | "reconciliation"
+  | "supplyReconciliation"
   | "inventory"
+  | "productCategories"
   | "autopilots"
   | "org"
   | "datasources"
@@ -147,7 +151,9 @@ type NavLabelKey =
   | "issues"
   | "projects"
   | "reconciliation"
+  | "supply_reconciliation"
   | "inventory"
+  | "product_categories"
   | "autopilots"
   | "org"
   | "datasources"
@@ -186,7 +192,9 @@ type WorkspaceGroupNavItem = WorkspaceGroupLinkItem | WorkspaceGroupActionItem;
 const primaryWorkspaceNav: WorkspaceGroupNavItem[] = [
   { type: "link", key: "inbox", shortcutKey: "inbox", labelKey: "inbox", icon: Inbox },
   { type: "link", key: "reconciliation", moduleKey: "reconciliation", labelKey: "reconciliation", icon: CheckCircle2 },
+  { type: "link", key: "supplyReconciliation", moduleKey: "supplyReconciliation", labelKey: "supply_reconciliation", icon: Scale },
   { type: "link", key: "inventory", moduleKey: "inventory", labelKey: "inventory", icon: Warehouse },
+  { type: "link", key: "productCategories", moduleKey: "productCategories", labelKey: "product_categories", icon: Tags },
   { type: "link", key: "autopilots", labelKey: "autopilots", icon: Zap },
 ];
 

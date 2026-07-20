@@ -1,17 +1,27 @@
-export type WorkspaceModuleKey = "issues" | "projects" | "reconciliation" | "inventory";
+export type WorkspaceModuleKey =
+  | "issues"
+  | "projects"
+  | "reconciliation"
+  | "supplyReconciliation"
+  | "inventory"
+  | "productCategories";
 
 export const WORKSPACE_MODULE_KEYS: readonly WorkspaceModuleKey[] = [
   "issues",
   "projects",
   "reconciliation",
+  "supplyReconciliation",
   "inventory",
+  "productCategories",
 ];
 
 export const WORKSPACE_MODULE_NAV_DEFAULTS: Record<WorkspaceModuleKey, boolean> = {
   issues: true,
   projects: true,
   reconciliation: false,
+  supplyReconciliation: false,
   inventory: false,
+  productCategories: false,
 };
 
 type JsonRecord = Record<string, unknown>;
@@ -62,7 +72,9 @@ export function getWorkspaceModuleNavVisibility(
     issues: isWorkspaceModuleNavVisible(settings, "issues"),
     projects: isWorkspaceModuleNavVisible(settings, "projects"),
     reconciliation: isWorkspaceModuleNavVisible(settings, "reconciliation"),
+    supplyReconciliation: isWorkspaceModuleNavVisible(settings, "supplyReconciliation"),
     inventory: isWorkspaceModuleNavVisible(settings, "inventory"),
+    productCategories: isWorkspaceModuleNavVisible(settings, "productCategories"),
   };
 }
 

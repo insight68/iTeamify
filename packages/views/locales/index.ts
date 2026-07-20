@@ -23,6 +23,8 @@ import enLayout from "./en/layout.json";
 import enOrg from "./en/org.json";
 import enDatasources from "./en/datasources.json";
 import enInventory from "./en/inventory.json";
+import enProductCategories from "./en/product-categories.json";
+import enSupplyReconciliation from "./en/supply-reconciliation.json";
 import zhHansCommon from "./zh-Hans/common.json";
 import zhHansAuth from "./zh-Hans/auth.json";
 import zhHansSettings from "./zh-Hans/settings.json";
@@ -47,6 +49,8 @@ import zhHansLayout from "./zh-Hans/layout.json";
 import zhHansOrg from "./zh-Hans/org.json";
 import zhHansDatasources from "./zh-Hans/datasources.json";
 import zhHansInventory from "./zh-Hans/inventory.json";
+import zhHansProductCategories from "./zh-Hans/product-categories.json";
+import zhHansSupplyReconciliation from "./zh-Hans/supply-reconciliation.json";
 
 // Single source of truth for the resource bundle. Both apps (web layout +
 // desktop App.tsx) import from here so adding a locale or namespace happens
@@ -77,6 +81,8 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     org: enOrg,
     datasources: enDatasources,
     inventory: enInventory,
+    "product-categories": enProductCategories,
+    "supply-reconciliation": enSupplyReconciliation,
   },
   "zh-Hans": {
     common: zhHansCommon,
@@ -103,5 +109,7 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     org: zhHansOrg,
     datasources: zhHansDatasources,
     inventory: zhHansInventory,
+    "product-categories": zhHansProductCategories,
+    "supply-reconciliation": zhHansSupplyReconciliation,
   },
 };

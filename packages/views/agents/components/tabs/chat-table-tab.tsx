@@ -57,6 +57,7 @@ function resolveConfig(raw: ChatTableConfig | undefined): ChatTableConfig {
     filters: raw.filters ?? DEFAULT_CONFIG.filters,
     page_size: raw.page_size ?? DEFAULT_CONFIG.page_size,
     default_sort: raw.default_sort ?? DEFAULT_CONFIG.default_sort,
+    row_key: raw.row_key,
     row_color_column: raw.row_color_column,
   };
 }

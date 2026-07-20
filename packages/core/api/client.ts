@@ -104,6 +104,20 @@ import type {
   ChatTableFilter,
 } from "../types";
 import type { OnboardingCompletionPath } from "../onboarding/types";
+import type {
+  SupplyFeeConfig,
+  SupplyFeeBillBatch,
+  SupplyFeeBillBatchDetail,
+  SupplyFeeBillBatchList,
+  SupplyFeeBillImportInput,
+  SupplyFeeReconRun,
+  SupplyFeeDashboard,
+  SupplyFeeFilters,
+  SupplyFeeResultDetail,
+  SupplyFeeResultSearch,
+  SupplyFeeSortBy,
+  SupplyFeeSortDir,
+} from "../supply-reconciliation/types";
 import { type Logger, noopLogger } from "../logger";
 import { createRequestId } from "../utils";
 import { getCurrentSlug } from "../platform/workspace-storage";
@@ -124,10 +138,36 @@ import {
   EMPTY_RECONCILIATION_SUMMARY,
   ReconciliationConfirmResponseSchema,
   EMPTY_RECONCILIATION_CONFIRM,
+  InventoryConfigResponseSchema,
+  EMPTY_INVENTORY_CONFIG,
   InventoryDashboardResponseSchema,
   EMPTY_INVENTORY_DASHBOARD,
+  InventoryStockResponseSchema,
+  EMPTY_INVENTORY_STOCK,
+  InventoryMonitorResponseSchema,
+  EMPTY_INVENTORY_MONITOR,
   InventorySalesTrendResponseSchema,
   EMPTY_INVENTORY_SALES_TREND,
+  ProductCategoryListResponseSchema,
+  EMPTY_PRODUCT_CATEGORY_LIST,
+  ProductCategoryUpdateResponseSchema,
+  EMPTY_PRODUCT_CATEGORY_UPDATE,
+  SupplyFeeConfigSchema,
+  EMPTY_SUPPLY_FEE_CONFIG,
+  SupplyFeeBillBatchSchema,
+  EMPTY_SUPPLY_FEE_BILL_BATCH,
+  SupplyFeeBillBatchListSchema,
+  EMPTY_SUPPLY_FEE_BILL_BATCH_LIST,
+  SupplyFeeBillBatchDetailSchema,
+  EMPTY_SUPPLY_FEE_BILL_BATCH_DETAIL,
+  SupplyFeeReconRunSchema,
+  EMPTY_SUPPLY_FEE_RECON_RUN,
+  SupplyFeeDashboardSchema,
+  EMPTY_SUPPLY_FEE_DASHBOARD,
+  SupplyFeeResultSearchSchema,
+  EMPTY_SUPPLY_FEE_RESULT_SEARCH,
+  SupplyFeeResultDetailSchema,
+  EMPTY_SUPPLY_FEE_RESULT_DETAIL,
 } from "./schemas";
 
 /** Identifies the calling client to the server.
@@ -372,6 +412,33 @@ export class ApiClient {
     }
     this.logger.info(`← ${res.status} ${path}`, { rid });
     return res;
+  }
+
+  private async postFormData(path: string, body: FormData): Promise<unknown> {
+    const rid = createRequestId();
+    const start = Date.now();
+    this.logger.info(`→ POST ${path}`, { rid });
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      method: "POST",
+      headers: {
+        "X-Request-ID": rid,
+        ...this.authHeaders(),
+      },
+      body,
+      credentials: "include",
+    });
+    if (!res.ok) {
+      if (res.status === 401) this.handleUnauthorized();
+      const { message, body: errorBody } = await this.parseErrorBody(res, `Upload failed: ${res.status}`);
+      this.logger.error(`← ${res.status} ${path}`, {
+        rid,
+        duration: `${Date.now() - start}ms`,
+        error: message,
+      });
+      throw new ApiError(message, res.status, res.statusText, errorBody);
+    }
+    this.logger.info(`← ${res.status} ${path}`, { rid, duration: `${Date.now() - start}ms` });
+    return res.json() as Promise<unknown>;
   }
 
   // Auth
@@ -767,6 +834,17 @@ export class ApiClient {
     });
   }
 
+  async exportAgentTableData(
+    agentId: string,
+    filters?: Record<string, unknown>,
+  ): Promise<Blob> {
+    const response = await this.fetchRaw(`/api/agents/${agentId}/table-data/export`, {
+      method: "POST",
+      body: JSON.stringify({ filters: filters ?? {} }),
+    });
+    return response.blob();
+  }
+
   async saveAgentTableData(
     agentId: string,
     payload: { action: string; row: Record<string, unknown>; rowKey?: string },
@@ -958,6 +1036,154 @@ export class ApiClient {
     return response.blob();
   }
 
+  async fetchWorkspaceSupplyFeeConfig(wsId: string): Promise<SupplyFeeConfig> {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/supply-reconciliation/config`);
+    return parseWithFallback(raw, SupplyFeeConfigSchema, EMPTY_SUPPLY_FEE_CONFIG, {
+      endpoint: "GET /api/workspaces/{id}/supply-reconciliation/config",
+    });
+  }
+
+  async fetchWorkspaceSupplyFeeBills(
+    wsId: string,
+    params: { page?: number; pageSize?: number } = {},
+  ): Promise<SupplyFeeBillBatchList> {
+    const search = new URLSearchParams({
+      page: String(params.page ?? 1),
+      page_size: String(params.pageSize ?? 30),
+    });
+    const raw = await this.fetch<unknown>(
+      `/api/workspaces/${wsId}/supply-reconciliation/bills?${search.toString()}`,
+    );
+    return parseWithFallback(raw, SupplyFeeBillBatchListSchema, EMPTY_SUPPLY_FEE_BILL_BATCH_LIST, {
+      endpoint: "GET /api/workspaces/{id}/supply-reconciliation/bills",
+    });
+  }
+
+  async fetchWorkspaceSupplyFeeBill(
+    wsId: string,
+    batchId: string,
+  ): Promise<SupplyFeeBillBatchDetail> {
+    const raw = await this.fetch<unknown>(
+      `/api/workspaces/${wsId}/supply-reconciliation/bills/${encodeURIComponent(batchId)}`,
+    );
+    return parseWithFallback(raw, SupplyFeeBillBatchDetailSchema, EMPTY_SUPPLY_FEE_BILL_BATCH_DETAIL, {
+      endpoint: "GET /api/workspaces/{id}/supply-reconciliation/bills/{batchId}",
+    });
+  }
+
+  async importWorkspaceSupplyFeeBill(
+    wsId: string,
+    input: SupplyFeeBillImportInput,
+  ): Promise<SupplyFeeBillBatch> {
+    const form = new FormData();
+    form.append("file", input.file);
+    form.append("billing_period_start", input.billing_period_start);
+    form.append("billing_period_end", input.billing_period_end);
+    form.append("currency_code", input.currency_code ?? "CNY");
+    if (input.provider_id) form.append("provider_id", input.provider_id);
+    if (input.provider_code) form.append("provider_code", input.provider_code);
+    if (input.provider_name) form.append("provider_name", input.provider_name);
+    if (input.provider_type) form.append("provider_type", input.provider_type);
+    if (input.invoice_no) form.append("invoice_no", input.invoice_no);
+    if (input.declared_amount !== undefined) form.append("declared_amount", String(input.declared_amount));
+    const raw = await this.postFormData(
+      `/api/workspaces/${wsId}/supply-reconciliation/bills/import`,
+      form,
+    );
+    return parseWithFallback(raw, SupplyFeeBillBatchSchema, EMPTY_SUPPLY_FEE_BILL_BATCH, {
+      endpoint: "POST /api/workspaces/{id}/supply-reconciliation/bills/import",
+    });
+  }
+
+  async runWorkspaceSupplyFeeReconciliation(
+    wsId: string,
+    batchId: string,
+    params: { toleranceAmount?: number; calculationMode?: "erp_recorded_fee" | "contract_rate" } = {},
+  ): Promise<SupplyFeeReconRun> {
+    const raw = await this.fetch<unknown>(
+      `/api/workspaces/${wsId}/supply-reconciliation/bills/${encodeURIComponent(batchId)}/run`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          tolerance_amount: params.toleranceAmount ?? 0.01,
+          calculation_mode: params.calculationMode ?? "erp_recorded_fee",
+        }),
+      },
+    );
+    return parseWithFallback(raw, SupplyFeeReconRunSchema, EMPTY_SUPPLY_FEE_RECON_RUN, {
+      endpoint: "POST /api/workspaces/{id}/supply-reconciliation/bills/{batchId}/run",
+    });
+  }
+
+  async fetchWorkspaceSupplyFeeDashboard(
+    wsId: string,
+    filters: SupplyFeeFilters = {},
+  ): Promise<SupplyFeeDashboard> {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/supply-reconciliation/dashboard`, {
+      method: "POST",
+      body: JSON.stringify({ filters }),
+    });
+    return parseWithFallback(raw, SupplyFeeDashboardSchema, EMPTY_SUPPLY_FEE_DASHBOARD, {
+      endpoint: "POST /api/workspaces/{id}/supply-reconciliation/dashboard",
+    });
+  }
+
+  async searchWorkspaceSupplyFeeResults(
+    wsId: string,
+    params: {
+      filters?: SupplyFeeFilters;
+      page?: number;
+      pageSize?: number;
+      sortBy?: SupplyFeeSortBy;
+      sortDir?: SupplyFeeSortDir;
+    } = {},
+  ): Promise<SupplyFeeResultSearch> {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/supply-reconciliation/results/search`, {
+      method: "POST",
+      body: JSON.stringify({
+        filters: params.filters ?? {},
+        page: params.page ?? 1,
+        page_size: params.pageSize ?? 50,
+        sort_by: params.sortBy ?? "diff_amount",
+        sort_dir: params.sortDir ?? "desc",
+      }),
+    });
+    return parseWithFallback(raw, SupplyFeeResultSearchSchema, EMPTY_SUPPLY_FEE_RESULT_SEARCH, {
+      endpoint: "POST /api/workspaces/{id}/supply-reconciliation/results/search",
+    });
+  }
+
+  async fetchWorkspaceSupplyFeeResult(
+    wsId: string,
+    resultId: string,
+  ): Promise<SupplyFeeResultDetail> {
+    const raw = await this.fetch<unknown>(
+      `/api/workspaces/${wsId}/supply-reconciliation/results/${encodeURIComponent(resultId)}`,
+    );
+    return parseWithFallback(raw, SupplyFeeResultDetailSchema, EMPTY_SUPPLY_FEE_RESULT_DETAIL, {
+      endpoint: "GET /api/workspaces/{id}/supply-reconciliation/results/{resultId}",
+    });
+  }
+
+  async exportWorkspaceSupplyFeeResults(
+    wsId: string,
+    params: {
+      filters?: SupplyFeeFilters;
+      sortBy?: SupplyFeeSortBy;
+      sortDir?: SupplyFeeSortDir;
+    } = {},
+  ): Promise<Blob> {
+    const response = await this.fetchRaw(`/api/workspaces/${wsId}/supply-reconciliation/results/export`, {
+      method: "POST",
+      body: JSON.stringify({
+        filters: params.filters ?? {},
+        sort_by: params.sortBy ?? "diff_amount",
+        sort_dir: params.sortDir ?? "desc",
+      }),
+    });
+    return response.blob();
+  }
+
   async fetchWorkspaceInventoryDashboard(
     wsId: string,
     params?: { filters?: Record<string, unknown>; page?: number; pageSize?: number },
@@ -975,6 +1201,86 @@ export class ApiClient {
     });
   }
 
+  async fetchWorkspaceInventoryConfig(wsId: string) {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/inventory/config`);
+    return parseWithFallback(raw, InventoryConfigResponseSchema, EMPTY_INVENTORY_CONFIG, {
+      endpoint: "GET /api/workspaces/{id}/inventory/config",
+    });
+  }
+
+  async fetchWorkspaceInventoryStock(
+    wsId: string,
+    params: { search?: string; warehouseNo?: string; page?: number; pageSize?: number } = {},
+  ) {
+    const page = typeof params.page === "number" && Number.isFinite(params.page) && params.page >= 1
+      ? Math.trunc(params.page)
+      : 1;
+    const pageSize = typeof params.pageSize === "number" && Number.isFinite(params.pageSize)
+      && params.pageSize >= 1
+      ? Math.min(100, Math.trunc(params.pageSize))
+      : 30;
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/inventory/stock`, {
+      method: "POST",
+      body: JSON.stringify({
+        search: params.search?.trim() ?? "",
+        warehouse_no: params.warehouseNo?.trim() ?? "",
+        page,
+        page_size: pageSize,
+      }),
+    });
+    return parseWithFallback(raw, InventoryStockResponseSchema, EMPTY_INVENTORY_STOCK, {
+      endpoint: "POST /api/workspaces/{id}/inventory/stock",
+    });
+  }
+
+  async fetchWorkspaceInventoryMonitor(
+    wsId: string,
+    params: {
+      search?: string;
+      category?: string;
+      series?: string;
+      warehouseNo?: string;
+      turnoverStatus?: "all" | "normal" | "warning" | "no_sales";
+    } = {},
+  ) {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/inventory/monitor`, {
+      method: "POST",
+      body: JSON.stringify({
+        search: params.search?.trim() ?? "",
+        category: params.category?.trim() ?? "",
+        series: params.series?.trim() ?? "",
+        warehouse_no: params.warehouseNo?.trim() ?? "",
+        turnover_status: params.turnoverStatus ?? "all",
+      }),
+    });
+    return parseWithFallback(raw, InventoryMonitorResponseSchema, EMPTY_INVENTORY_MONITOR, {
+      endpoint: "POST /api/workspaces/{id}/inventory/monitor",
+    });
+  }
+
+  async exportWorkspaceInventoryMonitor(
+    wsId: string,
+    params: {
+      search?: string;
+      category?: string;
+      series?: string;
+      warehouseNo?: string;
+      turnoverStatus?: "all" | "normal" | "warning" | "no_sales";
+    } = {},
+  ): Promise<Blob> {
+    const response = await this.fetchRaw(`/api/workspaces/${wsId}/inventory/monitor/export`, {
+      method: "POST",
+      body: JSON.stringify({
+        search: params.search?.trim() ?? "",
+        category: params.category?.trim() ?? "",
+        series: params.series?.trim() ?? "",
+        warehouse_no: params.warehouseNo?.trim() ?? "",
+        turnover_status: params.turnoverStatus ?? "all",
+      }),
+    });
+    return response.blob();
+  }
+
   async fetchWorkspaceInventorySalesTrend(
     wsId: string,
     params: { days: 7 | 30 | 90; productCode?: string; warehouseCodes?: string[] },
@@ -989,6 +1295,52 @@ export class ApiClient {
     });
     return parseWithFallback(raw, InventorySalesTrendResponseSchema, EMPTY_INVENTORY_SALES_TREND, {
       endpoint: "POST /api/workspaces/{id}/inventory/sales-trend",
+    });
+  }
+
+  async fetchWorkspaceProductCategories(
+    wsId: string,
+    params: {
+      search?: string;
+      category?: string;
+      series?: string;
+      status?: "all" | "mapped" | "unmapped" | "mixed";
+      page?: number;
+      pageSize?: number;
+    } = {},
+  ) {
+    const search = new URLSearchParams();
+    if (params.search?.trim()) search.set("search", params.search.trim());
+    if (params.category?.trim()) search.set("category", params.category.trim());
+    if (params.series?.trim()) search.set("series", params.series.trim());
+    if (params.status && params.status !== "all") search.set("status", params.status);
+    if (params.page) search.set("page", String(Math.max(1, Math.trunc(params.page))));
+    if (params.pageSize) search.set("page_size", String(Math.min(100, Math.max(1, Math.trunc(params.pageSize)))));
+    const suffix = search.size > 0 ? `?${search.toString()}` : "";
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/product-categories${suffix}`);
+    return parseWithFallback(raw, ProductCategoryListResponseSchema, EMPTY_PRODUCT_CATEGORY_LIST, {
+      endpoint: "GET /api/workspaces/{id}/product-categories",
+    });
+  }
+
+  async updateWorkspaceProductCategory(
+    wsId: string,
+    params: {
+      materialCode: string;
+      businessCategoryName: string;
+      productSeriesName: string;
+    },
+  ) {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${wsId}/product-categories`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        material_code: params.materialCode.trim(),
+        business_category_name: params.businessCategoryName.trim(),
+        product_series_name: params.productSeriesName.trim(),
+      }),
+    });
+    return parseWithFallback(raw, ProductCategoryUpdateResponseSchema, EMPTY_PRODUCT_CATEGORY_UPDATE, {
+      endpoint: "PATCH /api/workspaces/{id}/product-categories",
     });
   }
 

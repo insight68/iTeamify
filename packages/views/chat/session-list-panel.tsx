@@ -149,7 +149,7 @@ export function SessionListPanel({
   };
 
   return (
-    <div className="flex h-full flex-col border-r bg-sidebar">
+    <div className="flex h-full flex-col bg-sidebar">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-3 py-2.5">
         <span className="text-sm font-semibold">{t(($) => $.page.title)}</span>

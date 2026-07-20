@@ -15,6 +15,7 @@ const knownEventTypes = new Set<WSEventType>([
   "issue_reaction:added", "issue_reaction:removed", "chat:message", "chat:done",
   "chat:session_read", "chat:session_deleted", "chat:table_filter",
   "reconciliation:filter", "project:created", "project:updated", "project:deleted",
+  "inventory:updated",
   "label:created", "label:updated", "label:deleted", "issue_labels:changed",
   "pin:created", "pin:deleted", "pin:reordered", "invitation:created",
   "invitation:accepted", "invitation:declined", "invitation:revoked",
@@ -51,7 +52,7 @@ const payloadSchemas: Partial<Record<WSEventType, z.ZodType>> = {
   "invitation:declined": z.object({ invitation_id: z.string().min(1), invitee_email: z.string() }).loose(),
   "invitation:revoked": z.object({ invitation_id: z.string().min(1), invitee_email: z.string() }).loose(),
   "task:message": z.object({
-    task_id: z.string().min(1), issue_id: z.string(), chat_session_id: z.string().optional(),
+    task_id: z.string().min(1), issue_id: z.string().optional(), chat_session_id: z.string().optional(),
     seq: z.number().int().nonnegative(), type: z.enum(["text", "thinking", "tool_use", "tool_result", "error"]),
   }).loose(),
   "chat:message": z.object({ chat_session_id: z.string().min(1) }).loose(),
@@ -65,6 +66,17 @@ const payloadSchemas: Partial<Record<WSEventType, z.ZodType>> = {
   "chat:session_deleted": z.object({ chat_session_id: z.string().min(1) }).loose(),
   "chat:table_filter": z.object({ chat_session_id: z.string().min(1), agent_id: z.string(), filters: recordSchema }).loose(),
   "reconciliation:filter": z.object({ chat_session_id: z.string().min(1), agent_id: z.string(), filters: recordSchema }).loose(),
+  "inventory:updated": z.object({
+    dataset: z.enum([
+      "product_order",
+      "dim_product",
+      "allocation",
+      "supply_inventory",
+      "supply_inventory_snapshot",
+    ]),
+    refreshed_at: z.iso.datetime(),
+    run_id: z.string().optional(),
+  }).loose(),
 };
 
 const envelopeSchema = z.object({
@@ -77,23 +89,69 @@ export type ParsedWSFrame =
   | { kind: "auth_ack" }
   | { kind: "event"; message: WSMessage };
 
-export function parseWSFrame(data: unknown): ParsedWSFrame | null {
-  if (typeof data !== "string") return null;
+export interface InvalidWSFrame {
+  reason:
+    | "non_string"
+    | "invalid_json"
+    | "invalid_envelope"
+    | "unknown_event"
+    | "invalid_payload";
+  eventType?: string;
+  issues?: Array<{ path: string; message: string }>;
+}
+
+type InvalidWSFrameReporter = (details: InvalidWSFrame) => void;
+
+function zodIssues(error: z.ZodError): InvalidWSFrame["issues"] {
+  return error.issues.map((issue) => ({
+    path: issue.path.join("."),
+    message: issue.message,
+  }));
+}
+
+export function parseWSFrame(
+  data: unknown,
+  reportInvalid?: InvalidWSFrameReporter,
+): ParsedWSFrame | null {
+  if (typeof data !== "string") {
+    reportInvalid?.({ reason: "non_string" });
+    return null;
+  }
   let json: unknown;
   try {
     json = JSON.parse(data);
   } catch {
+    reportInvalid?.({ reason: "invalid_json" });
     return null;
   }
   const envelope = envelopeSchema.safeParse(json);
-  if (!envelope.success) return null;
+  if (!envelope.success) {
+    reportInvalid?.({
+      reason: "invalid_envelope",
+      issues: zodIssues(envelope.error),
+    });
+    return null;
+  }
   if (envelope.data.type === "auth_ack") return { kind: "auth_ack" };
-  if (!knownEventTypes.has(envelope.data.type as WSEventType)) return null;
+  if (!knownEventTypes.has(envelope.data.type as WSEventType)) {
+    reportInvalid?.({
+      reason: "unknown_event",
+      eventType: envelope.data.type,
+    });
+    return null;
+  }
 
   const type = envelope.data.type as WSEventType;
   const payloadSchema = payloadSchemas[type];
   const payload = payloadSchema?.safeParse(envelope.data.payload);
-  if (payload && !payload.success) return null;
+  if (payload && !payload.success) {
+    reportInvalid?.({
+      reason: "invalid_payload",
+      eventType: type,
+      issues: zodIssues(payload.error),
+    });
+    return null;
+  }
   return {
     kind: "event",
     message: {

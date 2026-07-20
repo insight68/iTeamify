@@ -7,7 +7,7 @@ import { agentListOptions } from "@teamify/core/workspace/queries";
 import { agentRunCounts30dOptions, workspaceAgentUsageOptions } from "@teamify/core/agents/queries";
 import { useWorkspacePresenceMap } from "@teamify/core/agents/use-agent-presence";
 import { ActorAvatar } from "../../common/actor-avatar";
-import { aggregateCostByAgent } from "../../runtimes/utils";
+import { aggregateCostByAgent, formatCny } from "../../runtimes/utils";
 import { Skeleton } from "@teamify/ui/components/ui/skeleton";
 import { availabilityConfig, workloadConfig } from "../../agents/presence";
 import type { AgentAvailability, Workload } from "@teamify/core/agents";
@@ -34,8 +34,15 @@ export function AgentsTab() {
   const loading = agentsPending || presenceLoading || runCountsPending || usagePending;
 
   const costMap = useMemo(() => {
-    if (!usageRows) return new Map<string, number>();
-    return new Map(aggregateCostByAgent(usageRows).map((c) => [c.key, c.cost]));
+    if (!usageRows) {
+      return new Map<string, { cost: number; estimated: boolean }>();
+    }
+    return new Map(
+      aggregateCostByAgent(usageRows).map((c) => [
+        c.key,
+        { cost: c.cost, estimated: c.estimated },
+      ]),
+    );
   }, [usageRows]);
 
   const runCountMap = useMemo(() => {
@@ -99,7 +106,7 @@ export function AgentsTab() {
               const availability = (presence?.availability ?? "offline") as AgentAvailability;
               const workload = (presence?.workload ?? "idle") as Workload;
               const runs = runCountMap.get(agent.id) ?? 0;
-              const cost = costMap.get(agent.id) ?? 0;
+              const cost = costMap.get(agent.id) ?? { cost: 0, estimated: false };
 
               return (
                 <tr key={agent.id} className="border-b last:border-0">
@@ -124,8 +131,15 @@ export function AgentsTab() {
                   <td className="px-4 py-2.5 text-right tabular-nums">
                     {runs}
                   </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums">
-                    ${cost.toFixed(2)}
+                  <td
+                    className="px-4 py-2.5 text-right tabular-nums"
+                    title={
+                      cost.estimated
+                        ? ts(($) => $.agents.cost_estimated_title)
+                        : undefined
+                    }
+                  >
+                    {formatCny(cost.cost, { estimated: cost.estimated })}
                   </td>
                 </tr>
               );

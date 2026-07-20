@@ -24,6 +24,14 @@
     "copied_toast": "已复制",
     "copy_failed_toast": "复制失败"
   },
+  "turn_navigation": {
+    "aria_label": "对话轮次",
+    "jump_to_turn": "跳转到第 {{position}} 轮",
+    "turn_label": "第 {{position}} 轮",
+    "responding": "正在回复…",
+    "no_response": "尚无回复",
+    "shortcut_hint": "Alt/⌥ ↑↓"
+  },
   "session_history": {
     "untitled": "无标题",
     "time": {

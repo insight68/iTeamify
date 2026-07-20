@@ -172,8 +172,12 @@
     "projects_nav_description": "Show project planning and grouping in the left workspace navigation.",
     "reconciliation_nav_title": "Reconciliation",
     "reconciliation_nav_description": "Show the reconciliation module in the left workspace navigation. The route stays available for direct links.",
+    "supply_reconciliation_nav_title": "Supply fee reconciliation",
+    "supply_reconciliation_nav_description": "Show SKU-level freight, handling, and storage reconciliation analysis in the left navigation.",
     "inventory_nav_title": "Inventory allocation",
     "inventory_nav_description": "Show the inventory and sales allocation dashboard in the left navigation. The route remains available by direct link.",
+    "product_categories_nav_title": "Product categories",
+    "product_categories_nav_description": "Show product category management below Inventory allocation in the left workspace navigation. The route remains available by direct link.",
     "inbox_nav_title": "Inbox",
     "inbox_nav_description": "Show followed tasks and unread work updates below the workspace navigation.",
     "my_issues_nav_title": "My Issues",
@@ -280,6 +284,7 @@
     "col_workload": "Workload",
     "col_runs": "Runs · 30d",
     "col_cost": "Cost · 30d",
+    "cost_estimated_title": "Includes model cost estimated with default pricing",
     "empty_state": "No agents yet."
   },
   "mcp": {

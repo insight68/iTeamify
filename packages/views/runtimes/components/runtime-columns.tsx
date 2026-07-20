@@ -44,6 +44,7 @@ import { ProviderLogo } from "./provider-logo";
 import { HealthIcon, useHealthLabel } from "./shared";
 import {
   computeCostInWindow,
+  formatCny,
   formatLastSeen,
   isVersionNewer,
   pctChange,
@@ -344,7 +345,7 @@ function CostCell({ runtimeId }: { runtimeId: string }) {
     () => computeCostInWindow(usage, 7, 7),
     [usage],
   );
-  const delta = pctChange(cost7d, costPrev7d);
+  const delta = pctChange(cost7d.cost, costPrev7d.cost);
 
   if (usage.length === 0) {
     return (
@@ -353,7 +354,7 @@ function CostCell({ runtimeId }: { runtimeId: string }) {
       </div>
     );
   }
-  const fmt = cost7d >= 100 ? `$${cost7d.toFixed(0)}` : `$${cost7d.toFixed(2)}`;
+  const fmt = formatCny(cost7d.cost, { estimated: cost7d.estimated });
   const deltaTone =
     delta == null
       ? "text-muted-foreground"
@@ -370,7 +371,16 @@ function CostCell({ runtimeId }: { runtimeId: string }) {
         : `${delta > 0 ? "↑" : "↓"}${Math.abs(delta)}%`;
   return (
     <div className="flex flex-col items-end leading-tight">
-      <span className="text-sm font-medium tabular-nums">{fmt}</span>
+      <span
+        className="text-sm font-medium tabular-nums"
+        title={
+          cost7d.estimated
+            ? t(($) => $.usage.cost_estimated_title)
+            : undefined
+        }
+      >
+        {fmt}
+      </span>
       {deltaLabel && (
         <span className={`text-[11px] tabular-nums ${deltaTone}`}>
           {deltaLabel}

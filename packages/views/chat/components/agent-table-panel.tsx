@@ -13,15 +13,15 @@ import { ChevronDown, ChevronLeft, ChevronRight, Download, RefreshCw } from "luc
 import { toast } from "sonner";
 import { useWorkspaceId } from "@teamify/core/hooks";
 import { useAuthStore } from "@teamify/core/auth";
+import { api } from "@teamify/core/api";
 import {
   agentTableDataOptions,
-  fetchAllAgentTableRows,
   tableDataKeys,
 } from "@teamify/core/chat/table-queries";
 import { useSaveTableData } from "@teamify/core/chat/table-mutations";
 import { getAgentTableRowBackground } from "@teamify/core/chat/table-colors";
 import {
-  buildAgentTableExportFileName,
+  buildAgentTableExportXlsxFileName,
 } from "@teamify/core/chat/table-export";
 import {
   resolveFilterDefault,
@@ -47,8 +47,8 @@ import type {
 } from "@teamify/core/types/agent";
 import { cn } from "@teamify/ui/lib/utils";
 import { useAgentTableFilterStore } from "@teamify/core/chat";
+import { downloadBlob } from "../../common/download-blob";
 import { useT } from "../../i18n";
-import { createAgentTableXlsxExportFile } from "../lib/agent-table-xlsx-export";
 
 // ── Types ──
 
@@ -243,17 +243,13 @@ export function AgentTablePanel({
   const handleExportAll = React.useCallback(async () => {
     setIsExporting(true);
     try {
-      const { rows: exportRows } = await fetchAllAgentTableRows(agentId, {
-        filters: effectiveFilters,
-      });
-      const exportFile = await createAgentTableXlsxExportFile({
-        config,
-        rows: exportRows,
-        fileName: buildAgentTableExportFileName(
+      const blob = await api.exportAgentTableData(agentId, effectiveFilters);
+      downloadBlob(
+        blob,
+        buildAgentTableExportXlsxFileName(
           config.title || config.data_table_name || "agent-table",
         ),
-      });
-      downloadBlob(exportFile.blob, exportFile.fileName);
+      );
       toast.success(t(($) => $.table.export_success));
     } catch (error) {
       toast.error(
@@ -581,17 +577,6 @@ export function AgentTablePanel({
       </div>
     </div>
   );
-}
-
-function downloadBlob(blob: Blob, fileName: string): void {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
 }
 
 // ── Edit Input ──

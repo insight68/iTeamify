@@ -20,7 +20,7 @@ import { useNavigation } from "../navigation";
 import { useWorkspacePaths } from "@teamify/core/paths";
 import type { ChatSession } from "@teamify/core/types";
 import { SessionListPanel } from "./session-list-panel";
-import { ChatArea } from "./chat-area";
+import { ChatWorkspace } from "./chat-workspace";
 import { createLogger } from "@teamify/core/logger";
 import { useT } from "../i18n";
 
@@ -197,7 +197,7 @@ export function ChatPage() {
                 </Tooltip>
               </div>
             )}
-            <ChatArea
+            <ChatWorkspace
               activeSessionId={activeSessionId}
               selectedAgentId={selectedAgentId}
               onSessionCreated={handleSessionCreated}

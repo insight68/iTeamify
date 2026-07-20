@@ -27,6 +27,14 @@
     "copied_toast": "Copied",
     "copy_failed_toast": "Copy failed"
   },
+  "turn_navigation": {
+    "aria_label": "Conversation turns",
+    "jump_to_turn": "Jump to turn {{position}}",
+    "turn_label": "Turn {{position}}",
+    "responding": "Responding…",
+    "no_response": "No response yet",
+    "shortcut_hint": "Alt/⌥ ↑↓"
+  },
   "session_history": {
     "untitled": "Untitled",
     "time": {

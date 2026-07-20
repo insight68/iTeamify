@@ -56,6 +56,7 @@ export type WSEventType =
   | "chat:session_deleted"
   | "chat:table_filter"
   | "reconciliation:filter"
+  | "inventory:updated"
   | "project:created"
   | "project:updated"
   | "project:deleted"
@@ -199,7 +200,7 @@ export interface ActivityCreatedPayload {
 
 export interface TaskMessagePayload {
   task_id: string;
-  issue_id: string;
+  issue_id?: string;
   chat_session_id?: string;
   seq: number;
   type: "text" | "thinking" | "tool_use" | "tool_result" | "error";
@@ -341,6 +342,17 @@ export interface InvitationRevokedPayload {
   invitee_email: string;
 }
 
+export interface InventoryUpdatedPayload {
+  dataset:
+    | "product_order"
+    | "dim_product"
+    | "allocation"
+    | "supply_inventory"
+    | "supply_inventory_snapshot";
+  refreshed_at: string;
+  run_id?: string;
+}
+
 // Payloads consumed by dedicated client handlers. Events not listed here are
 // still accepted by onAny, but do not get a typed dedicated subscription.
 export interface WSEventPayloadMap {
@@ -380,4 +392,5 @@ export interface WSEventPayloadMap {
   "chat:session_deleted": ChatSessionDeletedPayload;
   "chat:table_filter": ChatTableFilterPayload;
   "reconciliation:filter": ReconciliationFilterPayload;
+  "inventory:updated": InventoryUpdatedPayload;
 }

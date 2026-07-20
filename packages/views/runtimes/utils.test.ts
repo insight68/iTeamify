@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 
-import { collectUnmappedModels, estimateCost, isModelPriced } from "./utils";
+import {
+  collectUnmappedModels,
+  estimateCost,
+  formatCny,
+  isModelPriced,
+  usesFallbackPricing,
+} from "./utils";
 
 const zeroUsage = {
   input_tokens: 0,
@@ -17,7 +23,7 @@ describe("estimateCost", () => {
       input_tokens: 1_000_000,
       output_tokens: 1_000_000,
     });
-    // 1M × $3 input + 1M × $15 output = $18.
+    // 1M × ¥3 input + 1M × ¥15 output = ¥18.
     expect(cost).toBeCloseTo(18, 5);
   });
 
@@ -29,7 +35,7 @@ describe("estimateCost", () => {
       output_tokens: 1_000_000,
       cache_read_tokens: 2_000_000,
     });
-    // 1M × $1.25 + 1M × $10 + 2M × $0.125 = $11.50.
+    // 1M × ¥1.25 + 1M × ¥10 + 2M × ¥0.125 = ¥11.50.
     expect(cost).toBeCloseTo(11.5, 5);
   });
 
@@ -70,23 +76,25 @@ describe("estimateCost", () => {
     ).toBeCloseTo(1.75 + 14, 5);
   });
 
-  it("flags catalog SKUs without a published price (gpt-5.5-mini) as unmapped", () => {
+  it("uses visibly-marked default pricing for an unmapped catalog SKU", () => {
     // `gpt-5.5-mini` is in the Codex catalog but OpenAI hasn't published a
-    // public rate. We refuse to absorb it into `gpt-5.5` — the diagnostic
-    // surfaces it instead so the team knows to add an explicit row.
+    // public rate. It must not inherit `gpt-5.5`; it uses the independent
+    // default tier and remains flagged so the UI can mark the amount as an
+    // estimate.
     expect(isModelPriced("gpt-5.5-mini")).toBe(false);
+    expect(usesFallbackPricing("gpt-5.5-mini")).toBe(true);
     expect(
       estimateCost({
         ...zeroUsage,
         model: "gpt-5.5-mini",
         input_tokens: 1_000_000,
       }),
-    ).toBe(0);
+    ).toBeCloseTo(1.25, 5);
   });
 
   it("flags hypothetical future variants as unmapped instead of inheriting a relative's price", () => {
-    // No exact match → unmapped. Covers both dotted families (`gpt-5.99-codex`)
-    // and unknown sub-variants (`gpt-5-foo`); both must miss rather than
+    // No exact match → default-price estimate. Covers both dotted families
+    // (`gpt-5.99-codex`) and unknown sub-variants (`gpt-5-foo`); neither may
     // silently inherit `gpt-5` pricing.
     expect(isModelPriced("gpt-5.99-codex")).toBe(false);
     expect(isModelPriced("gpt-5-foo")).toBe(false);
@@ -96,17 +104,49 @@ describe("estimateCost", () => {
         model: "gpt-5.99-codex",
         input_tokens: 1_000_000,
       }),
-    ).toBe(0);
+    ).toBeCloseTo(1.25, 5);
   });
 
-  it("returns 0 for a genuinely unknown model so the UI can flag it", () => {
+  it("uses default pricing for a genuinely unknown model", () => {
     expect(
       estimateCost({
         ...zeroUsage,
         model: "totally-made-up-model",
         input_tokens: 1_000_000,
       }),
-    ).toBe(0);
+    ).toBeCloseTo(1.25, 5);
+  });
+
+  it("prices empty and explicit default model values with the default tier", () => {
+    expect(
+      estimateCost({
+        ...zeroUsage,
+        model: "",
+        input_tokens: 1_000_000,
+        output_tokens: 1_000_000,
+      }),
+    ).toBeCloseTo(11.25, 5);
+    expect(
+      estimateCost({
+        ...zeroUsage,
+        model: "default",
+        input_tokens: 1_000_000,
+      }),
+    ).toBeCloseTo(1.25, 5);
+    expect(isModelPriced("")).toBe(true);
+    expect(isModelPriced("default")).toBe(true);
+    expect(usesFallbackPricing("")).toBe(false);
+  });
+});
+
+describe("formatCny", () => {
+  it("formats direct renminbi values without conversion", () => {
+    expect(formatCny(1234.5)).toBe("¥1,234.50");
+    expect(formatCny(1.25)).toBe("¥1.25");
+  });
+
+  it("marks default-price fallback amounts as estimates", () => {
+    expect(formatCny(1.25, { estimated: true })).toBe("≈¥1.25");
   });
 });
 

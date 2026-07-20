@@ -7,13 +7,15 @@ const originalExitFullscreen = document.exitFullscreen;
 
 describe("BrowserFullscreenFrame", () => {
   let fullscreenElement: Element | null;
+  let fullscreenTarget: Element | null;
   let requestFullscreen: ReturnType<typeof vi.fn>;
   let exitFullscreen: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     fullscreenElement = null;
-    requestFullscreen = vi.fn(function request(this: Element) {
-      fullscreenElement = this;
+    fullscreenTarget = null;
+    requestFullscreen = vi.fn(() => {
+      fullscreenElement = fullscreenTarget;
       document.dispatchEvent(new Event("fullscreenchange"));
       return Promise.resolve();
     });
@@ -64,25 +66,24 @@ describe("BrowserFullscreenFrame", () => {
   });
 
   it("requests browser fullscreen and restores when toggled", async () => {
-    render(
-      <BrowserFullscreenFrame
-        enterLabel="Enter fullscreen"
-        exitLabel="Restore"
-      >
-        {(fullscreenControl) => (
+    const rendered = render(
+      <BrowserFullscreenFrame enterLabel="Enter fullscreen" exitLabel="Restore">
+        {(fullscreenControl, isFullscreen) => (
           <div>
             {fullscreenControl}
-            <span>Panel content</span>
+            <span>{isFullscreen ? "Fullscreen content" : "Panel content"}</span>
           </div>
         )}
       </BrowserFullscreenFrame>,
     );
+    fullscreenTarget = rendered.container.firstElementChild;
 
     fireEvent.click(screen.getByRole("button", { name: "Enter fullscreen" }));
 
     expect(requestFullscreen).toHaveBeenCalledTimes(1);
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument();
+      expect(screen.getByText("Fullscreen content")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Restore" }));

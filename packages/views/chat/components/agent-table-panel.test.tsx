@@ -7,13 +7,11 @@ import type { ChatTableConfig } from "@teamify/core/types";
 
 const {
   agentTableDataOptionsSpy,
-  fetchAllAgentTableRows,
-  createAgentTableXlsxExportFile,
+  exportAgentTableData,
   clickSpy,
 } = vi.hoisted(() => ({
   agentTableDataOptionsSpy: vi.fn(),
-  fetchAllAgentTableRows: vi.fn(),
-  createAgentTableXlsxExportFile: vi.fn(),
+  exportAgentTableData: vi.fn(),
   clickSpy: vi.fn(),
 }));
 
@@ -39,9 +37,14 @@ vi.mock("@teamify/core/chat/table-queries", () => ({
     }),
     meta: agentTableDataOptionsSpy(wsId, agentId, params),
   }),
-  fetchAllAgentTableRows,
   tableDataKeys: {
     all: (wsId: string) => ["table-data", wsId],
+  },
+}));
+
+vi.mock("@teamify/core/api", () => ({
+  api: {
+    exportAgentTableData,
   },
 }));
 
@@ -54,11 +57,7 @@ vi.mock("@teamify/core/chat/table-mutations", () => ({
 }));
 
 vi.mock("@teamify/core/chat/table-export", () => ({
-  buildAgentTableExportFileName: () => "customers-2026-07-05.xlsx",
-}));
-
-vi.mock("../lib/agent-table-xlsx-export", () => ({
-  createAgentTableXlsxExportFile,
+  buildAgentTableExportXlsxFileName: () => "customers-2026-07-05.xlsx",
 }));
 
 vi.mock("@teamify/core/chat", () => {
@@ -179,14 +178,7 @@ function renderPanel(
 describe("AgentTablePanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    fetchAllAgentTableRows.mockResolvedValue({
-      rows: [{ id: 1, status: "active" }, { id: 2, status: "active" }],
-      total: 2,
-    });
-    createAgentTableXlsxExportFile.mockResolvedValue({
-      blob: new Blob(["xlsx"]),
-      fileName: "customers-2026-07-05.xlsx",
-    });
+    exportAgentTableData.mockResolvedValue(new Blob(["xlsx"]));
     vi.stubGlobal("URL", {
       createObjectURL: vi.fn(() => "blob:table-export"),
       revokeObjectURL: vi.fn(),
@@ -269,17 +261,10 @@ describe("AgentTablePanel", () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(fetchAllAgentTableRows).toHaveBeenCalledWith("agent-1", {
-        filters: { status: "active" },
+      expect(exportAgentTableData).toHaveBeenCalledWith("agent-1", {
+        status: "active",
       });
     });
-    expect(createAgentTableXlsxExportFile).toHaveBeenCalledWith(
-      expect.objectContaining({
-        config,
-        rows: [{ id: 1, status: "active" }, { id: 2, status: "active" }],
-        fileName: "customers-2026-07-05.xlsx",
-      }),
-    );
     expect(clickSpy).toHaveBeenCalled();
   });
 });

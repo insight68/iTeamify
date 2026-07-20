@@ -21,7 +21,9 @@ import {
   aggregateCostByModel,
   aggregateCostByHour,
   collectUnmappedModels,
+  formatCny,
   pctChange,
+  usesFallbackPricing,
   type CostByKey,
 } from "../utils";
 import { KpiCard } from "./shared";
@@ -86,11 +88,6 @@ function Segmented<T extends string | number>({
   );
 }
 
-function fmtMoney(n: number): string {
-  if (n >= 100) return `$${n.toFixed(0)}`;
-  return `$${n.toFixed(2)}`;
-}
-
 // ---------------------------------------------------------------------------
 // Top-level orchestrator. Owns the time window, fetches a 180-day usage
 // cache once, slices it into "current" / "prior" windows for delta math,
@@ -152,7 +149,7 @@ export function UsageSection({ runtimeId }: { runtimeId: string }) {
       <div className="grid grid-cols-3 divide-x rounded-lg border bg-card">
         <KpiCard
           label={t(($) => $.usage.kpi_cost_label, { days })}
-          value={fmtMoney(totals.cost)}
+          value={formatCny(totals.cost, { estimated: totals.estimated })}
           hint={
             costDelta == null ? undefined : (
               <span
@@ -174,7 +171,9 @@ export function UsageSection({ runtimeId }: { runtimeId: string }) {
         />
         <KpiCard
           label={t(($) => $.usage.kpi_cache_label, { days })}
-          value={fmtMoney(totals.cacheSavings)}
+          value={formatCny(totals.cacheSavings, {
+            estimated: totals.estimated,
+          })}
           accent={totals.cacheSavings > 0 ? "success" : "default"}
           hint={
             <span>
@@ -258,6 +257,7 @@ function WhenChart({
       aggregateCostByHour(byHourRows).map((row) => ({
         hour: Number(row.key),
         cost: row.cost,
+        estimated: row.estimated,
       })),
     [byHourRows],
   );
@@ -307,7 +307,7 @@ function DailyTab({
   data,
   usage,
 }: {
-  data: { total: number }[];
+  data: { total: number; estimated: boolean }[];
   usage: RuntimeUsage[];
 }) {
   const totalCost = data.reduce((s, d) => s + d.total, 0);
@@ -319,7 +319,7 @@ function HourlyTab({
   data,
   usage,
 }: {
-  data: { hour: number; cost: number }[];
+  data: { hour: number; cost: number; estimated: boolean }[];
   usage: RuntimeUsage[];
 }) {
   const totalCost = data.reduce((s, d) => s + d.cost, 0);
@@ -331,9 +331,9 @@ function HourlyTab({
 // EmptyChartState — drop-in replacement for "the chart would render empty".
 // Two cases worth distinguishing:
 //   1. No tokens at all → "no usage" (genuinely nothing happened).
-//   2. Tokens present but cost is $0 → almost always means the model name
+//   2. Tokens present but cost is ¥0 → almost always means the model name
 //      reported by the daemon isn't in our pricing table. List the offenders
-//      so a developer can update MODEL_PRICING in one go.
+//      so a developer can update MODEL_PRICING_CNY in one go.
 // ---------------------------------------------------------------------------
 
 function EmptyChartState({ usage }: { usage: RuntimeUsage[] }) {
@@ -530,8 +530,15 @@ function CostByList({
             <div className="text-right text-xs tabular-nums text-muted-foreground">
               {formatTokens(row.tokens)}
             </div>
-            <div className="text-right text-sm font-medium tabular-nums">
-              ${row.cost.toFixed(2)}
+            <div
+              className="text-right text-sm font-medium tabular-nums"
+              title={
+                row.estimated
+                  ? t(($) => $.usage.cost_estimated_title)
+                  : undefined
+              }
+            >
+              {formatCny(row.cost, { estimated: row.estimated })}
             </div>
           </div>
         );
@@ -671,6 +678,7 @@ interface UsageTotals {
   cacheWrite: number;
   cost: number;
   cacheSavings: number;
+  estimated: boolean;
 }
 
 function computeTotals(rows: RuntimeUsage[]): UsageTotals {
@@ -682,8 +690,16 @@ function computeTotals(rows: RuntimeUsage[]): UsageTotals {
       cacheWrite: acc.cacheWrite + u.cache_write_tokens,
       cost: acc.cost + estimateCost(u),
       cacheSavings: acc.cacheSavings + estimateCacheSavings(u),
+      estimated: acc.estimated || usesFallbackPricing(u.model),
     }),
-    { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, cacheSavings: 0 },
+    {
+      input: 0,
+      output: 0,
+      cacheRead: 0,
+      cacheWrite: 0,
+      cost: 0,
+      cacheSavings: 0,
+      estimated: false,
+    },
   );
 }
-

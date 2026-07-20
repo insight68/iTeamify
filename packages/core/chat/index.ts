@@ -9,15 +9,7 @@ export {
   normalizeHexColor,
 } from "./table-colors";
 export {
-  buildAgentTableExportModel,
-  buildAgentTableExportFileName,
-} from "./table-export";
-export type {
-  AgentTableExportCell,
-  AgentTableExportColumn,
-  AgentTableExportInput,
-  AgentTableExportModel,
-  AgentTableExportRow,
+  buildAgentTableExportXlsxFileName,
 } from "./table-export";
 
 import type { createChatStore as CreateChatStoreFn } from "./store";

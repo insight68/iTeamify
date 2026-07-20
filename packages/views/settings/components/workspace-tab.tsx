@@ -12,6 +12,8 @@ import {
   Save,
   Search,
   SquarePen,
+  Tags,
+  Scale,
 } from "lucide-react";
 import { Input } from "@teamify/ui/components/ui/input";
 import { Textarea } from "@teamify/ui/components/ui/textarea";
@@ -64,12 +66,20 @@ import { useT } from "../../i18n";
 const moduleRows: {
   key: WorkspaceModuleKey;
   icon: typeof CheckCircle2;
-  titleKey: "issues_nav_title" | "projects_nav_title" | "reconciliation_nav_title" | "inventory_nav_title";
+  titleKey:
+    | "issues_nav_title"
+    | "projects_nav_title"
+    | "reconciliation_nav_title"
+    | "supply_reconciliation_nav_title"
+    | "inventory_nav_title"
+    | "product_categories_nav_title";
   descriptionKey:
     | "issues_nav_description"
     | "projects_nav_description"
     | "reconciliation_nav_description"
-    | "inventory_nav_description";
+    | "supply_reconciliation_nav_description"
+    | "inventory_nav_description"
+    | "product_categories_nav_description";
 }[] = [
   {
     key: "issues",
@@ -90,10 +100,22 @@ const moduleRows: {
     descriptionKey: "reconciliation_nav_description",
   },
   {
+    key: "supplyReconciliation",
+    icon: Scale,
+    titleKey: "supply_reconciliation_nav_title",
+    descriptionKey: "supply_reconciliation_nav_description",
+  },
+  {
     key: "inventory",
     icon: Warehouse,
     titleKey: "inventory_nav_title",
     descriptionKey: "inventory_nav_description",
+  },
+  {
+    key: "productCategories",
+    icon: Tags,
+    titleKey: "product_categories_nav_title",
+    descriptionKey: "product_categories_nav_description",
   },
 ];
 

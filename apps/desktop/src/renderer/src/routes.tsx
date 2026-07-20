@@ -13,11 +13,18 @@ import { SkillDetailPage } from "./pages/skill-detail-page";
 import { AgentDetailPage } from "./pages/agent-detail-page";
 import { RuntimeDetailPage } from "./pages/runtime-detail-page";
 import { ReconciliationDetailPage } from "./pages/reconciliation-detail-page";
+import { SupplyReconciliationDetailPage } from "./pages/supply-reconciliation-detail-page";
 import { IssuesPage } from "@teamify/views/issues/components";
 import { ProjectsPage } from "@teamify/views/projects/components";
 import { AutopilotsPage } from "@teamify/views/autopilots/components";
 import { ReconciliationPage } from "@teamify/views/reconciliation";
-import { InventoryPage } from "@teamify/views/inventory";
+import {
+  SupplyReconciliationBillsPage,
+  SupplyReconciliationPage,
+  SupplyReconciliationResultsPage,
+} from "@teamify/views/supply-reconciliation";
+import { InventoryMonitorPage, InventoryPage } from "@teamify/views/inventory";
+import { ProductCategoriesPage } from "@teamify/views/product-categories";
 import { OrgPage } from "@teamify/views/org";
 import { DataSourcesPage } from "@teamify/views/datasources";
 import { MyIssuesPage } from "@teamify/views/my-issues";
@@ -116,9 +123,39 @@ export const appRoutes: RouteObject[] = [
             handle: { title: "Reconciliation" },
           },
           {
+            path: "supply-reconciliation",
+            element: <ErrorBoundary><SupplyReconciliationPage /></ErrorBoundary>,
+            handle: { title: "Supply fee reconciliation" },
+          },
+          {
+            path: "supply-reconciliation/results",
+            element: <ErrorBoundary><SupplyReconciliationResultsPage /></ErrorBoundary>,
+            handle: { title: "Supply fee reconciliation results" },
+          },
+          {
+            path: "supply-reconciliation/bills",
+            element: <ErrorBoundary><SupplyReconciliationBillsPage /></ErrorBoundary>,
+            handle: { title: "Supply fee bill import" },
+          },
+          {
+            path: "supply-reconciliation/results/:resultId",
+            element: <ErrorBoundary><SupplyReconciliationDetailPage /></ErrorBoundary>,
+            handle: { title: "Supply fee reconciliation evidence" },
+          },
+          {
             path: "inventory",
             element: <ErrorBoundary><InventoryPage /></ErrorBoundary>,
             handle: { title: "Inventory allocation" },
+          },
+          {
+            path: "inventory/monitor",
+            element: <ErrorBoundary><InventoryMonitorPage /></ErrorBoundary>,
+            handle: { title: "Inventory monitor" },
+          },
+          {
+            path: "product-categories",
+            element: <ErrorBoundary><ProductCategoriesPage /></ErrorBoundary>,
+            handle: { title: "Product categories" },
           },
           {
             path: "reconciliation/:batchNo",

@@ -169,8 +169,12 @@
     "projects_nav_description": "在左侧工作区导航中显示项目规划和分组。",
     "reconciliation_nav_title": "对账确认",
     "reconciliation_nav_description": "在左侧工作区导航中显示对账模块。关闭后仍可通过直接链接访问。",
-    "inventory_nav_title": "库存调拨",
-    "inventory_nav_description": "在左侧工作区导航中显示库存销量动态调拨看板。关闭后仍可通过直接链接访问。",
+    "supply_reconciliation_nav_title": "供应链费用对账",
+    "supply_reconciliation_nav_description": "在左侧导航显示按 SKU 分析运费、处理费和仓储费的供应链对账模块。",
+    "inventory_nav_title": "产品库存",
+    "inventory_nav_description": "在左侧工作区导航中显示产品库存动态看板。关闭后仍可通过直接链接访问。",
+    "product_categories_nav_title": "产品分类",
+    "product_categories_nav_description": "在左侧工作区导航的“产品库存”下方显示产品分类管理入口。关闭后仍可通过直接链接访问。",
     "inbox_nav_title": "关注的任务",
     "inbox_nav_description": "在工作区导航下方显示关注任务和未读工作动态。",
     "my_issues_nav_title": "我的事项",
@@ -277,6 +281,7 @@
     "col_workload": "工作负载",
     "col_runs": "运行次数 · 30天",
     "col_cost": "费用 · 30天",
+    "cost_estimated_title": "包含按默认价格估算的模型费用",
     "empty_state": "暂无智能体。"
   },
   "mcp": {

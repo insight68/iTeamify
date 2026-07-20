@@ -12,19 +12,25 @@ describe("workspace module navigation settings", () => {
       issues: true,
       projects: true,
       reconciliation: false,
+      supplyReconciliation: false,
       inventory: false,
+      productCategories: false,
     });
     expect(getWorkspaceModuleNavVisibility(null)).toEqual({
       issues: true,
       projects: true,
       reconciliation: false,
+      supplyReconciliation: false,
       inventory: false,
+      productCategories: false,
     });
     expect(getWorkspaceModuleNavVisibility({ modules: "bad" })).toEqual({
       issues: true,
       projects: true,
       reconciliation: false,
+      supplyReconciliation: false,
       inventory: false,
+      productCategories: false,
     });
     expect(
       isWorkspaceModuleNavVisible(
@@ -40,7 +46,9 @@ describe("workspace module navigation settings", () => {
         issues: { nav_visible: false },
         projects: { nav_visible: false },
         reconciliation: { nav_visible: true },
+        supplyReconciliation: { nav_visible: true },
         inventory: { nav_visible: true },
+        productCategories: { nav_visible: false },
       },
     };
 
@@ -48,7 +56,9 @@ describe("workspace module navigation settings", () => {
       issues: false,
       projects: false,
       reconciliation: true,
+      supplyReconciliation: true,
       inventory: true,
+      productCategories: false,
     });
   });
 
@@ -103,7 +113,14 @@ describe("workspace module navigation settings", () => {
           projects: { default_view: "list" },
         },
       },
-      { issues: false, projects: true, reconciliation: true, inventory: false },
+      {
+        issues: false,
+        projects: true,
+        reconciliation: true,
+        supplyReconciliation: false,
+        inventory: false,
+        productCategories: false,
+      },
     );
 
     expect(next).toEqual({
@@ -112,7 +129,9 @@ describe("workspace module navigation settings", () => {
         issues: { nav_visible: false },
         projects: { default_view: "list", nav_visible: true },
         reconciliation: { nav_visible: true },
+        supplyReconciliation: { nav_visible: false },
         inventory: { nav_visible: false },
+        productCategories: { nav_visible: false },
       },
     });
   });

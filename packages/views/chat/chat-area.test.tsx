@@ -1,9 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { ChatArea } from "./chat-area";
-import type { Agent } from "@teamify/core/types";
+import { ChatWorkspace } from "./chat-workspace";
+import type { Agent, ChatMessage } from "@teamify/core/types";
 
-const { agent } = vi.hoisted((): { agent: Agent } => ({
+const { agent, chatMessages } = vi.hoisted((): {
+  agent: Agent;
+  chatMessages: ChatMessage[];
+} => ({
   agent: {
     id: "agent-1",
     workspace_id: "ws-1",
@@ -45,6 +48,7 @@ const { agent } = vi.hoisted((): { agent: Agent } => ({
       page_size: 20,
     },
   },
+  chatMessages: [],
 }));
 
 vi.mock("react-resizable-panels", () => ({
@@ -54,7 +58,19 @@ vi.mock("react-resizable-panels", () => ({
 vi.mock("@teamify/ui/components/ui/resizable", () => ({
   ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   ResizablePanel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  ResizableHandle: () => <div role="separator" />,
+  ResizableHandle: ({
+    className,
+    withHandle,
+    "aria-label": ariaLabel,
+  }: {
+    className?: string;
+    withHandle?: boolean;
+    "aria-label"?: string;
+  }) => (
+    <div role="separator" aria-label={ariaLabel} className={className}>
+      {withHandle ? <div /> : null}
+    </div>
+  ),
 }));
 
 vi.mock("@teamify/ui/components/ui/dropdown-menu", () => ({
@@ -125,7 +141,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
   useQuery: ({ queryKey }: { queryKey: readonly unknown[] }) => {
     if (queryKey[0] === "agents") return { data: [agent] };
     if (queryKey[0] === "members") return { data: [{ user_id: "user-1", role: "member" }] };
-    if (queryKey[0] === "messages") return { data: [], isLoading: false };
+    if (queryKey[0] === "messages") return { data: chatMessages, isLoading: false };
     if (queryKey[0] === "pendingTask") return { data: null };
     return { data: null };
   },
@@ -145,8 +161,31 @@ vi.mock("./components/chat-input", () => ({
 }));
 
 vi.mock("./components/chat-message-list", () => ({
-  ChatMessageList: () => <div />,
+  ChatMessageList: ({
+    scrollContainerRef,
+  }: {
+    scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  }) => <div ref={scrollContainerRef} data-testid="chat-message-list" />,
   ChatMessageSkeleton: () => <div />,
+}));
+
+vi.mock("./components/chat-turn-navigation-rail", () => ({
+  CHAT_TURN_NAVIGATION_MIN_TURNS: 2,
+  buildChatTurnNavigationItems: (
+    messages: Array<{ id: string; role: string; content: string }>,
+  ) =>
+    messages
+      .filter((message) => message.role === "user")
+      .map((message) => ({
+        id: message.id,
+        prompt: message.content,
+        response: "",
+        isPending: false,
+      })),
+  ChatTurnNavigationRail: ({ items }: { items: Array<{ id: string }> }) =>
+    items.length >= 2 ? (
+      <nav data-testid="chat-turn-navigation-rail" />
+    ) : null,
 }));
 
 vi.mock("./components/no-agent-banner", () => ({
@@ -200,13 +239,30 @@ vi.mock("../i18n", () => ({
   }),
 }));
 
-describe("ChatArea", () => {
+const now = "2026-07-16T00:00:00Z";
+
+function chatMessage(
+  id: string,
+  role: ChatMessage["role"],
+  content: string,
+): ChatMessage {
+  return {
+    id,
+    chat_session_id: "session-1",
+    role,
+    content,
+    task_id: null,
+    created_at: now,
+  };
+}
+
+describe("ChatWorkspace", () => {
   it("uses the selected agent's custom empty-state title", () => {
     agent.chat_empty_state_title = "和财务智能体对话";
 
     try {
       render(
-        <ChatArea
+        <ChatWorkspace
           activeSessionId={null}
           selectedAgentId="agent-1"
           onSessionCreated={vi.fn()}
@@ -220,11 +276,18 @@ describe("ChatArea", () => {
     }
   });
 
-  it("renders reconciliation panel when the selected agent enables reconciliation", () => {
+  it.each([
+    { routeState: "new chat", activeSessionId: null, selectedAgentId: null },
+    { routeState: "agent chat", activeSessionId: null, selectedAgentId: "agent-1" },
+    { routeState: "existing session", activeSessionId: "session-1", selectedAgentId: "agent-1" },
+  ])("keeps tool modules outside the chat window for $routeState", ({
+    activeSessionId,
+    selectedAgentId,
+  }) => {
     render(
-      <ChatArea
-        activeSessionId={null}
-        selectedAgentId="agent-1"
+      <ChatWorkspace
+        activeSessionId={activeSessionId}
+        selectedAgentId={selectedAgentId}
         onSessionCreated={vi.fn()}
         onAgentSelected={vi.fn()}
       />,
@@ -232,6 +295,45 @@ describe("ChatArea", () => {
 
     expect(screen.getByTestId("agent-reconciliation-panel")).toBeInTheDocument();
     expect(screen.getByTestId("chat-input")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("agent-reconciliation-panel").closest('[data-slot="chat-tool-modules"]'),
+    ).not.toBeNull();
+    expect(
+      screen.getByTestId("agent-reconciliation-panel").closest('[data-slot="chat-window"]'),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("chat-input").closest('[data-slot="chat-window"]'),
+    ).not.toBeNull();
+    expect(
+      screen.getByTestId("chat-input").closest('[data-slot="chat-window"]'),
+    ).toHaveClass("rounded-lg", "border", "shadow-sm");
+    const toolModules = screen
+      .getByTestId("agent-reconciliation-panel")
+      .closest('[data-slot="chat-tool-modules"]');
+    const chatWindow = screen
+      .getByTestId("chat-input")
+      .closest('[data-slot="chat-window"]');
+    const separator = screen.getByRole("separator", {
+      name: "Resize table and chat panels",
+    });
+
+    expect(
+      screen.getByTestId("agent-reconciliation-panel")
+        .closest('[data-slot="browser-fullscreen-frame"]'),
+    ).toHaveClass("rounded-lg", "border", "shadow-sm");
+    expect(toolModules).toHaveClass("px-2", "pb-0", "pt-2");
+    expect(chatWindow?.parentElement).toHaveClass("px-2", "pb-2", "pt-0");
+    expect(separator).toHaveClass(
+      "data-[panel-group-direction=vertical]:h-1.5",
+      "before:bg-border/20",
+      "hover:before:bg-foreground/15",
+      "focus-visible:before:bg-foreground/20",
+      "data-[separator=active]:before:bg-foreground/20",
+    );
+    expect(separator).not.toHaveClass(
+      "focus-visible:ring-2",
+      "focus-visible:ring-ring/50",
+    );
   });
 
   it("keeps the reconciliation module visible while enabled config has no columns", () => {
@@ -243,7 +345,7 @@ describe("ChatArea", () => {
 
     try {
       render(
-        <ChatArea
+        <ChatWorkspace
           activeSessionId={null}
           selectedAgentId="agent-1"
           onSessionCreated={vi.fn()}
@@ -255,6 +357,42 @@ describe("ChatArea", () => {
       expect(screen.getByTestId("chat-input")).toBeInTheDocument();
     } finally {
       agent.reconciliation_config = originalConfig;
+    }
+  });
+
+  it("keeps the two-turn navigation rail in the full chat window when tool modules are visible", () => {
+    chatMessages.push(
+      chatMessage("user-1", "user", "Check the first batch"),
+      chatMessage("assistant-1", "assistant", "The first batch is balanced."),
+      chatMessage("user-2", "user", "Check the second batch"),
+      chatMessage("assistant-2", "assistant", "The second batch has one difference."),
+    );
+
+    try {
+      render(
+        <ChatWorkspace
+          activeSessionId="session-1"
+          selectedAgentId="agent-1"
+          onSessionCreated={vi.fn()}
+          onAgentSelected={vi.fn()}
+        />,
+      );
+
+      const rail = screen.getByTestId("chat-turn-navigation-rail");
+      const chatWindow = rail.closest('[data-slot="chat-window"]');
+
+      expect(chatWindow).not.toBeNull();
+      expect(chatWindow).toHaveAttribute(
+        "data-turn-navigation-layout",
+        "compact",
+      );
+      expect(chatWindow?.firstElementChild).toHaveClass("pl-9");
+      expect(rail.closest('[data-slot="chat-tool-modules"]')).toBeNull();
+      expect(
+        screen.getByTestId("chat-input").closest('[data-slot="chat-window"]'),
+      ).toBe(chatWindow);
+    } finally {
+      chatMessages.splice(0);
     }
   });
 });

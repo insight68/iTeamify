@@ -1,6 +1,6 @@
 import type { WSMessage, WSEventPayloadMap, WSEventType } from "../types/events";
 import { type Logger, noopLogger } from "../logger";
-import { parseWSFrame } from "./ws-schema";
+import { parseWSFrame, type InvalidWSFrame } from "./ws-schema";
 
 type EventHandler = (payload: unknown, actorId?: string) => void;
 
@@ -80,9 +80,15 @@ export class WSClient {
     };
 
     this.ws.onmessage = (event) => {
-      const parsed = parseWSFrame(event.data);
+      let invalidDetails: InvalidWSFrame | undefined;
+      const parsed = parseWSFrame(event.data, (details) => {
+        invalidDetails = details;
+      });
       if (!parsed) {
-        this.logger.warn("ws ignored malformed or unknown message");
+        this.logger.warn(
+          "ws ignored malformed or unknown message",
+          invalidDetails ?? { reason: "invalid_frame" },
+        );
         return;
       }
       if (parsed.kind === "auth_ack") {

@@ -120,10 +120,8 @@ export function formatTokens(n: number): string {
 // Cost estimation
 // ---------------------------------------------------------------------------
 
-// Pricing per million tokens (USD). Anthropic figures sourced from
-// https://platform.claude.com/docs/en/about-claude/pricing; OpenAI figures
-// from https://openai.com/api/pricing — keep in sync when providers release
-// new models or adjust prices.
+// Product pricing per million tokens (CNY). Values are stored directly in
+// renminbi and are never derived through an exchange-rate conversion.
 //
 // Anthropic's cacheWrite reflects the 5-minute cache TTL (1.25× input); the
 // daemon reports cache_creation_input_tokens without TTL metadata, so 5m is
@@ -132,16 +130,24 @@ export function formatTokens(n: number): string {
 // subsequent reads), so cacheWrite mirrors input there.
 //
 // The resolver matches exact keys after stripping a trailing date snapshot
-// (see `resolvePricing` below). It deliberately does NOT do startsWith
-// fallbacks: every catalog SKU needs its own row. That keeps unfamiliar
-// variants (`gpt-5.5-mini`, hypothetical `gpt-5.4-foo`) from silently
-// inheriting the price of a near-named relative; they surface in the
-// unmapped diagnostic instead. Mirror new entries in
-// `server/pkg/agent/models.go` so the catalog and pricing stay in sync.
-const MODEL_PRICING: Record<
+// (see `resolvePricing` below). Empty / "default" model names use the formal
+// default tier. Other unknown names also use that tier as an explicitly
+// marked estimate instead of silently displaying zero spend.
+export const DEFAULT_MODEL_KEY = "default";
+
+export const DEFAULT_MODEL_PRICING_CNY = {
+  input: 1.25,
+  output: 10,
+  cacheRead: 0.125,
+  cacheWrite: 1.25,
+} as const;
+
+const MODEL_PRICING_CNY: Record<
   string,
   { input: number; output: number; cacheRead: number; cacheWrite: number }
 > = {
+  [DEFAULT_MODEL_KEY]: DEFAULT_MODEL_PRICING_CNY,
+
   // -- Anthropic: current generation (4.5+ — Opus dropped from 15/75 to 5/25 here) --
   "claude-haiku-4-5":   { input: 1,    output: 5,    cacheRead: 0.10, cacheWrite: 1.25 },
   "claude-sonnet-4-5":  { input: 3,    output: 15,   cacheRead: 0.30, cacheWrite: 3.75 },
@@ -183,10 +189,10 @@ const MODEL_PRICING: Record<
   "gpt-4o-mini":        { input: 0.15, output: 0.60, cacheRead: 0.075, cacheWrite: 0.15 },
   "gpt-4o":             { input: 2.50, output: 10,   cacheRead: 1.25,  cacheWrite: 2.50 },
 
-  // -- MiniMax: M2.7 (MiniMax official pricing, USD/M tokens) --
+  // -- MiniMax: M2.7 --
   "MiniMax-M2.7":        { input: 0.30, output: 1.20, cacheRead: 0.06,  cacheWrite: 0.375 },
 
-  // -- Zhipu / Z.ai: GLM-5.1 (OpenRouter rate, USD/M tokens; cache write unpublished, set to input) --
+  // -- Zhipu / Z.ai: GLM-5.1 --
   "glm-5.1":             { input: 1.05, output: 3.50, cacheRead: 0.525, cacheWrite: 1.05 },
 };
 
@@ -194,25 +200,63 @@ const MODEL_PRICING: Record<
 // tolerance: providers ship dated snapshots (`claude-sonnet-4-5-20250929`,
 // `gpt-5-2025-08-07`) where the family is what we price and the date is
 // volatile, so we strip a trailing date / "latest" tag and try again.
-// Anything still unmapped after that is genuinely unknown; return
-// undefined so callers can distinguish "$0 spend" from "spent but model
-// not priced". No startsWith fallback: variants like `gpt-5.5-mini` must
-// have their own row to be priced (otherwise they'd inherit `gpt-5.5`).
-function resolvePricing(model: string) {
-  if (!model) return undefined;
-  if (MODEL_PRICING[model]) return MODEL_PRICING[model];
+// No startsWith fallback: variants like `gpt-5.5-mini` never inherit the
+// price of a similarly named relative. They use the default tier with an
+// `estimated` marker until an explicit row is added.
+type PricingSource = "model" | "default" | "fallback";
 
-  const stripped = model.replace(/-(20\d{2}-\d{2}-\d{2}|20\d{6}|latest)$/, "");
-  if (stripped !== model && MODEL_PRICING[stripped]) return MODEL_PRICING[stripped];
+function resolvePricing(model: string): {
+  pricing: (typeof MODEL_PRICING_CNY)[string];
+  source: PricingSource;
+} {
+  const normalized = model.trim();
+  if (!normalized || normalized === DEFAULT_MODEL_KEY) {
+    return {
+      pricing: DEFAULT_MODEL_PRICING_CNY,
+      source: "default",
+    };
+  }
 
-  return undefined;
+  const exact = MODEL_PRICING_CNY[normalized];
+  if (exact) return { pricing: exact, source: "model" };
+
+  const stripped = normalized.replace(/-(20\d{2}-\d{2}-\d{2}|20\d{6}|latest)$/, "");
+  const dated = MODEL_PRICING_CNY[stripped];
+  if (stripped !== normalized && dated) {
+    return { pricing: dated, source: "model" };
+  }
+
+  return {
+    pricing: DEFAULT_MODEL_PRICING_CNY,
+    source: "fallback",
+  };
 }
 
-// Cheap predicate for the empty-state diagnostic: which model strings in a
-// usage batch failed pricing resolution. Useful when the user is staring at
-// "$0.00 / 2M tokens" and wants to know why.
+// True for explicit price rows and the formal default model. Unknown named
+// models return false even though estimateCost can still price them through
+// the visibly-marked default fallback.
 export function isModelPriced(model: string): boolean {
-  return resolvePricing(model) !== undefined;
+  return resolvePricing(model).source !== "fallback";
+}
+
+export function usesFallbackPricing(model: string): boolean {
+  return resolvePricing(model).source === "fallback";
+}
+
+const CNY_FORMATTER = new Intl.NumberFormat("zh-CN", {
+  style: "currency",
+  currency: "CNY",
+  currencyDisplay: "narrowSymbol",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+export function formatCny(
+  amount: number,
+  options: { estimated?: boolean } = {},
+): string {
+  const formatted = CNY_FORMATTER.format(amount);
+  return options.estimated === true ? `≈${formatted}` : formatted;
 }
 
 // Returns the unique, sorted list of model strings present in `rows` that
@@ -221,7 +265,7 @@ export function isModelPriced(model: string): boolean {
 export function collectUnmappedModels(rows: readonly Priceable[]): string[] {
   const set = new Set<string>();
   for (const r of rows) {
-    if (r.model && !isModelPriced(r.model)) set.add(r.model);
+    if (!isModelPriced(r.model)) set.add(r.model);
   }
   return [...set].sort();
 }
@@ -236,8 +280,7 @@ type Priceable = Pick<
 >;
 
 export function estimateCost(usage: Priceable): number {
-  const pricing = resolvePricing(usage.model);
-  if (!pricing) return 0;
+  const { pricing } = resolvePricing(usage.model);
   return (
     (usage.input_tokens * pricing.input +
       usage.output_tokens * pricing.output +
@@ -255,10 +298,7 @@ export interface CostBreakdown {
 }
 
 export function estimateCostBreakdown(usage: Priceable): CostBreakdown {
-  const pricing = resolvePricing(usage.model);
-  if (!pricing) {
-    return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
-  }
+  const { pricing } = resolvePricing(usage.model);
   return {
     input: (usage.input_tokens * pricing.input) / 1_000_000,
     output: (usage.output_tokens * pricing.output) / 1_000_000,
@@ -271,8 +311,7 @@ export function estimateCostBreakdown(usage: Priceable): CostBreakdown {
 // minus what they actually cost at the discounted cache-hit rate. This is a
 // reconstruction of "money the cache saved you", not real-world spend.
 export function estimateCacheSavings(usage: Priceable): number {
-  const pricing = resolvePricing(usage.model);
-  if (!pricing) return 0;
+  const { pricing } = resolvePricing(usage.model);
   const wouldHaveCost = (usage.cache_read_tokens * pricing.input) / 1_000_000;
   const actualCost = (usage.cache_read_tokens * pricing.cacheRead) / 1_000_000;
   return wouldHaveCost - actualCost;
@@ -295,9 +334,10 @@ export interface DailyCostData {
   date: string;
   label: string;
   cost: number;
+  estimated: boolean;
 }
 
-// Stacked variant — splits the daily $ figure into the three components that
+// Stacked variant — splits the daily CNY figure into the three components that
 // drive billing (cache reads excluded; their cost is tracked separately as
 // "savings" since they're typically dominated by the cached-input discount).
 export interface DailyCostStackData {
@@ -307,12 +347,14 @@ export interface DailyCostStackData {
   output: number;
   cacheWrite: number;
   total: number;
+  estimated: boolean;
 }
 
 export interface ModelDistribution {
   model: string;
   tokens: number;
   cost: number;
+  estimated: boolean;
 }
 
 export function aggregateByDate(usage: RuntimeUsage[]): {
@@ -322,12 +364,15 @@ export function aggregateByDate(usage: RuntimeUsage[]): {
   modelDist: ModelDistribution[];
 } {
   const dateMap = new Map<string, Omit<DailyTokenData, "label">>();
-  const costMap = new Map<string, number>();
+  const costMap = new Map<string, { cost: number; estimated: boolean }>();
   const stackMap = new Map<
     string,
-    { input: number; output: number; cacheWrite: number }
+    { input: number; output: number; cacheWrite: number; estimated: boolean }
   >();
-  const modelMap = new Map<string, { tokens: number; cost: number }>();
+  const modelMap = new Map<
+    string,
+    { tokens: number; cost: number; estimated: boolean }
+  >();
 
   for (const u of usage) {
     const existing = dateMap.get(u.date) ?? {
@@ -343,7 +388,9 @@ export function aggregateByDate(usage: RuntimeUsage[]): {
     existing.cacheWrite += u.cache_write_tokens;
     dateMap.set(u.date, existing);
 
-    const dayCost = (costMap.get(u.date) ?? 0) + estimateCost(u);
+    const dayCost = costMap.get(u.date) ?? { cost: 0, estimated: false };
+    dayCost.cost += estimateCost(u);
+    dayCost.estimated ||= usesFallbackPricing(u.model);
     costMap.set(u.date, dayCost);
 
     const breakdown = estimateCostBreakdown(u);
@@ -351,17 +398,24 @@ export function aggregateByDate(usage: RuntimeUsage[]): {
       input: 0,
       output: 0,
       cacheWrite: 0,
+      estimated: false,
     };
     stack.input += breakdown.input;
     stack.output += breakdown.output;
     stack.cacheWrite += breakdown.cacheWrite;
+    stack.estimated ||= usesFallbackPricing(u.model);
     stackMap.set(u.date, stack);
 
-    const modelName = u.model || u.provider;
-    const m = modelMap.get(modelName) ?? { tokens: 0, cost: 0 };
+    const modelName = u.model || DEFAULT_MODEL_KEY;
+    const m = modelMap.get(modelName) ?? {
+      tokens: 0,
+      cost: 0,
+      estimated: false,
+    };
     m.tokens +=
       u.input_tokens + u.output_tokens + u.cache_read_tokens + u.cache_write_tokens;
     m.cost += estimateCost(u);
+    m.estimated ||= usesFallbackPricing(u.model);
     modelMap.set(modelName, m);
   }
 
@@ -376,10 +430,11 @@ export function aggregateByDate(usage: RuntimeUsage[]): {
 
   const dailyCost = [...costMap.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, cost]) => ({
+    .map(([date, data]) => ({
       date,
       label: formatLabel(date),
-      cost: Math.round(cost * 100) / 100,
+      cost: Math.round(data.cost * 100) / 100,
+      estimated: data.estimated,
     }));
 
   const dailyCostStack = [...stackMap.entries()]
@@ -396,6 +451,7 @@ export function aggregateByDate(usage: RuntimeUsage[]): {
         output,
         cacheWrite,
         total: round(input + output + cacheWrite),
+        estimated: s.estimated,
       };
     });
 
@@ -420,6 +476,7 @@ export interface CostByKey {
   tokens: number;
   cost: number;
   taskCount: number;
+  estimated: boolean;
 }
 
 // Per-(agent, model) rows → per-agent totals. Cost is summed across all
@@ -433,11 +490,13 @@ export function aggregateCostByAgent(rows: RuntimeUsageByAgent[]): CostByKey[] {
       tokens: 0,
       cost: 0,
       taskCount: 0,
+      estimated: false,
     };
     entry.tokens +=
       r.input_tokens + r.output_tokens + r.cache_read_tokens + r.cache_write_tokens;
     entry.cost += estimateCost(r);
     entry.taskCount += r.task_count;
+    entry.estimated ||= usesFallbackPricing(r.model);
     map.set(r.agent_id, entry);
   }
   return [...map.values()].sort((a, b) => b.cost - a.cost);
@@ -448,11 +507,18 @@ export function aggregateCostByAgent(rows: RuntimeUsageByAgent[]): CostByKey[] {
 export function aggregateCostByModel(rows: RuntimeUsage[]): CostByKey[] {
   const map = new Map<string, CostByKey>();
   for (const r of rows) {
-    const key = r.model || r.provider || "unknown";
-    const entry = map.get(key) ?? { key, tokens: 0, cost: 0, taskCount: 0 };
+    const key = r.model || DEFAULT_MODEL_KEY;
+    const entry = map.get(key) ?? {
+      key,
+      tokens: 0,
+      cost: 0,
+      taskCount: 0,
+      estimated: false,
+    };
     entry.tokens +=
       r.input_tokens + r.output_tokens + r.cache_read_tokens + r.cache_write_tokens;
     entry.cost += estimateCost(r);
+    entry.estimated ||= usesFallbackPricing(r.model);
     map.set(key, entry);
   }
   return [...map.values()].sort((a, b) => b.cost - a.cost);
@@ -463,7 +529,13 @@ export function aggregateCostByModel(rows: RuntimeUsage[]): CostByKey[] {
 export function aggregateCostByHour(rows: RuntimeUsageByHour[]): CostByKey[] {
   const buckets = new Map<number, CostByKey>();
   for (let h = 0; h < 24; h++) {
-    buckets.set(h, { key: String(h), tokens: 0, cost: 0, taskCount: 0 });
+    buckets.set(h, {
+      key: String(h),
+      tokens: 0,
+      cost: 0,
+      taskCount: 0,
+      estimated: false,
+    });
   }
   for (const r of rows) {
     const entry = buckets.get(r.hour);
@@ -472,6 +544,7 @@ export function aggregateCostByHour(rows: RuntimeUsageByHour[]): CostByKey[] {
       r.input_tokens + r.output_tokens + r.cache_read_tokens + r.cache_write_tokens;
     entry.cost += estimateCost(r);
     entry.taskCount += r.task_count;
+    entry.estimated ||= usesFallbackPricing(r.model);
   }
   return [...buckets.values()];
 }
@@ -492,7 +565,7 @@ export function computeCostInWindow(
   rows: readonly RuntimeUsage[],
   daysBack: number,
   offsetDays: number = 0,
-): number {
+): { cost: number; estimated: boolean } {
   const now = new Date();
   const end = new Date(now);
   end.setDate(now.getDate() - offsetDays);
@@ -501,10 +574,14 @@ export function computeCostInWindow(
   const isoEnd = end.toISOString().slice(0, 10);
   const isoStart = start.toISOString().slice(0, 10);
   let total = 0;
+  let estimated = false;
   for (const r of rows) {
-    if (r.date >= isoStart && r.date < isoEnd) total += estimateCost(r);
+    if (r.date >= isoStart && r.date < isoEnd) {
+      total += estimateCost(r);
+      estimated ||= usesFallbackPricing(r.model);
+    }
   }
-  return total;
+  return { cost: total, estimated };
 }
 
 export function pctChange(current: number, previous: number): number | null {

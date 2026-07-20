@@ -150,6 +150,12 @@ vi.mock("../../i18n", () => ({
           projects_nav_description: "Show projects in the left navigation.",
           reconciliation_nav_title: "Reconciliation",
           reconciliation_nav_description: "Show in the left navigation.",
+          supply_reconciliation_nav_title: "Supply Fee Reconciliation",
+          supply_reconciliation_nav_description: "Show supply fee reconciliation in the left navigation.",
+          inventory_nav_title: "Inventory",
+          inventory_nav_description: "Show inventory in the left navigation.",
+          product_categories_nav_title: "Product Categories",
+          product_categories_nav_description: "Show product categories in the left navigation.",
           inbox_nav_title: "Inbox",
           inbox_nav_description: "Show inbox in the left navigation.",
           my_issues_nav_title: "My Issues",
@@ -249,15 +255,17 @@ describe("WorkspaceTab", () => {
     render(<WorkspaceTab />);
 
     const toggles = screen.getAllByRole("switch");
-    expect(toggles).toHaveLength(8);
+    expect(toggles).toHaveLength(10);
     expect(toggles[0]!).toHaveAttribute("aria-checked", "true");
     expect(toggles[1]!).toHaveAttribute("aria-checked", "true");
     expect(toggles[2]!).toHaveAttribute("aria-checked", "false");
     expect(toggles[3]!).toHaveAttribute("aria-checked", "false");
-    expect(toggles[4]!).toHaveAttribute("aria-checked", "true");
+    expect(toggles[4]!).toHaveAttribute("aria-checked", "false");
     expect(toggles[5]!).toHaveAttribute("aria-checked", "false");
-    expect(toggles[6]!).toHaveAttribute("aria-checked", "false");
+    expect(toggles[6]!).toHaveAttribute("aria-checked", "true");
     expect(toggles[7]!).toHaveAttribute("aria-checked", "false");
+    expect(toggles[8]!).toHaveAttribute("aria-checked", "false");
+    expect(toggles[9]!).toHaveAttribute("aria-checked", "false");
   });
 
   it("saves navigation visibility without dropping other settings", async () => {
@@ -269,15 +277,17 @@ describe("WorkspaceTab", () => {
     expect(toggles[1]!).toHaveAttribute("aria-checked", "true");
     expect(toggles[2]!).toHaveAttribute("aria-checked", "false");
     expect(toggles[3]!).toHaveAttribute("aria-checked", "false");
-    expect(toggles[4]!).toHaveAttribute("aria-checked", "true");
+    expect(toggles[4]!).toHaveAttribute("aria-checked", "false");
     expect(toggles[5]!).toHaveAttribute("aria-checked", "false");
-    expect(toggles[6]!).toHaveAttribute("aria-checked", "false");
+    expect(toggles[6]!).toHaveAttribute("aria-checked", "true");
     expect(toggles[7]!).toHaveAttribute("aria-checked", "false");
+    expect(toggles[8]!).toHaveAttribute("aria-checked", "false");
+    expect(toggles[9]!).toHaveAttribute("aria-checked", "false");
 
     await user.click(toggles[0]!);
     await user.click(toggles[2]!);
-    await user.click(toggles[4]!);
     await user.click(toggles[6]!);
+    await user.click(toggles[8]!);
     const saveButtons = screen.getAllByRole("button", { name: "Save" });
     await user.click(saveButtons[1]!);
 
@@ -295,7 +305,13 @@ describe("WorkspaceTab", () => {
           reconciliation: {
             nav_visible: true,
           },
+          supplyReconciliation: {
+            nav_visible: false,
+          },
           inventory: {
+            nav_visible: false,
+          },
+          productCategories: {
             nav_visible: false,
           },
         },

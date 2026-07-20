@@ -1,0 +1,77 @@
+{
+  "title": "Product categories",
+  "subtitle": "Maintain business categories and product series by material code.",
+  "source": "Source: dbo.dim_product",
+  "sync_note": "Saving synchronizes every active specification with the same material code.",
+  "refresh": "Refresh",
+  "last_synced": "Last synchronized {{time}}",
+  "never_synced": "No classification sync yet",
+  "read_only": "Only workspace owners and admins can edit classifications.",
+  "stats": {
+    "total": "Material codes",
+    "mapped": "Mapped",
+    "unmapped": "Needs mapping",
+    "categories": "Categories"
+  },
+  "filters": {
+    "search": "Search material code, product, or brand",
+    "category": "Category",
+    "series": "Product series",
+    "status": "Mapping status",
+    "all_categories": "All categories",
+    "all_series": "All series",
+    "all_statuses": "All statuses"
+  },
+  "status": {
+    "mapped": "Mapped",
+    "unmapped": "Unmapped",
+    "mixed": "Inconsistent",
+    "unknown": "Unknown"
+  },
+  "table": {
+    "product": "Product / material",
+    "category": "Business category",
+    "series": "Product series",
+    "status": "Status",
+    "scope": "Sync scope",
+    "updated": "Updated",
+    "actions": "Actions",
+    "records": "{{records}} specs · {{credentials}} credentials",
+    "edit": "Edit classification"
+  },
+  "empty": {
+    "title": "No matching material codes",
+    "description": "Adjust the filters or wait for product data to synchronize."
+  },
+  "unavailable": {
+    "title": "Product category data is unavailable",
+    "data_source_not_configured": "Configure a business data source containing dbo.dim_product.",
+    "data_source_unavailable": "The configured business data source cannot be reached.",
+    "table_missing": "The configured data source does not contain dbo.dim_product.",
+    "capability_check_failed": "The server could not inspect dbo.dim_product.",
+    "invalid_response": "The server returned an invalid product category response.",
+    "unknown": "Product category data could not be loaded."
+  },
+  "editor": {
+    "title": "Edit product classification",
+    "description": "{{name}} · {{materialCode}}",
+    "category": "Business category",
+    "category_placeholder": "Enter or reuse a category",
+    "series": "Product series",
+    "series_placeholder": "Enter or reuse a product series",
+    "sync_scope": "This will synchronize {{count}} active specifications with this material code.",
+    "clear_hint": "Leave both fields empty to mark the material code as unmapped.",
+    "cancel": "Cancel",
+    "save": "Save and synchronize",
+    "saving": "Synchronizing…"
+  },
+  "pagination": {
+    "summary": "{{from}}–{{to}} of {{total}}",
+    "previous": "Previous page",
+    "next": "Next page"
+  },
+  "toast": {
+    "success": "Synchronized {{count}} specification records.",
+    "error": "Could not synchronize the product classification."
+  }
+}

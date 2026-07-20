@@ -23,6 +23,8 @@ import type layout from "../locales/en/layout.json";
 import type org from "../locales/en/org.json";
 import type datasources from "../locales/en/datasources.json";
 import type inventory from "../locales/en/inventory.json";
+import type productCategories from "../locales/en/product-categories.json";
+import type supplyReconciliation from "../locales/en/supply-reconciliation.json";
 
 // Module augmentation enables i18next v26 selector API across the monorepo:
 // `t($ => $.signin.title)` resolves to the value in en/auth.json.
@@ -60,6 +62,8 @@ declare module "i18next" {
       org: typeof org;
       datasources: typeof datasources;
       inventory: typeof inventory;
+      "product-categories": typeof productCategories;
+      "supply-reconciliation": typeof supplyReconciliation;
     };
     enableSelector: true;
   }

@@ -36,6 +36,7 @@ import { cn } from "@teamify/ui/lib/utils";
 import { ConfirmationBadge } from "./confirmation-badge";
 import { useWorkspacePaths } from "@teamify/core/paths";
 import { useNavigation } from "../../navigation";
+import { downloadBlob } from "../../common/download-blob";
 import { useT } from "../../i18n";
 import { toast } from "sonner";
 import {
@@ -232,7 +233,14 @@ export function ReconciliationSummaryPanel({
     for (const [k, v] of Object.entries(filterDraft)) {
       if (v) currentFilters[k] = v;
     }
-    exportMutation.mutate({ wsId, filters: currentFilters });
+    exportMutation.mutate(
+      { wsId, filters: currentFilters },
+      {
+        onSuccess: (blob) => {
+          downloadBlob(blob, `reconciliation-${new Date().toISOString().split("T")[0]}.csv`);
+        },
+      },
+    );
   }, [wsId, filterDraft, exportMutation]);
 
   const handleRowClick = useCallback((row: TableRowData) => {

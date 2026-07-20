@@ -47,16 +47,6 @@ export function useExportReconciliation() {
       }
       throw new Error("useExportReconciliation requires wsId or agentId");
     },
-
-    onSuccess: (blob) => {
-      // Trigger download
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `reconciliation-${new Date().toISOString().split("T")[0]}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
-    },
   });
 }
 

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownRight, ArrowUpRight, RotateCcw, TrendingUp } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Database, RotateCcw, TrendingUp } from "lucide-react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { workspaceInventorySalesTrendOptions } from "@teamify/core/inventory";
 import { Button } from "@teamify/ui/components/ui/button";
@@ -66,12 +66,18 @@ export function SalesTrendPanel({
   onDaysChange,
   selection,
   onClearSelection,
+  availability,
+  comparisonAvailable,
+  onRetryAvailability,
 }: {
   wsId: string;
   days: 7 | 30 | 90;
   onDaysChange: (days: 7 | 30 | 90) => void;
   selection: SalesTrendSelection | null;
   onClearSelection: () => void;
+  availability: "checking" | "available" | "not-configured" | "unavailable";
+  comparisonAvailable: boolean;
+  onRetryAvailability: () => void;
 }) {
   const { t } = useT("inventory");
   const warehouseCodes = selection?.warehouses.map((warehouse) => warehouse.code) ?? [];
@@ -79,8 +85,9 @@ export function SalesTrendPanel({
     days,
     productCode: selection?.productCode,
     warehouseCodes,
+    enabled: availability === "available",
   }));
-  const points = (query.data?.points ?? []) as TrendPoint[];
+  const points = useMemo(() => (query.data?.points ?? []) as TrendPoint[], [query.data?.points]);
   const seriesKeys = useMemo(() => Array.from(new Set(points.map((point) => point.series_key))), [points]);
   const chartData = useMemo(() => {
     const byDate = new Map<string, ChartRow>();
@@ -114,15 +121,39 @@ export function SalesTrendPanel({
         <div>
           <div className="flex items-center gap-2"><TrendingUp className="size-4 text-primary" /><h2 className="text-sm font-semibold">{t(($) => $.sales_trend.title)}</h2></div>
           <p className="mt-1 text-xs text-muted-foreground">{selection ? t(($) => $.sales_trend.comparison_subtitle, { product: selection.productName || selection.productCode }) : t(($) => $.sales_trend.overall_subtitle)}</p>
-          {!selection && <p className="mt-1 text-[11px] text-muted-foreground/80">{t(($) => $.sales_trend.select_hint)}</p>}
+          {!selection && comparisonAvailable && <p className="mt-1 text-[11px] text-muted-foreground/80">{t(($) => $.sales_trend.select_hint)}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {selection && <Button size="sm" variant="ghost" onClick={onClearSelection}><RotateCcw className="size-3.5" />{t(($) => $.sales_trend.clear_comparison)}</Button>}
-          <div className="flex rounded-md border bg-muted/30 p-0.5">{([7, 30, 90] as const).map((value) => <button key={value} type="button" onClick={() => onDaysChange(value)} className={cn("rounded px-3 py-1.5 font-mono text-xs transition-colors", days === value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>{value}D</button>)}</div>
+          <div className="flex rounded-md border bg-muted/30 p-0.5">{([7, 30, 90] as const).map((value) => <button key={value} type="button" aria-pressed={days === value} disabled={availability !== "available"} onClick={() => onDaysChange(value)} className={cn("rounded px-3 py-1.5 font-mono text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50", days === value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>{value}D</button>)}</div>
         </div>
       </div>
 
-      {query.isLoading ? <div className="space-y-4 p-4"><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-16" />)}</div><Skeleton className="h-72" /></div> : query.isError ? <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">{t(($) => $.sales_trend.unavailable)}</div> : (
+      {availability === "checking" ? <div className="space-y-4 p-4"><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-16" />)}</div><Skeleton className="h-72" /></div> : availability === "not-configured" ? (
+        <div className="flex min-h-72 items-center justify-center p-6">
+          <div className="max-w-md text-center">
+            <div className="mx-auto flex size-10 items-center justify-center rounded-lg border bg-muted/30 text-muted-foreground"><Database className="size-4" /></div>
+            <p className="mt-3 text-sm font-medium">{t(($) => $.sales_trend.not_configured)}</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{t(($) => $.sales_trend.not_configured_detail)}</p>
+          </div>
+        </div>
+      ) : availability === "unavailable" ? (
+        <div className="flex min-h-72 items-center justify-center p-6">
+          <div className="max-w-md text-center">
+            <AlertTriangle className="mx-auto size-5 text-destructive" />
+            <p className="mt-3 text-sm font-medium">{t(($) => $.sales_trend.unavailable)}</p>
+            <Button className="mt-4" size="sm" variant="outline" onClick={onRetryAvailability}>{t(($) => $.sales_trend.retry)}</Button>
+          </div>
+        </div>
+      ) : query.isLoading ? <div className="space-y-4 p-4"><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-16" />)}</div><Skeleton className="h-72" /></div> : query.isError ? (
+        <div className="flex min-h-72 items-center justify-center p-6">
+          <div className="max-w-md text-center">
+            <AlertTriangle className="mx-auto size-5 text-destructive" />
+            <p className="mt-3 text-sm font-medium">{t(($) => $.sales_trend.unavailable)}</p>
+            <Button className="mt-4" size="sm" variant="outline" onClick={() => query.refetch()}>{t(($) => $.sales_trend.retry)}</Button>
+          </div>
+        </div>
+      ) : (
         <>
           <div className="grid grid-cols-2 border-b lg:grid-cols-4">
             <SummaryCell label={t(($) => $.sales_trend.period_total)} value={`${compact(summary?.net_sales_qty ?? 0)} ${t(($) => $.sales_trend.pieces)}`} />

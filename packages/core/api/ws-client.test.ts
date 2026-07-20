@@ -178,6 +178,32 @@ describe("WSClient", () => {
     ws.disconnect();
   });
 
+  it("logs the event type and validation reason for rejected frames", () => {
+    const warn = vi.fn();
+    const ws = new WSClient("ws://example.test/ws", {
+      cookieAuth: true,
+      logger: { info: vi.fn(), warn, debug: vi.fn(), error: vi.fn() },
+    });
+    ws.setAuth("tok", "acme");
+    ws.connect();
+
+    FakeWebSocket.lastInstance!.onmessage!({
+      data: JSON.stringify({
+        type: "task:message",
+        payload: { task_id: "task-1", seq: "one", type: "thinking" },
+      }),
+    });
+
+    expect(warn).toHaveBeenCalledWith(
+      "ws ignored malformed or unknown message",
+      expect.objectContaining({
+        eventType: "task:message",
+        reason: "invalid_payload",
+      }),
+    );
+    ws.disconnect();
+  });
+
   it("isolates a failing event handler from other subscribers", () => {
     const secondHandler = vi.fn();
     const ws = new WSClient("ws://example.test/ws", { cookieAuth: true });

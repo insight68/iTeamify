@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useRef, useState, type ComponentProps } from "react";
 import { ChevronDown, Check } from "lucide-react";
+import { cn } from "@teamify/ui/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,338 +12,163 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@teamify/ui/components/ui/dropdown-menu";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { useAuthStore } from "@teamify/core/auth";
-import { agentListOptions, memberListOptions } from "@teamify/core/workspace/queries";
-import { canAssignAgentToIssue } from "@teamify/core/permissions";
-import { api } from "@teamify/core/api";
-import { useAgentPresenceDetail, useWorkspaceAgentAvailability } from "@teamify/core/agents";
-import { useDefaultLayout } from "react-resizable-panels";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@teamify/ui/components/ui/resizable";
+import type { AgentAvailability } from "@teamify/core/agents";
 import { ActorAvatar } from "../common/actor-avatar";
 import { OfflineBanner } from "./components/offline-banner";
 import { NoAgentBanner } from "./components/no-agent-banner";
-import {
-  chatMessagesOptions,
-  pendingChatTaskOptions,
-  chatKeys,
-} from "@teamify/core/chat/queries";
-import { useCreateChatSession } from "@teamify/core/chat/mutations";
-import { useChatStore } from "@teamify/core/chat";
 import { ChatMessageList, ChatMessageSkeleton } from "./components/chat-message-list";
 import { ChatInput } from "./components/chat-input";
-import { AgentTablePanel } from "./components/agent-table-panel";
-import { AgentReconciliationPanel } from "./components/agent-reconciliation-panel";
-import { BrowserFullscreenFrame } from "./components/browser-fullscreen-frame";
+import {
+  buildChatTurnNavigationItems,
+  CHAT_TURN_NAVIGATION_MIN_TURNS,
+  ChatTurnNavigationRail,
+  type ChatTurnNavigationLayout,
+} from "./components/chat-turn-navigation-rail";
 import {
   ContextAnchorButton,
   ContextAnchorCard,
-  buildAnchorMarkdown,
-  useRouteAnchorCandidate,
 } from "./components/context-anchor";
-import { createLogger } from "@teamify/core/logger";
 import type { Agent, ChatMessage, ChatPendingTask } from "@teamify/core/types";
 import { useT } from "../i18n";
-import { useFileUpload } from "@teamify/core/hooks/use-file-upload";
-
-const apiLogger = createLogger("chat.api");
 
 interface ChatAreaProps {
-  activeSessionId: string | null;
-  selectedAgentId: string | null;
-  onSessionCreated: (id: string) => void;
-  onAgentSelected: (agentId: string) => void;
+  hasSession: boolean;
+  messages: ChatMessage[];
+  messagesLoading: boolean;
+  pendingTask: ChatPendingTask | null | undefined;
+  availability: AgentAvailability | undefined;
+  noAgent: boolean;
+  activeAgent: Agent | null;
+  availableAgents: Agent[];
+  userId: string | undefined;
+  onSend: (content: string, attachmentIds?: string[]) => void;
+  onStop: () => void;
+  onAgentSelected: (agent: Agent) => void;
+  onUploadFile: ComponentProps<typeof ChatInput>["onUploadFile"];
 }
 
 export function ChatArea({
-  activeSessionId,
-  selectedAgentId,
-  onSessionCreated,
+  hasSession,
+  messages,
+  messagesLoading,
+  pendingTask,
+  availability,
+  noAgent,
+  activeAgent,
+  availableAgents,
+  userId,
+  onSend,
+  onStop,
   onAgentSelected,
+  onUploadFile,
 }: ChatAreaProps) {
-  const wsId = useWorkspaceId();
-  const { t } = useT("chat");
-  const user = useAuthStore((s) => s.user);
-  const setActiveSession = useChatStore((s) => s.setActiveSession);
-
-  const { data: agents = [] } = useQuery(agentListOptions(wsId));
-  const { data: members = [] } = useQuery(memberListOptions(wsId));
-
-  const { data: rawMessages, isLoading: messagesLoading } = useQuery(
-    chatMessagesOptions(activeSessionId ?? ""),
-  );
-  const messages = activeSessionId ? rawMessages ?? [] : [];
-  const showSkeleton = !!activeSessionId && messagesLoading;
-
-  const { data: pendingTask } = useQuery(
-    pendingChatTaskOptions(activeSessionId ?? ""),
-  );
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const pendingTaskId = pendingTask?.task_id ?? null;
-
-  const currentMember = members.find((m) => m.user_id === user?.id);
-  const memberRole = currentMember?.role;
-  const availableAgents = useMemo(
-    () =>
-      agents.filter(
-        (a) =>
-          !a.archived_at &&
-          canAssignAgentToIssue(a, { userId: user?.id ?? null, role: memberRole ?? null }).allowed,
-      ),
-    [agents, user?.id, memberRole],
-  );
-
-  const activeAgent =
-    availableAgents.find((a) => a.id === selectedAgentId) ??
-    availableAgents[0] ??
-    null;
-
-  const agentAvailability = useWorkspaceAgentAvailability();
-  const noAgent = agentAvailability === "none";
-
-  const presenceDetail = useAgentPresenceDetail(wsId, activeAgent?.id);
-  const availability =
-    presenceDetail === "loading" ? undefined : presenceDetail.availability;
-
-  // Focus-mode anchor
-  const { candidate: anchorCandidate } = useRouteAnchorCandidate(wsId);
-
-  const qc = useQueryClient();
-  const createSession = useCreateChatSession();
-  const { uploadWithToast } = useFileUpload(api, undefined, { direct: true });
-
-  // Polling backup: when a task is in-flight, periodically refetch messages
-  // and pending task status as a safety net for missed WS events. This covers
-  // the case where staleTime: Infinity prevents auto-refetch on reconnect,
-  // and any WS events (chat:done, task:completed) lost during disconnection.
-  useEffect(() => {
-    if (!pendingTaskId || !activeSessionId) return;
-
-    const intervalId = setInterval(() => {
-      qc.refetchQueries({ queryKey: chatKeys.messages(activeSessionId) });
-      qc.refetchQueries({ queryKey: chatKeys.pendingTask(activeSessionId) });
-    }, 5000);
-
-    return () => clearInterval(intervalId);
-  }, [pendingTaskId, activeSessionId, qc]);
-
-  const handleSend = useCallback(
-    async (content: string, attachmentIds?: string[]) => {
-      if (!activeAgent) {
-        apiLogger.warn("sendChatMessage skipped: no active agent");
-        return;
-      }
-
-      const focusOn = useChatStore.getState().focusMode;
-      const finalContent = focusOn && anchorCandidate
-        ? `${buildAnchorMarkdown(anchorCandidate)}\n\n${content}`
-        : content;
-
-      let sessionId = activeSessionId;
-
-      if (!sessionId) {
-        const session = await createSession.mutateAsync({
-          agent_id: activeAgent.id,
-          title: finalContent.slice(0, 50),
-        });
-        sessionId = session.id;
-        setActiveSession(sessionId);
-        onSessionCreated(sessionId);
-      }
-
-      const sentAt = new Date().toISOString();
-      const optimistic: ChatMessage = {
-        id: `optimistic-${Date.now()}`,
-        chat_session_id: sessionId,
-        role: "user",
-        content: finalContent,
-        task_id: null,
-        created_at: sentAt,
-      };
-      qc.setQueryData<ChatMessage[]>(
-        chatKeys.messages(sessionId),
-        (old) => (old ? [...old, optimistic] : [optimistic]),
-      );
-      qc.setQueryData<ChatPendingTask>(chatKeys.pendingTask(sessionId), {
-        task_id: optimistic.id,
-        status: "queued",
-        created_at: sentAt,
-      });
-
-      const result = await api.sendChatMessage(sessionId, finalContent, attachmentIds);
-      qc.setQueryData<ChatPendingTask>(chatKeys.pendingTask(sessionId), (old) => {
-        // WS already cleared pending task (completed/failed/cancelled) — don't resurrect it
-        if (!old || !old.task_id) return old;
-        // Preserve WS-updated status (e.g. "running"), only upgrade task_id
-        return { ...old, task_id: result.task_id, created_at: result.created_at };
-      });
-      // Don't invalidate messages here — the optimistic user message is already
-      // in cache via setQueryData above, and the assistant reply hasn't been
-      // written yet. chat:done / task:completed WS events are the authoritative
-      // trigger for loading the full message list. Premature invalidation here
-      // races with those events and can leave the assistant message unloaded.
-    },
-    [activeSessionId, activeAgent, anchorCandidate, createSession, setActiveSession, onSessionCreated, qc],
-  );
-
-  
-  const handleStop = useCallback(() => {
-    if (!pendingTaskId || !activeSessionId) return;
-    qc.setQueryData(chatKeys.pendingTask(activeSessionId), {});
-    qc.invalidateQueries({ queryKey: chatKeys.messages(activeSessionId) });
-    api.cancelTaskById(pendingTaskId).then(
-      () => apiLogger.info("cancelTask.success", { taskId: pendingTaskId }),
-      (err) => apiLogger.warn("cancelTask.error", { taskId: pendingTaskId, err }),
-    );
-  }, [pendingTaskId, activeSessionId, qc]);
-
-  const handleSelectAgent = useCallback(
-    (agent: Agent) => {
-      if (activeAgent && agent.id === activeAgent.id) return;
-      onAgentSelected(agent.id);
-    },
-    [activeAgent, onAgentSelected],
-  );
-
   const hasMessages = messages.length > 0 || !!pendingTaskId;
-  const tableConfig = activeAgent?.chat_table_config;
-  const tableEnabled = tableConfig?.enabled ?? false;
-  const reconciliationConfig = activeAgent?.reconciliation_config;
-  const reconciliationEnabled = reconciliationConfig?.enabled ?? false;
-  const toolPanelEnabled = !!activeAgent && (tableEnabled || reconciliationEnabled);
+  const showSkeleton = hasSession && messagesLoading;
+  const pendingAlreadyPersisted =
+    !!pendingTaskId &&
+    messages.some(
+      (message) =>
+        message.role === "assistant" && message.task_id === pendingTaskId,
+    );
+  const isTurnStreaming =
+    !!pendingTaskId &&
+    !pendingTaskId.startsWith("optimistic-") &&
+    !pendingAlreadyPersisted;
+  const turnNavigationItems = useMemo(
+    () =>
+      showSkeleton
+        ? []
+        : buildChatTurnNavigationItems(messages, isTurnStreaming),
+    [isTurnStreaming, messages, showSkeleton],
+  );
+  const [turnNavigationLayout, setTurnNavigationLayout] =
+    useState<ChatTurnNavigationLayout>("hidden");
+  const effectiveTurnNavigationLayout =
+    turnNavigationItems.length < CHAT_TURN_NAVIGATION_MIN_TURNS
+      ? "hidden"
+      : turnNavigationLayout === "standard"
+        ? "standard"
+        : "compact";
 
-  // Per-agent resizable split persistence
-  const tableSplitLayoutId = activeAgent
-    ? `chat-table-split-${activeAgent.id}`
-    : "chat-table-split";
-  const {
-    defaultLayout: tableSplitLayout,
-    onLayoutChanged: onTableSplitLayoutChanged,
-  } = useDefaultLayout({ id: tableSplitLayoutId });
+  return (
+    <div
+      data-slot="chat-window"
+      data-turn-navigation-layout={effectiveTurnNavigationLayout}
+      className="relative isolate h-full min-h-0 min-w-0 overflow-hidden rounded-lg border bg-background shadow-sm"
+    >
+      <div
+        className={cn(
+          "flex h-full min-h-0 min-w-0 flex-col transition-[padding] duration-150",
+          // In compact mode the whole chat surface yields to the rail, so it
+          // cannot overlap messages, status banners, or the composer.
+          effectiveTurnNavigationLayout === "compact" && "pl-9",
+        )}
+      >
+        {/* Messages / skeleton / empty state */}
+        <div className="min-h-0 flex-1 overflow-hidden">
+          {showSkeleton ? (
+            <ChatMessageSkeleton />
+          ) : hasMessages ? (
+            <ChatMessageList
+              messages={messages}
+              pendingTask={pendingTask}
+              availability={availability}
+              scrollContainerRef={scrollContainerRef}
+            />
+          ) : (
+            <EmptyState
+              hasSessions={hasSession}
+              agentName={activeAgent?.name}
+              chatEmptyStateTitle={activeAgent?.chat_empty_state_title}
+              onPickPrompt={(text) => onSend(text)}
+            />
+          )}
+        </div>
 
-  // Keyboard shortcut: Ctrl+Shift+ArrowUp focuses the table/chat resize handle
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key === "ArrowUp") {
-        e.preventDefault();
-        document.querySelector<HTMLElement>(
-          '[data-panel-group-direction="vertical"] [role="separator"]',
-        )?.focus();
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
-
-  const chatContent = (
-    <div className="flex h-full flex-col bg-background">
-      {/* Messages / skeleton / empty state */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        {showSkeleton ? (
-          <ChatMessageSkeleton />
-        ) : hasMessages ? (
-          <ChatMessageList
-            messages={messages}
-            pendingTask={pendingTask}
+        {/* Status banner */}
+        {noAgent ? (
+          <NoAgentBanner />
+        ) : (
+          <OfflineBanner
+            agentName={activeAgent?.name}
             availability={availability}
           />
-        ) : (
-          <EmptyState
-            hasSessions={!!activeSessionId}
-            agentName={activeAgent?.name}
-            chatEmptyStateTitle={activeAgent?.chat_empty_state_title}
-            onPickPrompt={(text) => handleSend(text)}
-          />
         )}
+
+        {/* Input */}
+        <div className="shrink-0">
+          <ChatInput
+            onSend={onSend}
+            onStop={onStop}
+            isRunning={!!pendingTaskId}
+            noAgent={noAgent}
+            agentName={activeAgent?.name}
+            onUploadFile={onUploadFile}
+            topSlot={<ContextAnchorCard />}
+            leftAdornment={
+              <AgentDropdown
+                agents={availableAgents}
+                activeAgent={activeAgent}
+                userId={userId}
+                onSelect={onAgentSelected}
+              />
+            }
+            rightAdornment={<ContextAnchorButton />}
+          />
+        </div>
       </div>
 
-      {/* Status banner */}
-      {noAgent ? (
-        <NoAgentBanner />
-      ) : (
-        <OfflineBanner agentName={activeAgent?.name} availability={availability} />
-      )}
-
-      {/* Input */}
-      <div className="shrink-0">
-        <ChatInput
-          onSend={handleSend}
-          onStop={handleStop}
-          isRunning={!!pendingTaskId}
-          noAgent={noAgent}
-          agentName={activeAgent?.name}
-          onUploadFile={uploadWithToast}
-          topSlot={<ContextAnchorCard />}
-          leftAdornment={
-            <AgentDropdown
-              agents={availableAgents}
-              activeAgent={activeAgent}
-              userId={user?.id}
-              onSelect={handleSelectAgent}
-            />
-          }
-          rightAdornment={<ContextAnchorButton />}
-        />
-      </div>
+      {/* The full-window anchor keeps the bottom-aligned rail visible even
+       * when a tool module compresses the message viewport above it. */}
+      <ChatTurnNavigationRail
+        items={turnNavigationItems}
+        scrollContainerRef={scrollContainerRef}
+        onLayoutChange={setTurnNavigationLayout}
+      />
     </div>
   );
-
-  if (toolPanelEnabled && activeAgent) {
-    return (
-      <ResizablePanelGroup
-        id={tableSplitLayoutId}
-        orientation="vertical"
-        className="h-full"
-        defaultLayout={tableSplitLayout}
-        onLayoutChanged={onTableSplitLayoutChanged}
-      >
-        <ResizablePanel
-          id="table"
-          defaultSize="66.67%"
-          minSize="25%"
-          maxSize="85%"
-        >
-          <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden p-2 pb-0">
-            {reconciliationEnabled && reconciliationConfig && (
-              <BrowserFullscreenFrame
-                enterLabel={t(($) => $.window.expand_tooltip)}
-                exitLabel={t(($) => $.window.restore_tooltip)}
-                className="min-h-0 flex-1 rounded-lg bg-background data-[fullscreen=true]:rounded-none"
-              >
-                {(fullscreenControl) => (
-                  <AgentReconciliationPanel
-                    config={reconciliationConfig}
-                    fullscreenControl={fullscreenControl}
-                  />
-                )}
-              </BrowserFullscreenFrame>
-            )}
-            {tableEnabled && tableConfig && (
-              <BrowserFullscreenFrame
-                enterLabel={t(($) => $.window.expand_tooltip)}
-                exitLabel={t(($) => $.window.restore_tooltip)}
-                className="min-h-0 flex-1 rounded-lg border bg-card data-[fullscreen=true]:rounded-none data-[fullscreen=true]:border-0"
-              >
-                {(fullscreenControl) => (
-                  <AgentTablePanel
-                    config={tableConfig}
-                    agentId={activeAgent.id}
-                    sessionId={activeSessionId ?? ""}
-                    fullscreenControl={fullscreenControl}
-                  />
-                )}
-              </BrowserFullscreenFrame>
-            )}
-          </div>
-        </ResizablePanel>
-        <ResizableHandle aria-label="Resize table and chat panels" />
-        <ResizablePanel id="chat-content" minSize="15%">
-          <div className="h-full">{chatContent}</div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
-    );
-  }
-
-  return chatContent;
 }
 
 /**

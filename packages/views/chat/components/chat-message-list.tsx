@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, type RefObject } from "react";
 import { toast } from "sonner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@teamify/ui/lib/utils";
 import { Skeleton } from "@teamify/ui/components/ui/skeleton";
 import { Button } from "@teamify/ui/components/ui/button";
@@ -19,7 +19,7 @@ import {
 import { ChevronRight, ChevronDown, Brain, AlertCircle, AlertTriangle, Copy } from "lucide-react";
 import { useScrollFade } from "@teamify/ui/hooks/use-scroll-fade";
 import { useAutoScroll } from "@teamify/ui/hooks/use-auto-scroll";
-import { taskMessagesOptions, chatKeys } from "@teamify/core/chat/queries";
+import { taskMessagesOptions } from "@teamify/core/chat/queries";
 import { useChatStore } from "@teamify/core/chat";
 import { Markdown } from "@teamify/views/common/markdown";
 import { copyMarkdown } from "../../editor";
@@ -43,10 +43,16 @@ interface ChatMessageListProps {
   pendingTask: ChatPendingTask | null | undefined;
   /** Resolved presence; pass `undefined` while loading to keep the pill copy neutral. */
   availability: AgentAvailability | undefined;
+  /** ChatArea-owned scroll root shared with the turn navigation rail. */
+  scrollContainerRef: RefObject<HTMLDivElement | null>;
 }
 
-export function ChatMessageList({ messages, pendingTask, availability }: ChatMessageListProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+export function ChatMessageList({
+  messages,
+  pendingTask,
+  availability,
+  scrollContainerRef: scrollRef,
+}: ChatMessageListProps) {
   const fadeStyle = useScrollFade(scrollRef);
   useAutoScroll(scrollRef);
 
@@ -71,7 +77,7 @@ export function ChatMessageList({ messages, pendingTask, availability }: ChatMes
         el.scrollTop = savedPosition;
       });
     }
-  }, [activeSessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeSessionId, scrollRef]); // eslint-disable-line react-hooks/exhaustive-deps
   // scrollPositions intentionally excluded — we only want this to fire on
   // session change, not every time we save a position.
 
@@ -91,40 +97,9 @@ export function ChatMessageList({ messages, pendingTask, availability }: ChatMes
       el.removeEventListener("scroll", onScroll);
       clearTimeout(timer);
     };
-  }, [activeSessionId, setScrollPosition]);
+  }, [activeSessionId, scrollRef, setScrollPosition]);
 
-  const qc = useQueryClient();
   const pendingTaskId = pendingTask?.task_id ?? null;
-
-  // Track the last non-null pendingTaskId so we can detect the
-  // streaming→completed transition even after the cache is cleared.
-  const lastPendingTaskIdRef = useRef<string | null>(null);
-  if (pendingTaskId) {
-    lastPendingTaskIdRef.current = pendingTaskId;
-  }
-
-  // Defensive refetch: when the pending task clears but the corresponding
-  // assistant message hasn't landed in the messages array, force a refetch
-  // after a short grace period. This covers the race window between
-  // chat:done/task:completed WS events and the messages cache refetch.
-  useEffect(() => {
-    const lastTaskId = lastPendingTaskIdRef.current;
-    if (!pendingTask && lastTaskId && activeSessionId) {
-      const hasAssistant = messages.some(
-        (m) => m.role === "assistant" && m.task_id === lastTaskId,
-      );
-      if (!hasAssistant) {
-        const timer = setTimeout(() => {
-          qc.refetchQueries({ queryKey: chatKeys.messages(activeSessionId) });
-        }, 800);
-        return () => clearTimeout(timer);
-      }
-      // Assistant message landed — clear the ref so we don't re-fire on
-      // subsequent re-renders.
-      lastPendingTaskIdRef.current = null;
-    }
-    return undefined;
-  }, [pendingTask, messages, activeSessionId, qc]);
 
   // Once the assistant message for this pending task has landed in the
   // messages list, AssistantMessage owns its rendering — suppress the live
@@ -151,44 +126,54 @@ export function ChatMessageList({ messages, pendingTask, availability }: ChatMes
   const showStatusPill = !!pendingTaskId && !pendingAlreadyPersisted && !!pendingTask;
 
   return (
-    <div ref={scrollRef} style={{ ...fadeStyle, scrollbarGutter: "stable" }} className="flex-1">
-      {/* Inner container matches issue / project detail width convention
-       *  (max-w-4xl + mx-auto) so switching between chat and content
-       *  views doesn't jolt the reading width. px-5 is a touch tighter
-       *  than issue-detail's px-8 because the chat window can be narrow. */}
-      <div className="mx-auto w-full max-w-4xl px-5 py-4 space-y-4">
-        {messages.map((msg) => {
-          // During streaming, hide the assistant bubble for the in-flight task —
-          // the live timeline (hasLive branch) renders in its place. Once the
-          // message is persisted, pendingAlreadyPersisted flips and this path
-          // becomes a no-op, restoring normal rendering.
-          if (
-            isStreaming &&
-            msg.role === "assistant" &&
-            msg.task_id === pendingTaskId
-          ) {
-            return null;
-          }
-          return (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              isPending={!!pendingTaskId && msg.task_id === pendingTaskId}
-            />
-          );
-        })}
-        {hasLive && (
-          <div className="w-full space-y-1.5">
-            <TimelineView items={liveTimeline} isStreaming={isStreaming} />
+    <div className="h-full min-h-0">
+      <div
+        ref={scrollRef}
+        style={{ ...fadeStyle, scrollbarGutter: "stable" }}
+        className="h-full overflow-y-auto"
+      >
+        {/* Keep the viewport gutter outside the centered reading column.
+         * This mirrors ChatInput's px-5 outer / max-w-4xl inner structure,
+         * so both surfaces share one left edge at every panel width. */}
+        <div className="px-5">
+          <div
+            data-chat-turn-content
+            className="mx-auto w-full max-w-4xl space-y-4 py-4"
+          >
+            {messages.map((msg) => {
+              // During streaming, hide the assistant bubble for the in-flight task —
+              // the live timeline (hasLive branch) renders in its place. Once the
+              // message is persisted, pendingAlreadyPersisted flips and this path
+              // becomes a no-op, restoring normal rendering.
+              if (
+                isStreaming &&
+                msg.role === "assistant" &&
+                msg.task_id === pendingTaskId
+              ) {
+                return null;
+              }
+              return (
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  isPending={!!pendingTaskId && msg.task_id === pendingTaskId}
+                />
+              );
+            })}
+            {hasLive && (
+              <div className="w-full space-y-1.5">
+                <TimelineView items={liveTimeline} isStreaming={isStreaming} />
+              </div>
+            )}
+            {showStatusPill && pendingTask && (
+              <TaskStatusPill
+                pendingTask={pendingTask}
+                taskMessages={liveTaskMessages ?? []}
+                availability={availability}
+              />
+            )}
           </div>
-        )}
-        {showStatusPill && pendingTask && (
-          <TaskStatusPill
-            pendingTask={pendingTask}
-            taskMessages={liveTaskMessages ?? []}
-            availability={availability}
-          />
-        )}
+        </div>
       </div>
     </div>
   );
@@ -203,18 +188,20 @@ export function ChatMessageList({ messages, pendingTask, availability }: ChatMes
 export function ChatMessageSkeleton() {
   return (
     <div className="flex-1 overflow-hidden">
-      <div className="mx-auto w-full max-w-4xl px-5 py-4 space-y-5">
-        <div className="space-y-2">
-          <Skeleton className="h-3.5 w-3/4" />
-          <Skeleton className="h-3.5 w-1/2" />
-        </div>
-        <div className="flex justify-end">
-          <Skeleton className="h-8 w-48 rounded-2xl" />
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-3.5 w-2/3" />
-          <Skeleton className="h-3.5 w-5/6" />
-          <Skeleton className="h-3.5 w-1/3" />
+      <div className="px-5">
+        <div className="mx-auto w-full max-w-4xl space-y-5 py-4">
+          <div className="space-y-2">
+            <Skeleton className="h-3.5 w-3/4" />
+            <Skeleton className="h-3.5 w-1/2" />
+          </div>
+          <div className="flex justify-end">
+            <Skeleton className="h-8 w-48 rounded-2xl" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-3.5 w-2/3" />
+            <Skeleton className="h-3.5 w-5/6" />
+            <Skeleton className="h-3.5 w-1/3" />
+          </div>
         </div>
       </div>
     </div>
@@ -243,8 +230,14 @@ function MessageBubble({
 }) {
   if (message.role === "user") {
     return (
-      <div className="flex justify-end">
-        <div className="rounded-2xl bg-muted px-3.5 py-2 text-sm max-w-[80%] break-words">
+      <div
+        data-chat-turn-id={message.id}
+        className="-mx-2 flex scroll-mt-4 justify-end rounded-xl px-2"
+      >
+        <div
+          data-chat-turn-prompt
+          className="max-w-[80%] break-words rounded-2xl bg-muted px-3.5 py-2 text-sm"
+        >
           {/* User messages are authored as markdown in ContentEditor, so
            * render them through the same pipeline as assistant replies.
            * Neutralise prose's leading/trailing margin so single-line
@@ -682,4 +675,3 @@ function ErrorRow({ item }: { item: ChatTimelineItem }) {
 }
 
 // ─── Shared ──────────────────────────────────────────────────────────────
-

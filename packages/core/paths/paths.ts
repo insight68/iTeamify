@@ -40,7 +40,13 @@ function workspaceScoped(slug: string) {
     datasources: () => `${ws}/datasources`,
     reconciliation: () => `${ws}/reconciliation`,
     reconciliationDetail: (batchNo: string) => `${ws}/reconciliation/${encode(batchNo)}`,
+    supplyReconciliation: () => `${ws}/supply-reconciliation`,
+    supplyReconciliationBills: () => `${ws}/supply-reconciliation/bills`,
+    supplyReconciliationResults: () => `${ws}/supply-reconciliation/results`,
+    supplyReconciliationResult: (resultId: string) => `${ws}/supply-reconciliation/results/${encode(resultId)}`,
     inventory: () => `${ws}/inventory`,
+    inventoryMonitor: () => `${ws}/inventory/monitor`,
+    productCategories: () => `${ws}/product-categories`,
   };
 }
 

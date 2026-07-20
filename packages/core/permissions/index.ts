@@ -20,3 +20,4 @@ export {
 } from "./use-resource-permissions";
 
 export { useIsOwner } from "./use-owner-check";
+export { useCurrentMember } from "./use-current-member";

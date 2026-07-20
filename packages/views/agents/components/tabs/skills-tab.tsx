@@ -51,8 +51,9 @@ export function SkillsTab({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
+    <div className="flex h-full flex-col gap-4">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-2">
+        <div className="flex items-start justify-between gap-3">
         <p className="text-xs text-muted-foreground">
           {t(($) => $.tab_body.skills.intro)}
         </p>
@@ -126,6 +127,7 @@ export function SkillsTab({
       )}
 
       <SkillAddDialog agent={agent} open={showAdd} onOpenChange={setShowAdd} />
+      </div>
     </div>
   );
 }

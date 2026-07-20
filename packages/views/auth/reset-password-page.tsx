@@ -78,22 +78,11 @@ export function ResetPasswordPage({ logo, onSuccess, onBack }: ResetPasswordPage
   const handleVerifyCode = useCallback(
     async (value: string) => {
       if (value.length !== 6) return;
-      setLoading(true);
       setError("");
-      try {
-        await api.resetPasswordVerify(email, value, password);
-        onSuccess?.();
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : t(($) => $.errors.code_invalid),
-        );
-        setCode("");
-        setLoading(false);
-      }
+      setCode(value);
+      setStep("password");
     },
-    [email, password, onSuccess, t],
+    [],
   );
 
   const handleSubmitPassword = useCallback(

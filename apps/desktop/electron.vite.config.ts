@@ -5,11 +5,9 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   main: {
-    envDir: resolve(__dirname, "..", ".."),
     plugins: [externalizeDepsPlugin()],
   },
   preload: {
-    envDir: resolve(__dirname, "..", ".."),
     plugins: [externalizeDepsPlugin()],
   },
   renderer: {

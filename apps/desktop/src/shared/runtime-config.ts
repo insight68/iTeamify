@@ -13,13 +13,21 @@ export type RuntimeConfigResult =
   | { ok: true; config: RuntimeConfig }
   | { ok: false; error: RuntimeConfigError };
 
+// Production defaults baked into the packaged desktop app. Operators can
+// override per-install via `desktop.json` (see `runtime-config-loader.ts`).
+// The cloud host is a single domain (no `api.` subdomain), so apiUrl and
+// appUrl are identical here — the `deriveAppUrl` `api.` stripping heuristic
+// is a no-op on it.
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = Object.freeze({
   schemaVersion: 1,
-  apiUrl: "https://api.teamify.world",
-  wsUrl: "wss://api.teamify.world/ws",
-  appUrl: "https://teamify.world",
+  apiUrl: "https://pub.niuwoai.com",
+  wsUrl: "wss://pub.niuwoai.com/ws",
+  appUrl: "https://pub.niuwoai.com",
 });
 
+// Dev fallback used by `runtimeConfigFromDevEnv` when VITE_API_URL is unset
+// or points at localhost: the renderer is served from a separate dev port
+// (3000) so the appUrl cannot be derived from the api host.
 const LOCAL_DEV_RUNTIME_CONFIG: RuntimeConfig = Object.freeze({
   schemaVersion: 1,
   apiUrl: "http://localhost:8080",

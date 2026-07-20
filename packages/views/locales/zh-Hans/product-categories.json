@@ -1,0 +1,77 @@
+{
+  "title": "产品分类设置",
+  "subtitle": "按物料编码维护业务品类与产品系列。",
+  "source": "数据源：dbo.dim_product",
+  "sync_note": "保存后会同步到相同物料编码的全部有效规格。",
+  "refresh": "刷新",
+  "last_synced": "最近同步于 {{time}}",
+  "never_synced": "尚无分类同步记录",
+  "read_only": "仅工作区所有者和管理员可以修改分类。",
+  "stats": {
+    "total": "物料编码",
+    "mapped": "已映射",
+    "unmapped": "待映射",
+    "categories": "业务品类"
+  },
+  "filters": {
+    "search": "搜索物料编码、产品或品牌",
+    "category": "业务品类",
+    "series": "产品系列",
+    "status": "映射状态",
+    "all_categories": "全部业务品类",
+    "all_series": "全部产品系列",
+    "all_statuses": "全部状态"
+  },
+  "status": {
+    "mapped": "已映射",
+    "unmapped": "未映射",
+    "mixed": "数据不一致",
+    "unknown": "未知"
+  },
+  "table": {
+    "product": "产品 / 物料",
+    "category": "业务品类",
+    "series": "产品系列",
+    "status": "状态",
+    "scope": "同步范围",
+    "updated": "更新时间",
+    "actions": "操作",
+    "records": "{{records}} 条规格 · {{credentials}} 个凭据",
+    "edit": "修改分类"
+  },
+  "empty": {
+    "title": "没有匹配的物料编码",
+    "description": "请调整筛选条件，或等待产品数据完成同步。"
+  },
+  "unavailable": {
+    "title": "产品分类数据暂不可用",
+    "data_source_not_configured": "请配置包含 dbo.dim_product 的业务数据源。",
+    "data_source_unavailable": "当前无法连接已配置的业务数据源。",
+    "table_missing": "已配置的数据源中不存在 dbo.dim_product。",
+    "capability_check_failed": "服务端无法检查 dbo.dim_product。",
+    "invalid_response": "服务端返回了无效的产品分类数据。",
+    "unknown": "暂时无法加载产品分类数据。"
+  },
+  "editor": {
+    "title": "修改产品分类",
+    "description": "{{name}} · {{materialCode}}",
+    "category": "业务品类",
+    "category_placeholder": "输入或复用已有品类",
+    "series": "产品系列",
+    "series_placeholder": "输入或复用已有系列",
+    "sync_scope": "本次修改将同步到该物料编码下的 {{count}} 条有效规格。",
+    "clear_hint": "两个字段都留空，会将该物料编码标记为未映射。",
+    "cancel": "取消",
+    "save": "保存并同步",
+    "saving": "同步中…"
+  },
+  "pagination": {
+    "summary": "第 {{from}}–{{to}} 条，共 {{total}} 条",
+    "previous": "上一页",
+    "next": "下一页"
+  },
+  "toast": {
+    "success": "已同步 {{count}} 条规格记录。",
+    "error": "产品分类同步失败。"
+  }
+}

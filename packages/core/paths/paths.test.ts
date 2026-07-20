@@ -18,6 +18,12 @@ describe("paths.workspace(slug)", () => {
     expect(ws.skills()).toBe("/acme/skills");
     expect(ws.skillDetail("skl_123")).toBe("/acme/skills/skl_123");
     expect(ws.settings()).toBe("/acme/settings");
+    expect(ws.inventory()).toBe("/acme/inventory");
+    expect(ws.inventoryMonitor()).toBe("/acme/inventory/monitor");
+    expect(ws.supplyReconciliation()).toBe("/acme/supply-reconciliation");
+    expect(ws.supplyReconciliationBills()).toBe("/acme/supply-reconciliation/bills");
+    expect(ws.supplyReconciliationResults()).toBe("/acme/supply-reconciliation/results");
+    expect(ws.supplyReconciliationResult("result/42")).toBe("/acme/supply-reconciliation/results/result%2F42");
   });
 
   it("URL-encodes special characters in ids", () => {
@@ -28,7 +34,6 @@ describe("paths.workspace(slug)", () => {
 describe("paths (global)", () => {
   it("builds global paths without slug", () => {
     expect(paths.login()).toBe("/login");
-    expect(paths.signup()).toBe("/signup");
     expect(paths.newWorkspace()).toBe("/workspaces/new");
     expect(paths.invite("inv-1")).toBe("/invite/inv-1");
     expect(paths.authCallback()).toBe("/auth/callback");
@@ -38,7 +43,6 @@ describe("paths (global)", () => {
 describe("isGlobalPath", () => {
   it("returns true for pre-workspace routes", () => {
     expect(isGlobalPath("/login")).toBe(true);
-    expect(isGlobalPath("/signup")).toBe(true);
     expect(isGlobalPath("/workspaces/new")).toBe(true);
     expect(isGlobalPath("/invite/abc")).toBe(true);
     expect(isGlobalPath("/auth/callback")).toBe(true);

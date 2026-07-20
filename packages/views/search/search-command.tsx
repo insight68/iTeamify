@@ -50,7 +50,7 @@ import {
 import { useTheme } from "@teamify/ui/components/common/theme-provider";
 import { useNavigation } from "../navigation";
 import { useT } from "../i18n";
-import { useSearchStore } from "@teamify/core/search";
+import { useSearchStore } from "./search-store";
 
 function HighlightText({ text, query }: { text: string; query: string }) {
   const parts = useMemo(() => {
@@ -126,7 +126,7 @@ interface SearchResults {
 
 export function SearchCommand() {
   const { t } = useT("search");
-  const navPages: NavPage[] = [
+  const navPages = useMemo<NavPage[]>(() => [
     { key: "inbox", label: t(($) => $.pages.inbox), icon: Inbox, keywords: ["inbox", "notifications", "事项进度"] },
     { key: "myIssues", label: t(($) => $.pages.my_issues), icon: CircleUser, keywords: ["my", "issues", "assigned", "我的"] },
     { key: "issues", label: t(($) => $.pages.issues), icon: ListTodo, keywords: ["issues", "tasks", "bugs"] },
@@ -135,7 +135,7 @@ export function SearchCommand() {
     { key: "runtimes", label: t(($) => $.pages.runtimes), icon: Monitor, keywords: ["runtimes", "environments"] },
     { key: "skills", label: t(($) => $.pages.skills), icon: BookOpenText, keywords: ["skills", "library"] },
     { key: "settings", label: t(($) => $.pages.settings), icon: User, keywords: ["settings", "config", "preferences", "profile", "我的信息"] },
-  ];
+  ], [t]);
   const { push, pathname, getShareableUrl } = useNavigation();
   const open = useSearchStore((s) => s.open);
   const setOpen = useSearchStore((s) => s.setOpen);
@@ -173,7 +173,7 @@ export function SearchCommand() {
         page.label.toLowerCase().includes(q) ||
         page.keywords.some((kw) => kw.includes(q)),
     );
-  }, [query]);
+  }, [query, navPages]);
 
   // Detect if current route is an issue detail page — /{slug}/issues/{id}.
   // Falls back to null on any other route; used to gate issue-specific commands.

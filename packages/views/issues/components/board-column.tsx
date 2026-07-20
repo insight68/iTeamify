@@ -1,13 +1,11 @@
 "use client";
 
-import { useMemo, useState, useEffect, type ReactNode } from "react";
-import { EyeOff, MoreHorizontal, Plus, ChevronDown } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
+import { EyeOff, MoreHorizontal, Plus } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@teamify/ui/components/ui/tooltip";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useQuery } from "@tanstack/react-query";
-import type { Issue, IssueStatus, Project } from "@teamify/core/types";
-import { useWorkspaceId } from "@teamify/core/hooks";
+import type { Issue, IssueStatus } from "@teamify/core/types";
 import { Button } from "@teamify/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -17,17 +15,11 @@ import {
 } from "@teamify/ui/components/ui/dropdown-menu";
 import { STATUS_CONFIG } from "@teamify/core/issues/config";
 import { useModalStore } from "@teamify/core/modals";
-import { useViewStoreApi, useViewStore } from "@teamify/core/issues/stores/view-store-context";
-import { projectListOptions } from "@teamify/core/projects/queries";
+import { useViewStoreApi } from "@teamify/core/issues/stores/view-store-context";
 import { StatusHeading } from "./status-heading";
 import { DraggableBoardCard } from "./board-card";
 import type { ChildProgress } from "./list-row";
 import { useT } from "../../i18n";
-
-const VISIBLE_LIMIT = 10;
-// Stable empty default so the projects-query loading window doesn't hand a
-// fresh `[]` to every board card on each render, busting their React.memo.
-const EMPTY_PROJECTS: Project[] = [];
 
 export function BoardColumn({
   status,
@@ -51,7 +43,6 @@ export function BoardColumn({
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const viewStoreApi = useViewStoreApi();
   const { t } = useT("issues");
-  const wsId = useWorkspaceId();
 
   // Resolve IDs to Issue objects, preserving parent-provided order
   const resolvedIssues = useMemo(
@@ -62,19 +53,6 @@ export function BoardColumn({
       }),
     [issueIds, issueMap],
   );
-
-  const showProject = useViewStore((s) => s.cardProperties.project);
-  const { data: projects = EMPTY_PROJECTS } = useQuery({
-    ...projectListOptions(wsId),
-    enabled: showProject && resolvedIssues.some((i) => !!i.project_id),
-  });
-  const [showAll, setShowAll] = useState(false);
-  // Reset showAll when issues shrink below the limit (e.g. after filtering)
-  useEffect(() => {
-    if (resolvedIssues.length <= VISIBLE_LIMIT) setShowAll(false);
-  }, [resolvedIssues.length]);
-  const visibleIssues = showAll ? resolvedIssues : resolvedIssues.slice(0, VISIBLE_LIMIT);
-  const hasMore = resolvedIssues.length > VISIBLE_LIMIT;
 
   return (
     <div className={`flex w-[280px] shrink-0 flex-col rounded-xl ${cfg.columnBg} p-2`}>
@@ -126,21 +104,10 @@ export function BoardColumn({
         }`}
       >
         <SortableContext items={issueIds} strategy={verticalListSortingStrategy}>
-          {visibleIssues.map((issue) => (
-            <DraggableBoardCard key={issue.id} issue={issue} childProgress={childProgressMap?.get(issue.id)} projects={projects} />
+          {resolvedIssues.map((issue) => (
+            <DraggableBoardCard key={issue.id} issue={issue} childProgress={childProgressMap?.get(issue.id)} />
           ))}
         </SortableContext>
-        {hasMore && !showAll && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full text-xs text-muted-foreground"
-            onClick={() => setShowAll(true)}
-          >
-            <ChevronDown className="size-3 mr-1" />
-            {t(($) => $.board.show_more, { count: resolvedIssues.length - VISIBLE_LIMIT })}
-          </Button>
-        )}
         {issueIds.length === 0 && (
           <p className="py-8 text-center text-xs text-muted-foreground">
             {t(($) => $.board.empty_column)}

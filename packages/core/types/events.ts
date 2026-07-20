@@ -54,6 +54,9 @@ export type WSEventType =
   | "chat:done"
   | "chat:session_read"
   | "chat:session_deleted"
+  | "chat:table_filter"
+  | "reconciliation:filter"
+  | "inventory:updated"
   | "project:created"
   | "project:updated"
   | "project:deleted"
@@ -197,7 +200,7 @@ export interface ActivityCreatedPayload {
 
 export interface TaskMessagePayload {
   task_id: string;
-  issue_id: string;
+  issue_id?: string;
   chat_session_id?: string;
   seq: number;
   type: "text" | "thinking" | "tool_use" | "tool_result" | "error";
@@ -295,6 +298,18 @@ export interface ChatSessionDeletedPayload {
   chat_session_id: string;
 }
 
+export interface ChatTableFilterPayload {
+  chat_session_id: string;
+  agent_id: string;
+  filters: Record<string, unknown>;
+}
+
+export interface ReconciliationFilterPayload {
+  chat_session_id: string;
+  agent_id: string;
+  filters: Record<string, unknown>;
+}
+
 export interface ProjectCreatedPayload {
   project: Project;
 }
@@ -325,4 +340,57 @@ export interface InvitationDeclinedPayload {
 export interface InvitationRevokedPayload {
   invitation_id: string;
   invitee_email: string;
+}
+
+export interface InventoryUpdatedPayload {
+  dataset:
+    | "product_order"
+    | "dim_product"
+    | "allocation"
+    | "supply_inventory"
+    | "supply_inventory_snapshot";
+  refreshed_at: string;
+  run_id?: string;
+}
+
+// Payloads consumed by dedicated client handlers. Events not listed here are
+// still accepted by onAny, but do not get a typed dedicated subscription.
+export interface WSEventPayloadMap {
+  "issue:created": IssueCreatedPayload;
+  "issue:updated": IssueUpdatedPayload;
+  "issue:deleted": IssueDeletedPayload;
+  "issue_labels:changed": IssueLabelsChangedPayload;
+  "inbox:new": InboxNewPayload;
+  "comment:created": CommentCreatedPayload;
+  "comment:updated": CommentUpdatedPayload;
+  "comment:deleted": CommentDeletedPayload;
+  "comment:resolved": CommentResolvedPayload;
+  "comment:unresolved": CommentUnresolvedPayload;
+  "activity:created": ActivityCreatedPayload;
+  "reaction:added": ReactionAddedPayload;
+  "reaction:removed": ReactionRemovedPayload;
+  "issue_reaction:added": IssueReactionAddedPayload;
+  "issue_reaction:removed": IssueReactionRemovedPayload;
+  "subscriber:added": SubscriberAddedPayload;
+  "subscriber:removed": SubscriberRemovedPayload;
+  "workspace:deleted": WorkspaceDeletedPayload;
+  "member:removed": MemberRemovedPayload;
+  "member:added": MemberAddedPayload;
+  "invitation:created": InvitationCreatedPayload;
+  "invitation:accepted": InvitationAcceptedPayload;
+  "invitation:declined": InvitationDeclinedPayload;
+  "invitation:revoked": InvitationRevokedPayload;
+  "task:message": TaskMessagePayload;
+  "chat:message": ChatMessageEventPayload;
+  "chat:done": ChatDonePayload;
+  "task:queued": TaskQueuedPayload;
+  "task:dispatch": TaskDispatchPayload;
+  "task:cancelled": TaskCancelledPayload;
+  "task:completed": TaskCompletedPayload;
+  "task:failed": TaskFailedPayload;
+  "chat:session_read": ChatSessionReadPayload;
+  "chat:session_deleted": ChatSessionDeletedPayload;
+  "chat:table_filter": ChatTableFilterPayload;
+  "reconciliation:filter": ReconciliationFilterPayload;
+  "inventory:updated": InventoryUpdatedPayload;
 }

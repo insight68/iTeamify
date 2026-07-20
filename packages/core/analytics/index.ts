@@ -50,8 +50,7 @@ let pendingPageview: string | undefined | null = null;
 // buffer stays small (~one step-transition worth).
 type PendingOp =
   | { kind: "event"; name: string; props?: Record<string, unknown> }
-  | { kind: "set"; props: Record<string, unknown> }
-  | { kind: "exception"; props: Record<string, unknown> };
+  | { kind: "set"; props: Record<string, unknown> };
 const pendingOps: PendingOp[] = [];
 // Cached super-properties so resetAnalytics() can re-register them after
 // posthog.reset() wipes the persisted set. Without this, logout / account
@@ -127,23 +126,17 @@ export function initAnalytics(config: AnalyticsConfig | null | undefined): boole
     // the billed events until they actually identify, which aligns with how
     // our funnel is set up: signup is the first real funnel step.
     person_profiles: "identified_only",
-    // Turn off the on-by-default auto-capture surfaces that generate noise.
-    // Our funnel is narrow and explicit (the events in docs/analytics.md + a
-    // manual $pageview). Autocapture floods the Activity view with anonymous
-    // "clicked button" / "clicked link" noise, burns the billed event budget,
-    // and risks capturing user-typed content in input values. Turn things
-    // back on deliberately if we ever want them.
-    //
-    // EXCEPTION: capture_exceptions stays ON. Unhandled errors and rejections
-    // are signal, not noise — for installed desktop builds that can't hotfix,
-    // an invisible crash from API contract drift is the worst failure mode.
-    // The error boundaries also report via captureException() for React
-    // render crashes the global handler can't see.
+    // Turn off every on-by-default auto-capture surface. Our funnel is
+    // narrow and explicit (the events in docs/analytics.md + a manual
+    // $pageview). Autocapture floods the Activity view with anonymous
+    // "clicked button" / "clicked link" noise, burns the billed event
+    // budget, and risks capturing user-typed content in input values.
+    // Turn things back on deliberately if we ever want them.
     capture_pageview: false,
     autocapture: false,
     capture_heatmaps: false,
     capture_dead_clicks: false,
-    capture_exceptions: true,
+    capture_exceptions: false,
     disable_session_recording: true,
     disable_surveys: true,
   });
@@ -184,8 +177,6 @@ export function initAnalytics(config: AnalyticsConfig | null | undefined): boole
     const op = pendingOps.shift()!;
     if (op.kind === "event") {
       posthog.capture(op.name, withClientEventProperties(op.props));
-    } else if (op.kind === "exception") {
-      posthog.capture("$exception", op.props);
     } else {
       capturePersonSet(op.props);
     }
@@ -249,36 +240,6 @@ export function captureEvent(
     return;
   }
   posthog.capture(name, withClientEventProperties(props));
-}
-
-/**
- * Report a caught exception to telemetry. Used by the web/desktop Error
- * Boundaries and the schema-validation logger so a render crash or a drifted
- * API contract surfaces in PostHog instead of dying silently in the console —
- * critical for installed desktop builds that can't ship a hotfix in minutes.
- *
- * The payload follows PostHog's `$exception` convention (`$exception_message`,
- * `$exception_type`, `$exception_stack_trace_raw`) and carries the client
- * super-properties so crashes can be split by desktop/web and app version.
- *
- * Calls before initAnalytics() buffer in order, matching captureEvent.
- */
-export function captureException(
-  error: unknown,
-  context?: Record<string, unknown>,
-): void {
-  const props = withClientEventProperties({
-    ...(context ?? {}),
-    $exception_message: error instanceof Error ? error.message : String(error),
-    $exception_type: error instanceof Error ? error.name : "Error",
-    $exception_stack_trace_raw:
-      error instanceof Error ? error.stack : undefined,
-  });
-  if (!initialized) {
-    pendingOps.push({ kind: "exception", props });
-    return;
-  }
-  posthog.capture("$exception", props);
 }
 
 /**

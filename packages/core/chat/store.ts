@@ -9,10 +9,14 @@ const AGENT_STORAGE_KEY = "teamify:chat:selectedAgentId";
 const SESSION_STORAGE_KEY = "teamify:chat:activeSessionId";
 /** Drafts are stored as one JSON blob per workspace: { [sessionId]: text }. */
 const DRAFTS_KEY = "teamify:chat:drafts";
+/** Table column sizing is stored per workspace: { [tableKey]: { [columnId]: px } }. */
+const TABLE_COLUMN_SIZING_KEY = "teamify:chat:tableColumnSizing";
 /** Placeholder sessionId for a chat that hasn't been created yet. */
 export const DRAFT_NEW_SESSION = "__new__";
 /** Focus mode is a personal preference — global across workspaces/sessions. */
 const FOCUS_MODE_KEY = "teamify:chat:focusMode";
+
+export type AgentTableColumnSizing = Record<string, number>;
 
 function readDrafts(storage: StorageAdapter, key: string): Record<string, string> {
   const raw = storage.getItem(key);
@@ -30,6 +34,63 @@ function writeDrafts(storage: StorageAdapter, key: string, drafts: Record<string
   const pruned: Record<string, string> = {};
   for (const [k, v] of Object.entries(drafts)) {
     if (v) pruned[k] = v;
+  }
+  if (Object.keys(pruned).length === 0) {
+    storage.removeItem(key);
+  } else {
+    storage.setItem(key, JSON.stringify(pruned));
+  }
+}
+
+function sanitizeColumnSizing(value: unknown): AgentTableColumnSizing {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return {};
+  }
+  const sizing: AgentTableColumnSizing = {};
+  for (const [columnId, width] of Object.entries(value)) {
+    if (typeof width !== "number" || !Number.isFinite(width) || width <= 0) {
+      continue;
+    }
+    sizing[columnId] = Math.round(width);
+  }
+  return sizing;
+}
+
+function readTableColumnSizing(
+  storage: StorageAdapter,
+  key: string,
+): Record<string, AgentTableColumnSizing> {
+  const raw = storage.getItem(key);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      return {};
+    }
+    const result: Record<string, AgentTableColumnSizing> = {};
+    for (const [tableKey, value] of Object.entries(parsed)) {
+      const sizing = sanitizeColumnSizing(value);
+      if (Object.keys(sizing).length > 0) {
+        result[tableKey] = sizing;
+      }
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
+function writeTableColumnSizing(
+  storage: StorageAdapter,
+  key: string,
+  tableColumnSizing: Record<string, AgentTableColumnSizing>,
+) {
+  const pruned: Record<string, AgentTableColumnSizing> = {};
+  for (const [tableKey, value] of Object.entries(tableColumnSizing)) {
+    const sizing = sanitizeColumnSizing(value);
+    if (Object.keys(sizing).length > 0) {
+      pruned[tableKey] = sizing;
+    }
   }
   if (Object.keys(pruned).length === 0) {
     storage.removeItem(key);
@@ -78,12 +139,25 @@ export interface ChatState {
    * the preference survives workspace switches and reloads.
    */
   focusMode: boolean;
+  /** Persisted per-agent table column widths, keyed by table identity. */
+  tableColumnSizing: Record<string, AgentTableColumnSizing>;
+  /**
+   * Scroll position per session (scrollTop value). Not persisted — only
+   * survives within the current session in memory so switching between
+   * sessions and back restores the reading position.
+   */
+  scrollPositions: Record<string, number>;
   setActiveSession: (id: string | null) => void;
   setSelectedAgentId: (id: string) => void;
   /** sessionId accepts a real session UUID or DRAFT_NEW_SESSION. */
   setInputDraft: (sessionId: string, draft: string) => void;
   clearInputDraft: (sessionId: string) => void;
   setFocusMode: (on: boolean) => void;
+  setTableColumnSizing: (
+    tableKey: string,
+    sizing: AgentTableColumnSizing,
+  ) => void;
+  setScrollPosition: (sessionId: string, scrollTop: number) => void;
 }
 
 export interface ChatStoreOptions {
@@ -103,6 +177,11 @@ export function createChatStore(options: ChatStoreOptions) {
     selectedAgentId: storage.getItem(wsKey(AGENT_STORAGE_KEY)),
     inputDrafts: readDrafts(storage, wsKey(DRAFTS_KEY)),
     focusMode: storage.getItem(FOCUS_MODE_KEY) === "true",
+    tableColumnSizing: readTableColumnSizing(
+      storage,
+      wsKey(TABLE_COLUMN_SIZING_KEY),
+    ),
+    scrollPositions: {},
     setActiveSession: (id) => {
       logger.info("setActiveSession", { from: get().activeSessionId, to: id });
       if (id) {
@@ -129,6 +208,22 @@ export function createChatStore(options: ChatStoreOptions) {
       else storage.removeItem(FOCUS_MODE_KEY);
       set({ focusMode: on });
     },
+    setTableColumnSizing: (tableKey, sizing) => {
+      const sanitized = sanitizeColumnSizing(sizing);
+      const next = { ...get().tableColumnSizing };
+      if (Object.keys(sanitized).length > 0) {
+        next[tableKey] = sanitized;
+      } else {
+        delete next[tableKey];
+      }
+      writeTableColumnSizing(storage, wsKey(TABLE_COLUMN_SIZING_KEY), next);
+      set({ tableColumnSizing: next });
+    },
+    setScrollPosition: (sessionId, scrollTop) => {
+      set((state) => ({
+        scrollPositions: { ...state.scrollPositions, [sessionId]: scrollTop },
+      }));
+    },
     clearInputDraft: (sessionId) => {
       const current = get().inputDrafts;
       if (!(sessionId in current)) {
@@ -147,6 +242,10 @@ export function createChatStore(options: ChatStoreOptions) {
     const nextSession = storage.getItem(wsKey(SESSION_STORAGE_KEY));
     const nextAgent = storage.getItem(wsKey(AGENT_STORAGE_KEY));
     const nextDrafts = readDrafts(storage, wsKey(DRAFTS_KEY));
+    const nextTableColumnSizing = readTableColumnSizing(
+      storage,
+      wsKey(TABLE_COLUMN_SIZING_KEY),
+    );
     logger.info("workspace rehydration", {
       prevSession: store.getState().activeSessionId,
       nextSession,
@@ -158,6 +257,7 @@ export function createChatStore(options: ChatStoreOptions) {
       activeSessionId: nextSession,
       selectedAgentId: nextAgent,
       inputDrafts: nextDrafts,
+      tableColumnSizing: nextTableColumnSizing,
     });
   });
 

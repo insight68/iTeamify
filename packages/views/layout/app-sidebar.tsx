@@ -1,11 +1,19 @@
 "use client";
 
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@teamify/ui/lib/utils";
 import { AppLink, useNavigation } from "../navigation";
 import { HelpLauncher } from "./help-launcher";
-
-const SortablePins = lazy(() => import("./sortable-pins").then((m) => ({ default: m.SortablePins })));
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Inbox,
   ListTodo,
@@ -17,24 +25,32 @@ import {
   LogOut,
   Plus,
   Check,
+  CheckCircle2,
   BookOpenText,
   SquarePen,
   CircleUser,
   FolderKanban,
+  X,
   Zap,
   Search,
+  Warehouse,
   Building2,
   Database,
   KeyRound,
   Server,
   Settings,
   Users,
+  Plug,
+  Tags,
+  Scale,
 } from "lucide-react";
 import { WorkspaceAvatar } from "../workspace/workspace-avatar";
 import { ActorAvatar } from "@teamify/ui/components/common/actor-avatar";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@teamify/ui/components/ui/tooltip";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@teamify/ui/components/ui/collapsible";
+import { StatusIcon } from "../issues/components/status-icon";
 import { useCreateModeStore } from "@teamify/core/issues/stores/create-mode-store";
-import { useSearchStore } from "@teamify/core/search";
+import { useSearchStore } from "../search/search-store";
 import {
   Sidebar,
   SidebarContent,
@@ -62,14 +78,25 @@ import { useCurrentWorkspace, useWorkspacePaths, paths } from "@teamify/core/pat
 import { workspaceListOptions, myInvitationListOptions, workspaceKeys } from "@teamify/core/workspace/queries";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inboxKeys, deduplicateInboxItems } from "@teamify/core/inbox/queries";
-import { api } from "@teamify/core/api";
+import { api, ApiError } from "@teamify/core/api";
 import { useModalStore } from "@teamify/core/modals";
 import { useMyRuntimesNeedUpdate } from "@teamify/core/runtimes/hooks";
 import { useIsOwner } from "@teamify/core/permissions";
 import { pinListOptions } from "@teamify/core/pins/queries";
-import { useDeletePin } from "@teamify/core/pins/mutations";
+import { useDeletePin, useReorderPins } from "@teamify/core/pins/mutations";
+import { issueDetailOptions } from "@teamify/core/issues/queries";
+import { projectDetailOptions } from "@teamify/core/projects/queries";
+import {
+  isWorkspaceModuleNavVisible,
+  type WorkspaceModuleKey,
+} from "@teamify/core/workspace/modules";
+import {
+  isWorkspaceShortcutNavVisible,
+  type WorkspaceShortcutNavKey,
+} from "@teamify/core/workspace/navigation";
 import type { PinnedItem } from "@teamify/core/types";
 import { useLogout } from "../auth";
+import { ProjectIcon } from "../projects/components/project-icon";
 import { useT } from "../i18n";
 import { SidebarChatsGroup } from "./sidebar-chats-group";
 
@@ -99,6 +126,10 @@ type NavKey =
   | "myIssues"
   | "issues"
   | "projects"
+  | "reconciliation"
+  | "supplyReconciliation"
+  | "inventory"
+  | "productCategories"
   | "autopilots"
   | "org"
   | "datasources"
@@ -108,7 +139,7 @@ type NavKey =
   | "settings";
 
 // Special nav keys that don't map directly to WorkspacePaths methods
-type SpecialNavKey = "tokens" | "daemon";
+type SpecialNavKey = "tokens" | "daemon" | "mcp";
 
 // Action items open modals or palettes instead of navigating
 type ActionKey = "createIssue" | "search";
@@ -119,11 +150,16 @@ type NavLabelKey =
   | "my_issues"
   | "issues"
   | "projects"
+  | "reconciliation"
+  | "supply_reconciliation"
+  | "inventory"
+  | "product_categories"
   | "autopilots"
   | "org"
   | "datasources"
   | "agents"
   | "runtimes"
+  | "mcp"
   | "tokens"
   | "skills"
   | "settings"
@@ -136,21 +172,52 @@ type DigitalEmployeeNavItem = { key: NavKey | SpecialNavKey; labelKey: NavLabelK
 
 type ActionLabelKey = "new_issue" | "search";
 
-type PersonalNavItem = { key: NavKey; labelKey: NavLabelKey; icon: typeof Inbox };
-type ActionNavItem = { key: ActionKey; labelKey: ActionLabelKey; icon: typeof Inbox };
+type WorkspaceGroupLinkItem = {
+  type: "link";
+  key: NavKey;
+  labelKey: NavLabelKey;
+  icon: typeof Inbox;
+  moduleKey?: WorkspaceModuleKey;
+  shortcutKey?: WorkspaceShortcutNavKey;
+};
+type WorkspaceGroupActionItem = {
+  type: "action";
+  key: ActionKey;
+  shortcutKey: WorkspaceShortcutNavKey;
+  labelKey: ActionLabelKey;
+  icon: typeof Inbox;
+};
+type WorkspaceGroupNavItem = WorkspaceGroupLinkItem | WorkspaceGroupActionItem;
 
-const personalNav: (PersonalNavItem | ActionNavItem)[] = [
-  { key: "inbox", labelKey: "inbox", icon: Inbox },
-  { key: "myIssues", labelKey: "my_issues", icon: CircleUser },
-  { key: "createIssue", labelKey: "new_issue", icon: SquarePen },
-  { key: "search", labelKey: "search", icon: Search },
+const primaryWorkspaceNav: WorkspaceGroupNavItem[] = [
+  { type: "link", key: "inbox", shortcutKey: "inbox", labelKey: "inbox", icon: Inbox },
+  { type: "link", key: "reconciliation", moduleKey: "reconciliation", labelKey: "reconciliation", icon: CheckCircle2 },
+  { type: "link", key: "supplyReconciliation", moduleKey: "supplyReconciliation", labelKey: "supply_reconciliation", icon: Scale },
+  { type: "link", key: "inventory", moduleKey: "inventory", labelKey: "inventory", icon: Warehouse },
+  { type: "link", key: "productCategories", moduleKey: "productCategories", labelKey: "product_categories", icon: Tags },
+  { type: "link", key: "autopilots", labelKey: "autopilots", icon: Zap },
 ];
 
-const workspaceNav: { key: NavKey; labelKey: NavLabelKey; icon: typeof Inbox }[] = [
-  { key: "issues", labelKey: "issues", icon: ListTodo },
-  { key: "projects", labelKey: "projects", icon: FolderKanban },
-  { key: "autopilots", labelKey: "autopilots", icon: Zap },
+const workspaceGroupNav: WorkspaceGroupNavItem[] = [
+  { type: "link", key: "projects", moduleKey: "projects", labelKey: "projects", icon: FolderKanban },
+  { type: "link", key: "issues", moduleKey: "issues", labelKey: "issues", icon: ListTodo },
+  { type: "link", key: "myIssues", shortcutKey: "myIssues", labelKey: "my_issues", icon: CircleUser },
+  { type: "action", key: "createIssue", shortcutKey: "createIssue", labelKey: "new_issue", icon: SquarePen },
+  { type: "action", key: "search", shortcutKey: "search", labelKey: "search", icon: Search },
 ];
+
+function isWorkspaceNavItemVisible(settings: unknown, item: WorkspaceGroupNavItem): boolean {
+  const moduleVisible =
+    !("moduleKey" in item) ||
+    !item.moduleKey ||
+    isWorkspaceModuleNavVisible(settings, item.moduleKey);
+  const shortcutVisible =
+    !("shortcutKey" in item) ||
+    !item.shortcutKey ||
+    isWorkspaceShortcutNavVisible(settings, item.shortcutKey);
+
+  return moduleVisible && shortcutVisible;
+}
 
 type ConfigureNavItem = {
   key: string;
@@ -168,6 +235,7 @@ const configureNav: ConfigureNavItem[] = [
 
 const digitalEmployeeNav: DigitalEmployeeNavItem[] = [
   { key: "agents", labelKey: "agents", icon: Bot },
+  { key: "mcp", labelKey: "mcp", icon: Plug },
   { key: "org", labelKey: "org", icon: Building2 },
   { key: "datasources", labelKey: "datasources", icon: Database },
   { key: "skills", labelKey: "skills", icon: BookOpenText },
@@ -175,6 +243,179 @@ const digitalEmployeeNav: DigitalEmployeeNavItem[] = [
   { key: "tokens", labelKey: "tokens", icon: KeyRound },
   { key: "daemon", labelKey: "daemon", icon: Server, desktopOnly: true },
 ];
+
+/**
+ * Presentational pin row. The `label` and `iconNode` are computed by the
+ * parent `PinRow` from cached issue / project detail queries — keeping
+ * this component dumb means the dnd-kit / navigation wiring lives in
+ * one place and the data flow is explicit.
+ */
+function SortablePinItem({
+  pin,
+  href,
+  pathname,
+  onUnpin,
+  label,
+  iconNode,
+}: {
+  pin: PinnedItem;
+  href: string;
+  pathname: string;
+  onUnpin: () => void;
+  label: string;
+  iconNode: React.ReactNode;
+}) {
+  const { t } = useT("layout");
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: pin.id });
+  const wasDragged = useRef(false);
+
+  useEffect(() => {
+    if (isDragging) wasDragged.current = true;
+  }, [isDragging]);
+
+  const style = { transform: CSS.Transform.toString(transform), transition };
+  const isActive = pathname === href;
+
+  return (
+    <SidebarMenuItem
+      ref={setNodeRef}
+      style={style}
+      className={cn("group/pin", isDragging && "opacity-30")}
+      {...attributes}
+      {...listeners}
+    >
+      <SidebarMenuButton
+        size="sm"
+        isActive={isActive}
+        render={<AppLink href={href} draggable={false} />}
+        onClick={(event) => {
+          if (wasDragged.current) {
+            wasDragged.current = false;
+            event.preventDefault();
+            return;
+          }
+        }}
+        className={cn(
+          "text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground",
+          isDragging && "pointer-events-none",
+        )}
+      >
+        {iconNode}
+        <span
+          className="min-w-0 flex-1 overflow-hidden whitespace-nowrap"
+          style={{
+            maskImage: "linear-gradient(to right, black calc(100% - 12px), transparent)",
+            WebkitMaskImage: "linear-gradient(to right, black calc(100% - 12px), transparent)",
+          }}
+        >{label}</span>
+        <Tooltip>
+          <TooltipTrigger
+            render={<span role="button" />}
+            className="hidden size-2.5 shrink-0 items-center justify-center rounded-sm text-muted-foreground group-hover/pin:flex hover:text-foreground"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onUnpin();
+            }}
+          >
+            <X className="size-1" />
+          </TooltipTrigger>
+          <TooltipContent side="top" sideOffset={4}>{t(($) => $.sidebar.unpin_tooltip)}</TooltipContent>
+        </Tooltip>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
+/**
+ * Smart wrapper that resolves a pin's display data (label + status/icon)
+ * from the issue / project detail query cache. Both queries are declared
+ * unconditionally with `enabled` gates so the hook order stays stable
+ * regardless of `pin.item_type`.
+ *
+ * Loading: render a flat skeleton so the sidebar height doesn't jump.
+ * Missing (deleted item / 404): render nothing — the row hides itself
+ * until the user unpins manually or a server-side cascade catches up.
+ */
+function PinRow({
+  pin,
+  href,
+  pathname,
+  onUnpin,
+  wsId,
+}: {
+  pin: PinnedItem;
+  href: string;
+  pathname: string;
+  onUnpin: () => void;
+  wsId: string;
+}) {
+  const isIssue = pin.item_type === "issue";
+  const issueQuery = useQuery({
+    ...issueDetailOptions(wsId, pin.item_id),
+    enabled: isIssue,
+  });
+  const projectQuery = useQuery({
+    ...projectDetailOptions(wsId, pin.item_id),
+    enabled: !isIssue,
+  });
+
+  const triggeredRef = useRef(false);
+  useEffect(() => {
+    const err = isIssue ? issueQuery.error : projectQuery.error;
+    if (err instanceof ApiError && err.status === 404 && !triggeredRef.current) {
+      triggeredRef.current = true;
+      onUnpin();
+    }
+  }, [isIssue, issueQuery.error, onUnpin, projectQuery.error]);
+
+  if (isIssue) {
+    if (issueQuery.isPending) return <PinSkeleton />;
+    if (issueQuery.isError || !issueQuery.data) return null;
+    const issue = issueQuery.data;
+    const label = issue.identifier ? `${issue.identifier} ${issue.title}` : issue.title;
+    const iconNode = (
+      /* Override parent [&_svg]:size-4 — pinned items need smaller icons to match sm size */
+      <StatusIcon status={issue.status} className="!size-3.5 shrink-0" />
+    );
+    return (
+      <SortablePinItem
+        pin={pin}
+        href={href}
+        pathname={pathname}
+        onUnpin={onUnpin}
+        label={label}
+        iconNode={iconNode}
+      />
+    );
+  }
+
+  if (projectQuery.isPending) return <PinSkeleton />;
+  if (projectQuery.isError || !projectQuery.data) return null;
+  const project = projectQuery.data;
+  const iconNode = <ProjectIcon project={project} size="sm" />;
+  return (
+    <SortablePinItem
+      pin={pin}
+      href={href}
+      pathname={pathname}
+      onUnpin={onUnpin}
+      label={project.title}
+      iconNode={iconNode}
+    />
+  );
+}
+
+function PinSkeleton() {
+  return (
+    <SidebarMenuItem>
+      <div className="flex h-7 w-full items-center gap-2 px-2">
+        <div className="size-3.5 shrink-0 rounded-sm bg-sidebar-accent/40" />
+        <div className="h-3 w-24 rounded bg-sidebar-accent/40" />
+      </div>
+    </SidebarMenuItem>
+  );
+}
 
 interface AppSidebarProps {
   /** Rendered above SidebarHeader (e.g. desktop traffic light spacer) */
@@ -197,10 +438,11 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
   const { data: myInvitations = EMPTY_INVITATIONS } = useQuery(myInvitationListOptions());
 
   const wsId = workspace?.id;
+  const isInboxNavVisible = isWorkspaceShortcutNavVisible(workspace?.settings, "inbox");
   const { data: inboxItems = EMPTY_INBOX } = useQuery({
     queryKey: wsId ? inboxKeys.list(wsId) : ["inbox", "disabled"],
     queryFn: () => api.listInbox(),
-    enabled: !!wsId,
+    enabled: !!wsId && isInboxNavVisible,
   });
   const unreadCount = React.useMemo(
     () => deduplicateInboxItems(inboxItems).filter((i) => !i.read).length,
@@ -208,11 +450,51 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
   );
   const hasRuntimeUpdates = useMyRuntimesNeedUpdate(wsId);
   const { isOwner } = useIsOwner(wsId ?? "");
+  const visiblePrimaryWorkspaceNav = React.useMemo(
+    () => primaryWorkspaceNav.filter((item) => isWorkspaceNavItemVisible(workspace?.settings, item)),
+    [workspace?.settings],
+  );
+  const visibleWorkspaceGroupNav = React.useMemo(
+    () => workspaceGroupNav.filter((item) => isWorkspaceNavItemVisible(workspace?.settings, item)),
+    [workspace?.settings],
+  );
   const { data: pinnedItems = EMPTY_PINS } = useQuery({
     ...pinListOptions(wsId ?? "", userId ?? ""),
     enabled: !!wsId && !!userId,
   });
   const deletePin = useDeletePin();
+  const reorderPins = useReorderPins();
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  // Local presentational copy of pinnedItems for drop-animation stability.
+  // Follows TQ at rest; frozen during a drag gesture so a mid-drag cache
+  // write (our own optimistic update, or a WS refetch) cannot reorder the
+  // DOM under dnd-kit while its drop animation is still interpolating.
+  const [localPinned, setLocalPinned] = useState<PinnedItem[]>(pinnedItems);
+  const isDraggingRef = useRef(false);
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      setLocalPinned(pinnedItems);
+    }
+  }, [pinnedItems]);
+
+  const handleDragStart = useCallback(() => {
+    isDraggingRef.current = true;
+  }, []);
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      isDraggingRef.current = false;
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = localPinned.findIndex((p) => p.id === active.id);
+      const newIndex = localPinned.findIndex((p) => p.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+      const reordered = arrayMove(localPinned, oldIndex, newIndex);
+      setLocalPinned(reordered);
+      reorderPins.mutate(reordered);
+    },
+    [localPinned, reorderPins],
+  );
 
   const queryClient = useQueryClient();
   const acceptInvitationMut = useMutation({
@@ -275,6 +557,51 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [pathname]);
+
+  const renderWorkspaceNavItem = (item: WorkspaceGroupNavItem) => {
+    if (item.type === "action") {
+      return (
+        <SidebarMenuItem key={item.key}>
+          <SidebarMenuButton
+            className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
+            onClick={() => {
+              if (item.key === "createIssue") {
+                useModalStore.getState().open("quick-create-issue");
+              } else if (item.key === "search") {
+                useSearchStore.getState().setOpen(true);
+              }
+            }}
+          >
+            <item.icon />
+            <span>{t(($) => $.sidebar[item.labelKey])}</span>
+            {item.key === "createIssue" && (
+              <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">{t(($) => $.sidebar.new_issue_shortcut)}</kbd>
+            )}
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      );
+    }
+
+    const href = p[item.key]();
+    const isActive = isNavActive(pathname, href);
+    return (
+      <SidebarMenuItem key={item.key}>
+        <SidebarMenuButton
+          isActive={isActive}
+          render={<AppLink href={href} />}
+          className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
+        >
+          <item.icon />
+          <span>{t(($) => $.nav[item.labelKey])}</span>
+          {item.key === "inbox" && unreadCount > 0 && (
+            <span className="ml-auto text-xs">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
 
   return (
       <Sidebar variant="inset">
@@ -408,59 +735,12 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
-                {personalNav.map((item) => {
-                  const isActionItem = item.key === "createIssue" || item.key === "search";
-                  if (isActionItem) {
-                    const actionItem = item as ActionNavItem;
-                    return (
-                      <SidebarMenuItem key={actionItem.key}>
-                        <SidebarMenuButton
-                          className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
-                          onClick={() => {
-                            if (actionItem.key === "createIssue") {
-                              useModalStore.getState().open("quick-create-issue");
-                            } else if (actionItem.key === "search") {
-                              useSearchStore.getState().setOpen(true);
-                            }
-                          }}
-                        >
-                          <actionItem.icon />
-                          <span>{t(($) => $.sidebar[actionItem.labelKey])}</span>
-                          {actionItem.key === "createIssue" && (
-                            <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">{t(($) => $.sidebar.new_issue_shortcut)}</kbd>
-                          )}
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  }
-                  const navItem = item as PersonalNavItem;
-                  const href = p[navItem.key]();
-                  const isActive = isNavActive(pathname, href);
-                  return (
-                    <SidebarMenuItem key={navItem.key}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        render={<AppLink href={href} />}
-                        className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
-                      >
-                        <navItem.icon />
-                        <span>{t(($) => $.nav[navItem.labelKey])}</span>
-                        {navItem.key === "inbox" && unreadCount > 0 && (
-                          <span className="ml-auto text-xs">
-                            {unreadCount > 99 ? "99+" : unreadCount}
-                          </span>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                {visiblePrimaryWorkspaceNav.map(renderWorkspaceNavItem)}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarChatsGroup wsId={wsId} userId={user?.id} />
-
-          {pinnedItems.length > 0 && (
+          {localPinned.length > 0 && (
             <Collapsible defaultOpen>
               <SidebarGroup className="group/pinned">
                 <SidebarGroupLabel
@@ -469,47 +749,44 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
                 >
                   <span>{t(($) => $.sidebar.pinned_label)}</span>
                   <ChevronRight className="!size-3 ml-1 stroke-[2.5] transition-transform duration-200 group-data-[panel-open]/trigger:rotate-90" />
-                  <span className="ml-auto text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover/pinned:opacity-100">{pinnedItems.length}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover/pinned:opacity-100">{localPinned.length}</span>
                 </SidebarGroupLabel>
                 <CollapsibleContent>
                   <SidebarGroupContent>
-                    <Suspense fallback={null}>
-                      <SortablePins
-                        pinnedItems={pinnedItems}
-                        wsId={wsId}
-                        pathname={pathname}
-                        deletePin={deletePin}
-                      />
-                    </Suspense>
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                      <SortableContext items={localPinned.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                        <SidebarMenu className="gap-0.5">
+                          {localPinned.map((pin: PinnedItem) => (
+                            <PinRow
+                              key={pin.id}
+                              pin={pin}
+                              href={pin.item_type === "issue" ? p.issueDetail(pin.item_id) : p.projectDetail(pin.item_id)}
+                              pathname={pathname}
+                              onUnpin={() => deletePin.mutate({ itemType: pin.item_type, itemId: pin.item_id })}
+                              wsId={wsId ?? ""}
+                            />
+                          ))}
+                        </SidebarMenu>
+                      </SortableContext>
+                    </DndContext>
                   </SidebarGroupContent>
                 </CollapsibleContent>
               </SidebarGroup>
             </Collapsible>
           )}
 
-          <SidebarGroup>
-            <SidebarGroupLabel>{t(($) => $.sidebar.workspace_group)}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
-                {workspaceNav.map((item) => {
-                  const href = p[item.key]();
-                  const isActive = isNavActive(pathname, href);
-                  return (
-                    <SidebarMenuItem key={item.key}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        render={<AppLink href={href} />}
-                        className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
-                      >
-                        <item.icon />
-                        <span>{t(($) => $.nav[item.labelKey])}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <SidebarChatsGroup wsId={wsId} userId={user?.id} />
+
+          {visibleWorkspaceGroupNav.length > 0 && (
+            <SidebarGroup>
+              <SidebarGroupLabel>{t(($) => $.sidebar.workspace_group)}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-0.5">
+                  {visibleWorkspaceGroupNav.map(renderWorkspaceNavItem)}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
 
           <SidebarGroup>
             <SidebarGroupLabel>{t(($) => $.sidebar.configure_group)}</SidebarGroupLabel>
@@ -547,8 +824,8 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
                   {digitalEmployeeNav
                     .filter((item) => !item.desktopOnly || !!(window as unknown as { desktopAPI?: unknown }).desktopAPI)
                     .map((item) => {
-                    // tokens & daemon link to settings?tab=<key> — special handling
-                    const isSpecial = item.key === "tokens" || item.key === "daemon";
+                    // tokens, MCP, and daemon link to settings?tab=<key>.
+                    const isSpecial = item.key === "tokens" || item.key === "mcp" || item.key === "daemon";
                     const navKey = item.key as NavKey;
                     const href = isSpecial
                       ? p.settings() + "?tab=" + item.key

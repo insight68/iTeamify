@@ -6,10 +6,12 @@ import { useWorkspaceId } from "@teamify/core/hooks";
 import type { DataSourceResponse } from "@teamify/core/types";
 import { Badge } from "@teamify/ui/components/ui/badge";
 import { Skeleton } from "@teamify/ui/components/ui/skeleton";
+import { useT } from "../../i18n";
 import { DataTableCreateDialog } from "./data-table-create-dialog";
 import { DataTableList } from "./data-table-list";
 
 export function DataSourceDetail({ dataSource }: { dataSource: DataSourceResponse | null }) {
+  const { t } = useT("datasources");
   const wsId = useWorkspaceId();
   const { data: tables = [], isLoading } = useQuery({
     ...dataTableListOptions(wsId, dataSource?.id ?? ""),
@@ -19,7 +21,7 @@ export function DataSourceDetail({ dataSource }: { dataSource: DataSourceRespons
   if (!dataSource) {
     return (
       <div className="flex min-h-72 items-center justify-center rounded-md border border-dashed p-6 text-sm text-muted-foreground">
-        选择左侧数据源查看详情
+        {t(($) => $.detail.empty)}
       </div>
     );
   }
@@ -30,14 +32,14 @@ export function DataSourceDetail({ dataSource }: { dataSource: DataSourceRespons
         <div className="min-w-0">
           <h2 className="truncate text-base font-semibold">{dataSource.name}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {dataSource.description || "暂无描述"}
+            {dataSource.description || t(($) => $.no_description)}
           </p>
         </div>
         <Badge variant="secondary">{dataSource.type}</Badge>
       </div>
       <div className="space-y-3 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium">数据表</h3>
+          <h3 className="text-sm font-medium">{t(($) => $.detail.tables_heading)}</h3>
           <DataTableCreateDialog dataSourceId={dataSource.id} />
         </div>
         {isLoading ? (

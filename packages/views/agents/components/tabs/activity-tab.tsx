@@ -152,7 +152,8 @@ export function ActivityTab({ agent }: ActivityTabProps) {
   }, [issueQueries, issueIds]);
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div className="flex h-full flex-col gap-4 p-6">
+      <div className="flex-1 min-h-0 overflow-y-auto pr-2">
       <NowSection tasks={activeTasks} issueMap={issueMap} agent={agent} />
       <Last30dSection activity={activity} avgDurationMs={avgDurationMs} />
       <RecentWorkSection
@@ -165,6 +166,7 @@ export function ActivityTab({ agent }: ActivityTabProps) {
         issueMap={issueMap}
         agent={agent}
       />
+      </div>
     </div>
   );
 }

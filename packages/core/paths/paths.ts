@@ -38,6 +38,15 @@ function workspaceScoped(slug: string) {
     settings: () => `${ws}/settings`,
     org: () => `${ws}/org`,
     datasources: () => `${ws}/datasources`,
+    reconciliation: () => `${ws}/reconciliation`,
+    reconciliationDetail: (batchNo: string) => `${ws}/reconciliation/${encode(batchNo)}`,
+    supplyReconciliation: () => `${ws}/supply-reconciliation`,
+    supplyReconciliationBills: () => `${ws}/supply-reconciliation/bills`,
+    supplyReconciliationResults: () => `${ws}/supply-reconciliation/results`,
+    supplyReconciliationResult: (resultId: string) => `${ws}/supply-reconciliation/results/${encode(resultId)}`,
+    inventory: () => `${ws}/inventory`,
+    inventoryMonitor: () => `${ws}/inventory/monitor`,
+    productCategories: () => `${ws}/product-categories`,
   };
 }
 
@@ -46,7 +55,6 @@ export const paths = {
 
   // Global (pre-workspace) routes
   login: () => "/login",
-  signup: () => "/signup",
   newWorkspace: () => "/workspaces/new",
   invite: (id: string) => `/invite/${encode(id)}`,
   invitations: () => "/invitations",

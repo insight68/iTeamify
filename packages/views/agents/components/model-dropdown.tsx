@@ -13,6 +13,10 @@ import {
 import { Input } from "@teamify/ui/components/ui/input";
 import { Label } from "@teamify/ui/components/ui/label";
 import { useT } from "../../i18n";
+import {
+  DEFAULT_MODEL_PRICING_CNY,
+  formatCny,
+} from "../../runtimes/utils";
 
 // ModelDropdown renders a searchable, creatable model picker for an agent.
 // It fetches the supported-model catalog from the selected runtime — the
@@ -154,6 +158,27 @@ export function ModelDropdown({
             />
           </div>
           <div className="max-h-72 overflow-y-auto p-1">
+            <button
+              type="button"
+              onClick={() => select("")}
+              className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                value === "" ? "bg-accent" : "hover:bg-accent/50"
+              }`}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-medium">
+                  {t(($) => $.pickers.model_default_option)}
+                </div>
+                <div className="truncate text-xs text-muted-foreground">
+                  {t(($) => $.pickers.model_default_price, {
+                    input: formatCny(DEFAULT_MODEL_PRICING_CNY.input),
+                    output: formatCny(DEFAULT_MODEL_PRICING_CNY.output),
+                  })}
+                </div>
+              </div>
+              {value === "" && <Check className="h-4 w-4 shrink-0 text-primary" />}
+            </button>
+
             {modelsQuery.isLoading && (
               <div className="flex items-center gap-2 px-3 py-6 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -220,14 +245,6 @@ export function ModelDropdown({
               </button>
             )}
 
-            {value && (
-              <button
-                onClick={() => select("")}
-                className="mt-1 flex w-full items-center gap-2 border-t border-border px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-accent/50"
-              >
-                {t(($) => $.model_dropdown.clear_full)}
-              </button>
-            )}
           </div>
         </PopoverContent>
       </Popover>

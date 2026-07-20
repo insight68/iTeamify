@@ -24,10 +24,18 @@ export function useAutoScroll(ref: RefObject<HTMLElement | null>) {
       stickRef.current = scrollHeight - scrollTop - clientHeight < 50
     }
 
+    // Debounce scroll-to-bottom via requestAnimationFrame so rapid
+    // ResizeObserver / MutationObserver callbacks (streaming, image loads)
+    // coalesce into a single paint.
+    const rafId = { current: 0 as number | null }
+
     const onContentChange = () => {
       if (lockRef.current) return
-      if (stickRef.current) {
-        scrollToBottom()
+      if (stickRef.current && rafId.current === null) {
+        rafId.current = requestAnimationFrame(() => {
+          rafId.current = null
+          scrollToBottom()
+        })
       }
     }
 
@@ -60,6 +68,9 @@ export function useAutoScroll(ref: RefObject<HTMLElement | null>) {
       el.removeEventListener("scroll", onScroll)
       ro.disconnect()
       mo.disconnect()
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current)
+      }
     }
   }, [ref])
 

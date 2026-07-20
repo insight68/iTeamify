@@ -161,4 +161,62 @@ describe("WSClient", () => {
 
     ws.disconnect();
   });
+
+  it("ignores malformed frames and still dispatches the next valid frame", () => {
+    const handler = vi.fn();
+    const ws = new WSClient("ws://example.test/ws", { cookieAuth: true });
+    ws.setAuth("tok", "acme");
+    ws.connect();
+    ws.on("issue:deleted", handler);
+
+    FakeWebSocket.lastInstance!.onmessage!({ data: "{" });
+    FakeWebSocket.lastInstance!.onmessage!({
+      data: JSON.stringify({ type: "issue:deleted", payload: { issue_id: "issue-1" } }),
+    });
+
+    expect(handler).toHaveBeenCalledWith({ issue_id: "issue-1" }, undefined);
+    ws.disconnect();
+  });
+
+  it("logs the event type and validation reason for rejected frames", () => {
+    const warn = vi.fn();
+    const ws = new WSClient("ws://example.test/ws", {
+      cookieAuth: true,
+      logger: { info: vi.fn(), warn, debug: vi.fn(), error: vi.fn() },
+    });
+    ws.setAuth("tok", "acme");
+    ws.connect();
+
+    FakeWebSocket.lastInstance!.onmessage!({
+      data: JSON.stringify({
+        type: "task:message",
+        payload: { task_id: "task-1", seq: "one", type: "thinking" },
+      }),
+    });
+
+    expect(warn).toHaveBeenCalledWith(
+      "ws ignored malformed or unknown message",
+      expect.objectContaining({
+        eventType: "task:message",
+        reason: "invalid_payload",
+      }),
+    );
+    ws.disconnect();
+  });
+
+  it("isolates a failing event handler from other subscribers", () => {
+    const secondHandler = vi.fn();
+    const ws = new WSClient("ws://example.test/ws", { cookieAuth: true });
+    ws.setAuth("tok", "acme");
+    ws.connect();
+    ws.on("issue:deleted", () => { throw new Error("boom"); });
+    ws.on("issue:deleted", secondHandler);
+
+    FakeWebSocket.lastInstance!.onmessage!({
+      data: JSON.stringify({ type: "issue:deleted", payload: { issue_id: "issue-1" } }),
+    });
+
+    expect(secondHandler).toHaveBeenCalledOnce();
+    ws.disconnect();
+  });
 });

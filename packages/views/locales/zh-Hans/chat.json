@@ -8,7 +8,8 @@
     "placeholder_no_agent": "创建一个智能体后才能开始对话",
     "placeholder_archived": "此会话已归档",
     "placeholder_named": "告诉 {{name}} 该做什么...",
-    "placeholder_default": "告诉我该做什么..."
+    "placeholder_default": "告诉我该做什么...",
+    "attach_file": "添加文件"
   },
   "message_list": {
     "show_details": "查看详情",
@@ -22,6 +23,14 @@
     "copy_action": "复制",
     "copied_toast": "已复制",
     "copy_failed_toast": "复制失败"
+  },
+  "turn_navigation": {
+    "aria_label": "对话轮次",
+    "jump_to_turn": "跳转到第 {{position}} 轮",
+    "turn_label": "第 {{position}} 轮",
+    "responding": "正在回复…",
+    "no_response": "尚无回复",
+    "shortcut_hint": "Alt/⌥ ↑↓"
   },
   "session_history": {
     "untitled": "无标题",
@@ -93,6 +102,7 @@
   "page": {
     "title": "对话",
     "new_chat": "新对话",
+    "restore_sessions": "显示会话列表",
     "no_sessions": "暂无对话",
     "search_placeholder": "搜索对话..."
   },
@@ -113,5 +123,19 @@
       "searching_web": "搜索网页",
       "fallback": "处理中"
     }
+  },
+  "table": {
+    "saving": "保存中…",
+    "save_failed_retry": "保存失败 — 重试",
+    "loading": "加载表格数据中…",
+    "load_failed": "加载表格数据失败",
+    "load_failed_from": "加载表格数据 \"{{table}}\" 失败",
+    "retry": "重试",
+    "export_all": "下载全部筛选结果",
+    "exporting": "正在生成下载文件…",
+    "export_success": "下载已开始",
+    "export_failed": "下载失败",
+    "boolean_true": "✓ 真",
+    "boolean_false": "✗ 假"
   }
 }

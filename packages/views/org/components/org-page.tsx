@@ -6,11 +6,13 @@ import { useWorkspaceId } from "@teamify/core/hooks";
 import { orgTreeOptions, orgUnitListOptions } from "@teamify/core/org/queries";
 import { Skeleton } from "@teamify/ui/components/ui/skeleton";
 import { PageHeader } from "../../layout/page-header";
+import { useT } from "../../i18n";
 import { OrgCreateDialog } from "./org-create-dialog";
 import { OrgDetailPanel } from "./org-detail-panel";
 import { OrgTreeView } from "./org-tree-view";
 
 export function OrgPage() {
+  const { t } = useT("org");
   const wsId = useWorkspaceId();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data: tree = [], isLoading: treeLoading } = useQuery(orgTreeOptions(wsId));
@@ -24,8 +26,8 @@ export function OrgPage() {
     <div className="flex h-full flex-col bg-background">
       <PageHeader className="justify-between px-5">
         <div>
-          <h1 className="text-sm font-semibold">组织架构</h1>
-          <p className="text-xs text-muted-foreground">管理公司、部门、团队与数据权限入口</p>
+          <h1 className="text-sm font-semibold">{t(($) => $.header.title)}</h1>
+          <p className="text-xs text-muted-foreground">{t(($) => $.header.subtitle)}</p>
         </div>
         <OrgCreateDialog orgUnits={orgUnits} />
       </PageHeader>

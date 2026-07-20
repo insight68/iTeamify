@@ -4,6 +4,18 @@ export interface WorkspaceRepo {
   url: string;
 }
 
+export interface WorkspaceMcpServerConfig {
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  [key: string]: unknown;
+}
+
+export interface WorkspaceMcpConfig {
+  mcpServers?: Record<string, WorkspaceMcpServerConfig>;
+  [key: string]: unknown;
+}
+
 export interface Workspace {
   id: string;
   name: string;
@@ -12,9 +24,33 @@ export interface Workspace {
   context: string | null;
   settings: Record<string, unknown>;
   repos: WorkspaceRepo[];
+  mcp_config?: WorkspaceMcpConfig;
   issue_prefix: string;
   created_at: string;
   updated_at: string;
+}
+
+// Returned by POST /api/workspaces/{id}/import-from/{sourceId}.
+// `copied` is the count actually inserted on the target; `skipped` is the
+// count not touched because an entity with the same name already exists on
+// the target (skip-by-name conflict policy — never overwrite).
+export interface WorkspaceImportCounts {
+  copied: number;
+  skipped: number;
+}
+
+export interface WorkspaceImportApply {
+  applied: boolean;
+  // Free-text reason when not applied; empty when applied. Examples: "target
+  // workspace already has MCP config", "source workspace has no MCP config".
+  reason?: string;
+}
+
+export interface WorkspaceImportReport {
+  runtimes: WorkspaceImportCounts;
+  agents: WorkspaceImportCounts;
+  skills: WorkspaceImportCounts;
+  mcp_config: WorkspaceImportApply;
 }
 
 export interface Member {

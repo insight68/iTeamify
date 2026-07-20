@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@teamify/core/api";
 import { AppSidebar } from "./app-sidebar";
 
-const { detail, deletePin, pins } = vi.hoisted(() => ({
+const { detail, deletePin, pins, workspaceRef } = vi.hoisted(() => ({
   detail: { current: { isPending: false, isError: false, data: null as unknown, error: null as unknown } },
   deletePin: vi.fn(),
   pins: {
@@ -18,6 +18,14 @@ const { detail, deletePin, pins } = vi.hoisted(() => ({
         created_at: "2026-05-06T00:00:00Z",
       },
     ],
+  },
+  workspaceRef: {
+    current: {
+      id: "ws-1",
+      name: "Acme",
+      slug: "acme",
+      settings: {} as Record<string, unknown>,
+    },
   },
 }));
 
@@ -40,7 +48,7 @@ vi.mock("@teamify/ui/components/ui/sidebar", () => ({
   SidebarFooter: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SidebarGroup: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SidebarGroupContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SidebarGroupLabel: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SidebarGroupLabel: ({ children }: { children: React.ReactNode }) => <div data-testid="sidebar-group-label">{children}</div>,
   SidebarHeader: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SidebarMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SidebarMenuButton: ({ children }: { children: React.ReactNode }) => <button type="button">{children}</button>,
@@ -76,18 +84,77 @@ vi.mock("../navigation", () => ({
 vi.mock("../projects/components/project-icon", () => ({ ProjectIcon: () => <span /> }));
 vi.mock("../workspace/workspace-avatar", () => ({ WorkspaceAvatar: () => <span /> }));
 vi.mock("@teamify/ui/components/common/actor-avatar", () => ({ ActorAvatar: () => <span /> }));
+vi.mock("../i18n", () => ({
+  useT: () => ({
+    t: (selector: (resources: {
+      nav: Record<string, string>;
+      sidebar: Record<string, string>;
+    }) => string) =>
+      selector({
+        nav: {
+          inbox: "Inbox",
+          my_issues: "My Issues",
+          issues: "Issues",
+          projects: "Projects",
+          reconciliation: "Reconciliation",
+          supply_reconciliation: "Supply Fee Reconciliation",
+          inventory: "Inventory",
+          product_categories: "Product Categories",
+          autopilots: "Autopilot",
+          org: "Org",
+          datasources: "Data Sources",
+          agents: "Agents",
+          mcp: "MCP",
+          runtimes: "Runtimes",
+          tokens: "Tokens",
+          skills: "Skills",
+          settings: "Settings",
+          daemon: "Daemon",
+          workspace: "Workspace",
+          members: "Members",
+        },
+        sidebar: {
+          unpin_tooltip: "Unpin",
+          workspaces_label: "Workspaces",
+          create_workspace: "Create workspace",
+          pending_invitations_label: "Pending invitations",
+          invitation_workspace_fallback: "Workspace",
+          invitation_join: "Join",
+          invitation_decline: "Decline",
+          log_out: "Log out",
+          new_issue: "New Issue",
+          search: "Search",
+          new_issue_shortcut: "C",
+          pinned_label: "Pinned",
+          chats_group_label: "Chats",
+          chats_empty: "No agents yet",
+          workspace_group: "Workspace",
+          configure_group: "Settings",
+          digital_employee_group: "Digital Employees",
+        },
+      }),
+  }),
+}));
 
 vi.mock("@teamify/core/auth", () => ({
   useAuthStore: (selector: (state: { user: { id: string } }) => unknown) => selector({ user: { id: "user-1" } }),
 }));
 vi.mock("@teamify/core/paths", () => ({
   paths: { workspace: (slug: string) => ({ issues: () => `/${slug}/issues` }) },
-  useCurrentWorkspace: () => ({ id: "ws-1", name: "Acme", slug: "acme" }),
+  useCurrentWorkspace: () => workspaceRef.current,
   useWorkspacePaths: () => ({
     inbox: () => "/acme/inbox",
     myIssues: () => "/acme/my-issues",
     issues: () => "/acme/issues",
     projects: () => "/acme/projects",
+    reconciliation: () => "/acme/reconciliation",
+    reconciliationDetail: (batchNo: string) => `/acme/reconciliation/${batchNo}`,
+    supplyReconciliation: () => "/acme/supply-reconciliation",
+    supplyReconciliationBills: () => "/acme/supply-reconciliation/bills",
+    supplyReconciliationResults: () => "/acme/supply-reconciliation/results",
+    supplyReconciliationResult: (resultId: string) => `/acme/supply-reconciliation/results/${resultId}`,
+    inventory: () => "/acme/inventory",
+    productCategories: () => "/acme/product-categories",
     autopilots: () => "/acme/autopilots",
     org: () => "/acme/org",
     datasources: () => "/acme/datasources",
@@ -97,6 +164,7 @@ vi.mock("@teamify/core/paths", () => ({
     settings: () => "/acme/settings",
     chats: () => "/acme/chats",
     chatsWithAgent: (id: string) => `/acme/chats?agent=${id}`,
+    chatsWithSession: (id: string) => `/acme/chats/${id}`,
     issueDetail: (id: string) => `/acme/issues/${id}`,
     projectDetail: (id: string) => `/acme/projects/${id}`,
   }),
@@ -130,15 +198,46 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
   useQuery: ({ queryKey }: { queryKey: readonly unknown[] }) => {
     if (queryKey[0] === "pins") return { data: pins.current };
     if (queryKey[0] === "issue") return detail.current;
+    if (queryKey[0] === "agents") {
+      return {
+        data: [
+          {
+            id: "agent-1",
+            name: "Helper",
+            avatar_url: null,
+            archived_at: null,
+            owner_id: null,
+            visibility: "workspace",
+          },
+        ],
+      };
+    }
+    if (queryKey[0] === "members") return { data: [{ user_id: "user-1", role: "member" }] };
+    if (queryKey[0] === "chatSessions") return { data: [] };
     return { data: [] };
   },
   useQueryClient: () => ({ fetchQuery: vi.fn(), invalidateQueries: vi.fn() }),
 }));
 
+function getSidebarGroupLabel(text: string): HTMLElement {
+  const label = screen
+    .getAllByTestId("sidebar-group-label")
+    .find((element) => element.textContent?.includes(text));
+
+  expect(label).toBeTruthy();
+  return label as HTMLElement;
+}
+
 describe("PinRow", () => {
   beforeEach(() => {
     deletePin.mockReset();
     detail.current = { isPending: false, isError: false, data: null, error: null };
+    workspaceRef.current = {
+      id: "ws-1",
+      name: "Acme",
+      slug: "acme",
+      settings: {},
+    };
   });
 
   it("unpins missing details", async () => {
@@ -157,5 +256,199 @@ describe("PinRow", () => {
     detail.current = { isPending: false, isError: false, data: { identifier: "MUL-123", title: "Keep this pin", status: "todo" }, error: null };
     render(<AppSidebar />);
     expect(await screen.findByText("MUL-123 Keep this pin")).toBeInTheDocument();
+  });
+
+  it("orders workspace group defaults", () => {
+    render(<AppSidebar />);
+    const inbox = screen.getByText("Inbox");
+    const autopilot = screen.getByText("Autopilot");
+    const pinnedGroup = getSidebarGroupLabel("Pinned");
+    const chatsGroup = getSidebarGroupLabel("Chats");
+    const workspaceGroup = getSidebarGroupLabel("Workspace");
+    const projects = screen.getByText("Projects");
+    const issues = screen.getByText("Issues");
+
+    expect(inbox).toBeInTheDocument();
+    expect(autopilot).toBeInTheDocument();
+    expect(projects).toBeInTheDocument();
+    expect(issues).toBeInTheDocument();
+    expect(screen.queryByText("Reconciliation")).not.toBeInTheDocument();
+    expect(screen.queryByText("Product Categories")).not.toBeInTheDocument();
+    expect(screen.queryByText("My Issues")).not.toBeInTheDocument();
+    expect(screen.queryByText("New Issue")).not.toBeInTheDocument();
+    expect(screen.queryByText("Search")).not.toBeInTheDocument();
+    expect(
+      inbox.compareDocumentPosition(autopilot) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      autopilot.compareDocumentPosition(pinnedGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      pinnedGroup.compareDocumentPosition(chatsGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      chatsGroup.compareDocumentPosition(workspaceGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      workspaceGroup.compareDocumentPosition(projects) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      projects.compareDocumentPosition(issues) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("hides issues and projects when workspace settings disable them", () => {
+    workspaceRef.current = {
+      ...workspaceRef.current,
+      settings: {
+        modules: {
+          issues: { nav_visible: false },
+          projects: { nav_visible: false },
+        },
+      },
+    };
+    render(<AppSidebar />);
+    expect(screen.queryByText("Issues")).not.toBeInTheDocument();
+    expect(screen.queryByText("Projects")).not.toBeInTheDocument();
+    expect(screen.getByText("Autopilot")).toBeInTheDocument();
+  });
+
+  it("shows reconciliation when module settings enable it", () => {
+    workspaceRef.current = {
+      ...workspaceRef.current,
+      settings: { modules: { reconciliation: { nav_visible: true } } },
+    };
+    render(<AppSidebar />);
+    const inbox = screen.getByText("Inbox");
+    const reconciliation = screen.getByText("Reconciliation");
+    const autopilot = screen.getByText("Autopilot");
+    const pinnedGroup = getSidebarGroupLabel("Pinned");
+    const chatsGroup = getSidebarGroupLabel("Chats");
+    const workspaceGroup = getSidebarGroupLabel("Workspace");
+
+    expect(reconciliation).toBeInTheDocument();
+    expect(
+      inbox.compareDocumentPosition(reconciliation) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      reconciliation.compareDocumentPosition(autopilot) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      autopilot.compareDocumentPosition(pinnedGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      pinnedGroup.compareDocumentPosition(chatsGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      chatsGroup.compareDocumentPosition(workspaceGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows product categories below inventory when workspace settings enable it", () => {
+    workspaceRef.current = {
+      ...workspaceRef.current,
+      settings: {
+        modules: {
+          inventory: { nav_visible: true },
+          productCategories: { nav_visible: true },
+        },
+      },
+    };
+
+    render(<AppSidebar />);
+
+    const inventory = screen.getByText("Inventory");
+    const productCategories = screen.getByText("Product Categories");
+    const autopilot = screen.getByText("Autopilot");
+    expect(
+      inventory.compareDocumentPosition(productCategories) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      productCategories.compareDocumentPosition(autopilot) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows the independent supply fee module when workspace settings enable it", () => {
+    workspaceRef.current = {
+      ...workspaceRef.current,
+      settings: {
+        modules: {
+          reconciliation: { nav_visible: true },
+          supplyReconciliation: { nav_visible: true },
+          inventory: { nav_visible: true },
+        },
+      },
+    };
+
+    render(<AppSidebar />);
+
+    const reconciliation = screen.getByText("Reconciliation");
+    const supply = screen.getByText("Supply Fee Reconciliation");
+    const inventory = screen.getByText("Inventory");
+    expect(
+      reconciliation.compareDocumentPosition(supply) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      supply.compareDocumentPosition(inventory) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows shortcut nav items when workspace settings enable them", () => {
+    workspaceRef.current = {
+      ...workspaceRef.current,
+      settings: {
+        navigation: {
+          sidebar: {
+            myIssues: { nav_visible: true },
+            createIssue: { nav_visible: true },
+            search: { nav_visible: true },
+          },
+        },
+      },
+    };
+    render(<AppSidebar />);
+    const pinnedGroup = getSidebarGroupLabel("Pinned");
+    const chatsGroup = getSidebarGroupLabel("Chats");
+    const workspaceGroup = getSidebarGroupLabel("Workspace");
+    const projects = screen.getByText("Projects");
+    const issues = screen.getByText("Issues");
+    const myIssues = screen.getByText("My Issues");
+    const newIssue = screen.getByText("New Issue");
+    const search = screen.getByText("Search");
+
+    expect(screen.getByText("Inbox")).toBeInTheDocument();
+    expect(myIssues).toBeInTheDocument();
+    expect(newIssue).toBeInTheDocument();
+    expect(search).toBeInTheDocument();
+    expect(
+      pinnedGroup.compareDocumentPosition(chatsGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      chatsGroup.compareDocumentPosition(workspaceGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      workspaceGroup.compareDocumentPosition(projects) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      projects.compareDocumentPosition(issues) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      issues.compareDocumentPosition(myIssues) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      myIssues.compareDocumentPosition(newIssue) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      newIssue.compareDocumentPosition(search) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("supports legacy reconciliation visibility", () => {
+    workspaceRef.current = {
+      ...workspaceRef.current,
+      settings: { reconciliation: { nav_visible: true } },
+    };
+    render(<AppSidebar />);
+    expect(screen.getByText("Reconciliation")).toBeInTheDocument();
   });
 });

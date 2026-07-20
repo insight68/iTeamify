@@ -6,7 +6,11 @@ import {
   BookOpenText,
   FileText,
   KeyRound,
+  MessageCircle,
+  Table,
   Terminal,
+  CheckCircle2,
+  Warehouse,
 } from "lucide-react";
 import type { Agent, AgentRuntime } from "@teamify/core/types";
 import {
@@ -24,21 +28,36 @@ import { InstructionsTab } from "./tabs/instructions-tab";
 import { SkillsTab } from "./tabs/skills-tab";
 import { EnvTab } from "./tabs/env-tab";
 import { CustomArgsTab } from "./tabs/custom-args-tab";
+import { ChatSettingsTab } from "./tabs/chat-settings-tab";
+import { ChatTableTab } from "./tabs/chat-table-tab";
+import { ReconciliationTab } from "./tabs/reconciliation-tab";
+import { InventoryTab } from "./tabs/inventory-tab";
 import { useT } from "../../i18n";
 
 type DetailTab =
   | "activity"
   | "instructions"
   | "skills"
+  | "chat"
   | "env"
-  | "custom_args";
+  | "custom_args"
+  | "chat_table"
+  | "reconciliation"
+  | "inventory";
 
-const TAB_LABEL_KEY: Record<DetailTab, "activity" | "instructions" | "skills" | "environment" | "custom_args"> = {
+// All tabs use i18n via the TAB_I18N_KEY mapping.
+type I18nTab = "activity" | "instructions" | "skills" | "chat" | "environment" | "custom_args" | "chat_table" | "reconciliation" | "inventory";
+
+const TAB_I18N_KEY: Partial<Record<DetailTab, I18nTab>> = {
   activity: "activity",
   instructions: "instructions",
   skills: "skills",
+  chat: "chat",
   env: "environment",
   custom_args: "custom_args",
+  chat_table: "chat_table",
+  reconciliation: "reconciliation",
+  inventory: "inventory",
 };
 
 const detailTabs: {
@@ -48,8 +67,12 @@ const detailTabs: {
   { id: "activity", icon: Activity },
   { id: "instructions", icon: FileText },
   { id: "skills", icon: BookOpenText },
+  { id: "chat", icon: MessageCircle },
   { id: "env", icon: KeyRound },
   { id: "custom_args", icon: Terminal },
+  { id: "chat_table", icon: Table },
+  { id: "reconciliation", icon: CheckCircle2 },
+  { id: "inventory", icon: Warehouse },
 ];
 
 interface AgentOverviewPaneProps {
@@ -135,12 +158,12 @@ export function AgentOverviewPane({
             }`}
           >
             <tab.icon className="h-3.5 w-3.5" />
-            {t(($) => $.tabs[TAB_LABEL_KEY[tab.id]])}
+            {t(($) => $.tabs[TAB_I18N_KEY[tab.id]!])}
           </button>
         ))}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === "activity" && <ActivityTab agent={agent} />}
         {activeTab === "instructions" && (
           <TabContent>
@@ -154,6 +177,15 @@ export function AgentOverviewPane({
         {activeTab === "skills" && (
           <TabContent>
             <SkillsTab agent={agent} />
+          </TabContent>
+        )}
+        {activeTab === "chat" && (
+          <TabContent>
+            <ChatSettingsTab
+              agent={agent}
+              onSave={(updates) => onUpdate(agent.id, updates)}
+              onDirtyChange={setActiveDirty}
+            />
           </TabContent>
         )}
         {activeTab === "env" && (
@@ -174,6 +206,29 @@ export function AgentOverviewPane({
               onSave={(updates) => onUpdate(agent.id, updates)}
               onDirtyChange={setActiveDirty}
             />
+          </TabContent>
+        )}
+        {activeTab === "chat_table" && (
+          <TabContent>
+            <ChatTableTab
+              agent={agent}
+              onSave={(updates) => onUpdate(agent.id, updates)}
+              onDirtyChange={setActiveDirty}
+            />
+          </TabContent>
+        )}
+        {activeTab === "reconciliation" && (
+          <TabContent>
+            <ReconciliationTab
+              agent={agent}
+              onSave={(updates) => onUpdate(agent.id, updates)}
+              onDirtyChange={setActiveDirty}
+            />
+          </TabContent>
+        )}
+        {activeTab === "inventory" && (
+          <TabContent>
+            <InventoryTab agent={agent} onSave={(updates) => onUpdate(agent.id, updates)} onDirtyChange={setActiveDirty} />
           </TabContent>
         )}
       </div>

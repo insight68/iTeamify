@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState, lazy } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Save } from "lucide-react";
 import type { Agent } from "@teamify/core/types";
 import { Button } from "@teamify/ui/components/ui/button";
-const ContentEditor = lazy(() =>
-  import("../../../editor/content-editor").then((m) => ({ default: m.ContentEditor })),
-);
+import { ContentEditor } from "../../../editor/content-editor";
 import { useT } from "../../../i18n";
 
 export function InstructionsTab({

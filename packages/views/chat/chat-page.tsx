@@ -1,9 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useDefaultLayout } from "react-resizable-panels";
+import { PanelLeftOpen } from "lucide-react";
+import { useDefaultLayout, usePanelRef } from "react-resizable-panels";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@teamify/ui/components/ui/resizable";
+import { Button } from "@teamify/ui/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@teamify/ui/components/ui/tooltip";
 import { useWorkspaceId } from "@teamify/core/hooks";
 import { agentListOptions } from "@teamify/core/workspace/queries";
 import { chatSessionsOptions } from "@teamify/core/chat/queries";
@@ -13,18 +20,29 @@ import { useNavigation } from "../navigation";
 import { useWorkspacePaths } from "@teamify/core/paths";
 import type { ChatSession } from "@teamify/core/types";
 import { SessionListPanel } from "./session-list-panel";
-import { ChatArea } from "./chat-area";
+import { ChatWorkspace } from "./chat-workspace";
 import { createLogger } from "@teamify/core/logger";
+import { useT } from "../i18n";
 
 const logger = createLogger("chat.page");
 
 export function ChatPage() {
+  const { t } = useT("chat");
   const wsId = useWorkspaceId();
   const { push, replace, searchParams } = useNavigation();
   const p = useWorkspacePaths();
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
     id: "chat-page",
   });
+  const sessionsPanelRef = usePanelRef();
+  const [sessionsCollapsed, setSessionsCollapsed] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setSessionsCollapsed(sessionsPanelRef.current?.isCollapsed() ?? false);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [defaultLayout, sessionsPanelRef]);
 
   const activeSessionId = useChatStore((s) => s.activeSessionId);
   const selectedAgentId = useChatStore((s) => s.selectedAgentId);
@@ -120,6 +138,15 @@ export function ChatPage() {
     [sessions, setSelectedAgentId, setActiveSession, push, p],
   );
 
+  const handleSessionsResize = useCallback(() => {
+    setSessionsCollapsed(sessionsPanelRef.current?.isCollapsed() ?? false);
+  }, [sessionsPanelRef]);
+
+  const handleRestoreSessions = useCallback(() => {
+    sessionsPanelRef.current?.expand();
+    setSessionsCollapsed(false);
+  }, [sessionsPanelRef]);
+
   return (
     <div className="flex h-full">
       <ResizablePanelGroup
@@ -130,11 +157,13 @@ export function ChatPage() {
       >
         <ResizablePanel
           id="sessions"
+          panelRef={sessionsPanelRef}
           defaultSize={280}
           minSize={220}
           maxSize={360}
           collapsible
           groupResizeBehavior="preserve-pixel-size"
+          onResize={handleSessionsResize}
         >
           <SessionListPanel
             agents={agents}
@@ -145,12 +174,36 @@ export function ChatPage() {
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel id="chat" minSize="50%">
-          <ChatArea
-            activeSessionId={activeSessionId}
-            selectedAgentId={selectedAgentId}
-            onSessionCreated={handleSessionCreated}
-            onAgentSelected={handleAgentSelected}
-          />
+          <div className="relative h-full min-w-0">
+            {sessionsCollapsed && (
+              <div className="absolute left-3 top-3 z-20">
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        className="rounded-full bg-background/95 shadow-sm backdrop-blur"
+                        onClick={handleRestoreSessions}
+                        aria-label={t(($) => $.page.restore_sessions)}
+                      >
+                        <PanelLeftOpen className="size-4" />
+                      </Button>
+                    }
+                  />
+                  <TooltipContent side="right">
+                    {t(($) => $.page.restore_sessions)}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            )}
+            <ChatWorkspace
+              activeSessionId={activeSessionId}
+              selectedAgentId={selectedAgentId}
+              onSessionCreated={handleSessionCreated}
+              onAgentSelected={handleAgentSelected}
+            />
+          </div>
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

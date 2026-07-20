@@ -15,8 +15,10 @@ import {
 import { Input } from "@teamify/ui/components/ui/input";
 import { Textarea } from "@teamify/ui/components/ui/textarea";
 import { Plus } from "lucide-react";
+import { useT } from "../../i18n";
 
 export function DataSourceCreateDialog() {
+  const { t } = useT("datasources");
   const createDataSource = useCreateDataSource();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -51,33 +53,33 @@ export function DataSourceCreateDialog() {
         render={
           <Button size="sm" className="gap-1.5">
             <Plus className="size-4" />
-            新建数据源
+            {t(($) => $.source_dialog.trigger)}
           </Button>
         }
       />
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>新建数据源</DialogTitle>
+          <DialogTitle>{t(($) => $.source_dialog.title)}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <Input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="数据源名称"
+            placeholder={t(($) => $.source_dialog.name_placeholder)}
           />
           <select
             value={type}
             onChange={(event) => setType(event.target.value as DataSourceType)}
             className="h-9 w-full rounded-md border bg-background px-3 text-sm"
           >
-            <option value="database">数据库</option>
-            <option value="api">API</option>
-            <option value="file">文件</option>
+            <option value="database">{t(($) => $.source_dialog.types.database)}</option>
+            <option value="api">{t(($) => $.source_dialog.types.api)}</option>
+            <option value="file">{t(($) => $.source_dialog.types.file)}</option>
           </select>
           <Textarea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="描述"
+            placeholder={t(($) => $.source_dialog.description_placeholder)}
             rows={3}
           />
         </div>
@@ -87,7 +89,7 @@ export function DataSourceCreateDialog() {
             onClick={submit}
             disabled={!name.trim() || createDataSource.isPending}
           >
-            创建
+            {t(($) => $.source_dialog.submit)}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { codeToHtml, bundledLanguages, type BundledLanguage } from 'shiki'
 import { Copy, Check } from "lucide-react"
 import { Button } from "@teamify/ui/components/ui/button"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@teamify/ui/components/ui/tooltip"
@@ -17,10 +18,8 @@ export interface CodeBlockProps {
   mode?: 'terminal' | 'minimal' | 'full'
 }
 
-// Map common aliases to Shiki language names.
-// Type is string-valued here — Shiki's BundledLanguage union is resolved at
-// runtime when the import loads.
-const LANGUAGE_ALIASES: Record<string, string> = {
+// Map common aliases to Shiki language names
+const LANGUAGE_ALIASES: Record<string, BundledLanguage> = {
   js: 'javascript',
   ts: 'typescript',
   py: 'python',
@@ -40,6 +39,11 @@ const CACHE_MAX_SIZE = 200
 
 function getCacheKey(code: string, lang: string): string {
   return `${lang}:${code}`
+}
+
+function isValidLanguage(lang: string): lang is BundledLanguage {
+  const normalized = LANGUAGE_ALIASES[lang] || lang
+  return normalized in bundledLanguages
 }
 
 /**
@@ -81,11 +85,8 @@ export function CodeBlock({
       }
 
       try {
-        // Shiki (~200-400 KB) is only imported when highlighting is actually
-        // needed, not on every page that imports CodeBlock.
-        const { codeToHtml, bundledLanguages } = await import('shiki')
-        const normalized = LANGUAGE_ALIASES[resolvedLang] || resolvedLang
-        const lang = normalized in bundledLanguages ? resolvedLang : 'text'
+        // Use valid language or fallback to plaintext
+        const lang = isValidLanguage(resolvedLang) ? resolvedLang : 'text'
 
         // Dual themes: Shiki outputs CSS variables for both themes in one pass.
         // CSS handles switching via .dark selector (see globals.css).

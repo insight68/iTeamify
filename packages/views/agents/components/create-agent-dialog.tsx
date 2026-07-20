@@ -140,6 +140,9 @@ export function CreateAgentDialog({
         if (template.max_concurrent_tasks) {
           data.max_concurrent_tasks = template.max_concurrent_tasks;
         }
+        if (template.chat_empty_state_title?.trim()) {
+          data.chat_empty_state_title = template.chat_empty_state_title.trim();
+        }
       }
       await onCreate(data);
       onClose();

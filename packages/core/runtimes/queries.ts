@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
+import { fetchLatestCliVersion } from "./releases";
 
 export const runtimeKeys = {
   all: (wsId: string) => ["runtimes", wsId] as const,
@@ -53,24 +54,10 @@ export function runtimeListOptions(wsId: string, owner?: "me") {
   });
 }
 
-const GITHUB_RELEASES_URL =
-  "https://api.github.com/repos/teamify-ai/teamify/releases/latest";
-
 export function latestCliVersionOptions() {
   return queryOptions({
     queryKey: runtimeKeys.latestVersion(),
-    queryFn: async (): Promise<string | null> => {
-      try {
-        const resp = await fetch(GITHUB_RELEASES_URL, {
-          headers: { Accept: "application/vnd.github+json" },
-        });
-        if (!resp.ok) return null;
-        const data = await resp.json();
-        return (data.tag_name as string) ?? null;
-      } catch {
-        return null;
-      }
-    },
+    queryFn: fetchLatestCliVersion,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }

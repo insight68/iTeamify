@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "@teamify/core/i18n/react";
 import { SearchCommand } from "./search-command";
-import { useSearchStore } from "@teamify/core/search";
+import { useSearchStore } from "./search-store";
 import enCommon from "../locales/en/common.json";
 import enAuth from "../locales/en/auth.json";
 import enSettings from "../locales/en/settings.json";
@@ -216,11 +216,14 @@ describe("SearchCommand", () => {
     renderSearch();
 
     const input = screen.getByPlaceholderText("Type a command or search...");
+    // Settings was renamed to "My Information" in commit bdf2022 but its
+    // keyword list still includes "settings", so typing "set" must still
+    // surface it.
     await user.type(input, "set");
 
     await waitFor(() => {
       // HighlightText splits text, so use a function matcher
-      expect(screen.getByText((_, el) => el?.textContent === "Settings" && el?.tagName === "SPAN")).toBeInTheDocument();
+      expect(screen.getByText((_, el) => el?.textContent === "My Information" && el?.tagName === "SPAN")).toBeInTheDocument();
     });
     expect(screen.queryByText("Inbox")).not.toBeInTheDocument();
   });
@@ -232,7 +235,7 @@ describe("SearchCommand", () => {
     const input = screen.getByPlaceholderText("Type a command or search...");
     await user.type(input, "settings");
 
-    const settingsItem = await screen.findByText("Settings");
+    const settingsItem = await screen.findByText("My Information");
     await user.click(settingsItem);
 
     expect(mockPush).toHaveBeenCalledWith("/ws-test/settings");

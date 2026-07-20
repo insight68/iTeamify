@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useRef, useState, lazy } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import { CheckCircle2, ChevronRight, Copy, Download, FileText, MoreHorizontal, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@teamify/ui/components/ui/card";
@@ -30,10 +30,7 @@ import { QuickEmojiPicker } from "@teamify/ui/components/common/quick-emoji-pick
 import { cn } from "@teamify/ui/lib/utils";
 import { useActorName } from "@teamify/core/workspace/hooks";
 import { timeAgo } from "@teamify/core/utils";
-import { type ContentEditorRef, copyMarkdown, ReadonlyContent, useFileDropZone, FileDropOverlay } from "../../editor";
-const ContentEditor = lazy(() =>
-  import("../../editor/content-editor").then((m) => ({ default: m.ContentEditor })),
-);
+import { ContentEditor, type ContentEditorRef, copyMarkdown, ReadonlyContent, useFileDropZone, FileDropOverlay } from "../../editor";
 import { FileUploadButton } from "@teamify/ui/components/common/file-upload-button";
 import { useFileUpload } from "@teamify/core/hooks/use-file-upload";
 import { api } from "@teamify/core/api";

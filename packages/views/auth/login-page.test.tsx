@@ -129,7 +129,7 @@ describe("LoginPage", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Contact validation
+  // Email validation
   // -------------------------------------------------------------------------
 
   it("shows disabled submit when phone is empty", async () => {
@@ -716,57 +716,6 @@ describe("LoginPage", () => {
     expect(
       screen.getByRole("button", { name: /log in/i }),
     ).toBeInTheDocument();
-  });
-
-  it("renders signup as an email-only verification flow", () => {
-    renderWithI18n(
-      <LoginPage
-        onSuccess={onSuccess}
-        intent="signup"
-        defaultMode="code"
-        defaultCodeChannel="email"
-        codeChannels={["email"]}
-        allowPasswordMode={false}
-      />,
-    );
-
-    expect(screen.getByText("Create your Teamify account")).toBeInTheDocument();
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/phone/i)).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /sms code/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /use password/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /get verification code/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("signup sends an email verification code", async () => {
-    mockSendCode.mockResolvedValueOnce(undefined);
-    renderWithI18n(
-      <LoginPage
-        onSuccess={onSuccess}
-        intent="signup"
-        defaultMode="code"
-        defaultCodeChannel="email"
-        codeChannels={["email"]}
-        allowPasswordMode={false}
-      />,
-    );
-
-    const user = userEvent.setup();
-    await user.type(screen.getByLabelText(/email/i), "new@example.com");
-    await user.click(
-      screen.getByRole("button", { name: /get verification code/i }),
-    );
-
-    expect(mockSendCode).toHaveBeenCalledWith({
-      email: "new@example.com",
-      channel: "email",
-    });
   });
 
   // -------------------------------------------------------------------------

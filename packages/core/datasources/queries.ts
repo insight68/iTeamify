@@ -10,6 +10,8 @@ export const dataSourceKeys = {
     [...dataSourceKeys.all(wsId), "tables", dataSourceId] as const,
   table: (wsId: string, tableId: string) =>
     [...dataSourceKeys.all(wsId), "table", tableId] as const,
+  tableColumns: (wsId: string, tableId: string) =>
+    [...dataSourceKeys.all(wsId), "table", tableId, "columns"] as const,
   permissions: (wsId: string) => ["permissions", wsId] as const,
 };
 
@@ -40,6 +42,15 @@ export function dataTableDetailOptions(wsId: string, tableId: string) {
   return queryOptions({
     queryKey: dataSourceKeys.table(wsId, tableId),
     queryFn: () => api.getDataTable(tableId),
+  });
+}
+
+export function tableColumnsOptions(wsId: string, tableId: string) {
+  return queryOptions({
+    queryKey: dataSourceKeys.tableColumns(wsId, tableId),
+    queryFn: () => api.fetchTableColumns(tableId),
+    enabled: !!tableId,
+    staleTime: 5 * 60 * 1000, // column schemas rarely change
   });
 }
 

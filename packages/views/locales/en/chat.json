@@ -9,7 +9,8 @@
     "placeholder_no_agent": "Create an agent to start chatting",
     "placeholder_archived": "This session is archived",
     "placeholder_named": "Tell {{name}} what to do…",
-    "placeholder_default": "Tell me what to do…"
+    "placeholder_default": "Tell me what to do…",
+    "attach_file": "Attach files"
   },
   "message_list": {
     "show_details": "Show details",
@@ -25,6 +26,14 @@
     "copy_action": "Copy",
     "copied_toast": "Copied",
     "copy_failed_toast": "Copy failed"
+  },
+  "turn_navigation": {
+    "aria_label": "Conversation turns",
+    "jump_to_turn": "Jump to turn {{position}}",
+    "turn_label": "Turn {{position}}",
+    "responding": "Responding…",
+    "no_response": "No response yet",
+    "shortcut_hint": "Alt/⌥ ↑↓"
   },
   "session_history": {
     "untitled": "Untitled",
@@ -97,6 +106,7 @@
   "page": {
     "title": "Chats",
     "new_chat": "New chat",
+    "restore_sessions": "Show conversation list",
     "no_sessions": "No conversations yet",
     "search_placeholder": "Search chats..."
   },
@@ -117,5 +127,19 @@
       "searching_web": "Searching the web",
       "fallback": "Working"
     }
+  },
+  "table": {
+    "saving": "Saving…",
+    "save_failed_retry": "Save failed — retry",
+    "loading": "Loading table data…",
+    "load_failed": "Failed to load table data",
+    "load_failed_from": "Failed to load table data from \"{{table}}\"",
+    "retry": "Retry",
+    "export_all": "Download all filtered results",
+    "exporting": "Preparing download…",
+    "export_success": "Download started",
+    "export_failed": "Download failed",
+    "boolean_true": "✓ true",
+    "boolean_false": "✗ false"
   }
 }

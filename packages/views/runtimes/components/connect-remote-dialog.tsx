@@ -116,7 +116,7 @@ export function ConnectRemoteDialog({ onClose }: { onClose: () => void }) {
 // Step 1: Installation instructions
 // ---------------------------------------------------------------------------
 
-const INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/teamify-ai/teamify/main/scripts/install.sh | bash";
+const INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/Insight86/Teamify/main/scripts/install.sh | bash";
 
 const CONFIGURE_CMD = `teamify config set server_url https://api.teamify.world
 teamify config set app_url https://teamify.world`;

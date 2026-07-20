@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
 import { useQuery } from "@tanstack/react-query";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { useWorkspaceId } from "@teamify/core/hooks";
 import { useWorkspacePaths } from "@teamify/core/paths";
 import { useModalStore } from "@teamify/core/modals";
@@ -141,11 +140,11 @@ export function InboxPage() {
     });
   }, [selectedId, selectedRead, markReadMutate, t]);
 
-  const handleSelect = useCallback((itemId: string) => {
-    setSelectedKey(itemId);
-  }, [setSelectedKey]);
+  const handleSelect = (item: InboxItem) => {
+    setSelectedKey(item.issue_id ?? item.id);
+  };
 
-  const handleArchive = useCallback((id: string) => {
+  const handleArchive = (id: string) => {
     const idx = items.findIndex((i) => i.id === id);
     const archived = idx >= 0 ? items[idx] : null;
     const wasSelected =
@@ -160,7 +159,7 @@ export function InboxPage() {
     archiveMutation.mutate(id, {
       onError: () => toast.error(t(($) => $.errors.archive_failed)),
     });
-  }, [items, selectedKey, setSelectedKey, archiveMutation, t]);
+  };
 
   // Batch operations
   const handleMarkAllRead = () => {
@@ -244,12 +243,17 @@ export function InboxPage() {
       <p className="text-sm">{t(($) => $.list.empty)}</p>
     </div>
   ) : (
-    <VirtualizedInboxList
-      items={items}
-      selectedKey={selectedKey}
-      onSelect={handleSelect}
-      onArchive={handleArchive}
-    />
+    <div>
+      {items.map((item) => (
+        <InboxListItem
+          key={item.id}
+          item={item}
+          isSelected={(item.issue_id ?? item.id) === selectedKey}
+          onClick={() => handleSelect(item)}
+          onArchive={() => handleArchive(item.id)}
+        />
+      ))}
+    </div>
   );
 
   const detailContent = selected?.issue_id ? (
@@ -447,62 +451,5 @@ export function InboxPage() {
       </div>
       </ResizablePanel>
     </ResizablePanelGroup>
-  );
-}
-
-function VirtualizedInboxList({
-  items,
-  selectedKey,
-  onSelect,
-  onArchive,
-}: {
-  items: InboxItem[];
-  selectedKey: string;
-  onSelect: (itemId: string) => void;
-  onArchive: (id: string) => void;
-}) {
-  const parentRef = useRef<HTMLDivElement>(null);
-  const virtualizer = useVirtualizer({
-    count: items.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 60,
-    overscan: 5,
-  });
-
-  return (
-    <div ref={parentRef} className="h-full overflow-y-auto">
-      <div
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          width: "100%",
-          position: "relative",
-        }}
-      >
-        {virtualizer.getVirtualItems().map((virtualItem) => {
-          const item = items[virtualItem.index];
-          if (!item) return null;
-          return (
-            <div
-              key={item.id}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: `${virtualItem.size}px`,
-                transform: `translateY(${virtualItem.start}px)`,
-              }}
-            >
-              <InboxListItem
-                item={item}
-                isSelected={(item.issue_id ?? item.id) === selectedKey}
-                onSelect={onSelect}
-                onArchive={onArchive}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }

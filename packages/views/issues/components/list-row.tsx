@@ -1,12 +1,15 @@
 "use client";
 
 import { memo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AppLink } from "../../navigation";
-import type { Issue, Project } from "@teamify/core/types";
+import type { Issue } from "@teamify/core/types";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { useIssueSelectionStore } from "@teamify/core/issues/stores/selection-store";
 import { useWorkspacePaths } from "@teamify/core/paths";
+import { useWorkspaceId } from "@teamify/core/hooks";
 import { useViewStore } from "@teamify/core/issues/stores/view-store-context";
+import { projectListOptions } from "@teamify/core/projects/queries";
 import { ProjectIcon } from "../../projects/components/project-icon";
 import { PriorityIcon } from "./priority-icon";
 import { ProgressRing } from "./progress-ring";
@@ -28,32 +31,27 @@ function formatDate(date: string): string {
 export const ListRow = memo(function ListRow({
   issue,
   childProgress,
-  projects,
 }: {
   issue: Issue;
   childProgress?: ChildProgress;
-  projects?: Project[];
 }) {
   const selected = useIssueSelectionStore((s) => s.selectedIds.has(issue.id));
   const toggle = useIssueSelectionStore((s) => s.toggle);
   const p = useWorkspacePaths();
-  // Atomic selectors: toggling one card property only re-renders the rows
-  // that read that specific property, instead of every row (a whole-object
-  // `s.cardProperties` selector breaks on any toggle since the store rebuilds
-  // the object).
-  const propProject = useViewStore((s) => s.cardProperties.project);
-  const propChildProgress = useViewStore((s) => s.cardProperties.childProgress);
-  const propAssignee = useViewStore((s) => s.cardProperties.assignee);
-  const propDueDate = useViewStore((s) => s.cardProperties.dueDate);
-  const propLabels = useViewStore((s) => s.cardProperties.labels);
-  const project = issue.project_id ? projects?.find((pr) => pr.id === issue.project_id) : undefined;
+  const storeProperties = useViewStore((s) => s.cardProperties);
+  const wsId = useWorkspaceId();
+  const { data: projects = [] } = useQuery({
+    ...projectListOptions(wsId),
+    enabled: storeProperties.project && !!issue.project_id,
+  });
+  const project = issue.project_id ? projects.find((pr) => pr.id === issue.project_id) : undefined;
   const labels = issue.labels ?? [];
 
-  const showProject = propProject && project;
-  const showChildProgress = propChildProgress && childProgress;
-  const showAssignee = propAssignee && issue.assignee_type && issue.assignee_id;
-  const showDueDate = propDueDate && issue.due_date;
-  const showLabels = propLabels && labels.length > 0;
+  const showProject = storeProperties.project && project;
+  const showChildProgress = storeProperties.childProgress && childProgress;
+  const showAssignee = storeProperties.assignee && issue.assignee_type && issue.assignee_id;
+  const showDueDate = storeProperties.dueDate && issue.due_date;
+  const showLabels = storeProperties.labels && labels.length > 0;
 
   return (
     <IssueActionsContextMenu issue={issue}>

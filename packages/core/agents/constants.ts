@@ -2,3 +2,4 @@
 // disabled save) and the back-end (handler validation + DB CHECK constraint).
 // Kept in core so both apps and the test suite read from one source.
 export const AGENT_DESCRIPTION_MAX_LENGTH = 255;
+export const AGENT_CHAT_EMPTY_STATE_TITLE_MAX_LENGTH = 120;

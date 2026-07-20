@@ -119,12 +119,129 @@ export interface Agent {
   status: AgentStatus;
   max_concurrent_tasks: number;
   model: string;
+  chat_empty_state_title?: string;
   owner_id: string | null;
   skills: AgentSkillSummary[];
   created_at: string;
   updated_at: string;
   archived_at: string | null;
   archived_by: string | null;
+  /** Always provided by the backend (defaults to { enabled: false, ... }),
+   *  but optional here so test fixtures and legacy payloads work without it. */
+  chat_table_config?: ChatTableConfig;
+  /** Reconciliation page config — drives the standalone reconciliation route.
+   *  Optional for the same legacy-payload reasons as chat_table_config. */
+  reconciliation_config?: ReconciliationConfig;
+  inventory_config?: InventoryConfig;
+}
+
+// ── Chat Table Config ──
+
+export interface ChatTableConfig {
+  enabled: boolean;
+  title: string;
+  /** Reference to a workspace-level data_source (type=database) for direct SQL queries. */
+  data_source_id?: string;
+  /** Reference to a data_table within the data_source (for schema resolution). */
+  data_table_id?: string;
+  /** Table name within the data_source (used directly if data_table_id is not set). */
+  data_table_name?: string;
+  /** MCP tool based data source (fallback for non-SQL sources). */
+  mcp_tool?: ChatTableMcpTool;
+  columns: ChatTableColumn[];
+  filters: ChatTableFilter[];
+  page_size: number;
+  default_sort?: { column: string; direction: "asc" | "desc" };
+  /** Optional unique row key used for stable ordering and update/delete identity. */
+  row_key?: string;
+  /** Column key to use as row coloring source. Must reference a select-type column. */
+  row_color_column?: string;
+}
+
+export interface ChatTableMcpTool {
+  tool_name: string;
+  tool_params: Record<string, unknown>;
+  response_data_path: string;
+  save_tool_name?: string;
+  create_tool_name?: string;
+  delete_tool_name?: string;
+  save_params_mapping?: Record<string, string>;
+}
+
+export interface ChatTableColumn {
+  key: string;
+  label: string;
+  type: "text" | "number" | "date" | "boolean" | "select";
+  editable: boolean;
+  visible: boolean;
+  width?: number;
+  grow?: boolean;
+  options?: {
+    label: string;
+    value: string;
+    /** Optional hex color for row background when this option is selected (e.g. "#3B82F6") */
+    color?: string;
+  }[];
+}
+
+export interface ChatTableFilter {
+  key: string;
+  label: string;
+  type: "text" | "select" | "multi_select" | "date";
+  options?: { label: string; value: string }[];
+  default_value?: unknown;
+}
+
+// ── Reconciliation Config ──
+
+/**
+ * Drives the standalone reconciliation route
+ * (`/[workspaceSlug]/reconciliation/[agentId]/summary`). Like ChatTableConfig
+ * but adds a detail (drill-down) table and a per-batch confirmation workflow.
+ */
+export interface ReconciliationConfig {
+  enabled: boolean;
+  title: string;
+  /** Workspace-level data_source (type=database) backing the summary table. */
+  data_source_id?: string;
+  /** data_table record for the summary table (schema + name resolved server-side). */
+  summary_table_id?: string;
+  summary_table_name?: string;
+  /** data_table record for the drill-down detail table. */
+  detail_table_id?: string;
+  detail_table_name?: string;
+  /** Column key identifying the batch — used to join summary rows to confirmation
+   *  state and to drill into detail rows. Defaults to "batch_no". */
+  batch_no_column: string;
+  /** Enables the confirm/unlock workflow on the summary table. */
+  confirmable: boolean;
+  columns: ChatTableColumn[];
+  filters: ChatTableFilter[];
+  page_size: number;
+  default_sort?: { column: string; direction: "asc" | "desc" };
+}
+
+export interface InventoryConfig {
+  enabled: boolean;
+  title: string;
+  focus: "all" | "shortage" | "overstock";
+}
+
+export interface ConfirmStatus {
+  confirmed: boolean;
+  confirmed_by?: string;
+  confirmed_at?: string;
+  locked: boolean;
+  locked_at?: string;
+  locked_by?: string;
+  status?: string;
+  unlockable?: boolean;
+}
+
+export interface ReconciliationSummaryResponse {
+  rows: Record<string, unknown>[];
+  total: number;
+  confirmation_status: Record<string, ConfirmStatus>;
 }
 
 /**
@@ -152,9 +269,13 @@ export interface CreateAgentRequest {
   visibility?: AgentVisibility;
   max_concurrent_tasks?: number;
   model?: string;
+  chat_empty_state_title?: string;
   /** Optional template slug used by the onboarding agent picker. Surfaced
    *  as the `template` property on the `agent_created` PostHog event. */
   template?: string;
+  chat_table_config?: ChatTableConfig;
+  reconciliation_config?: ReconciliationConfig;
+  inventory_config?: InventoryConfig;
 }
 
 export interface UpdateAgentRequest {
@@ -170,6 +291,10 @@ export interface UpdateAgentRequest {
   status?: AgentStatus;
   max_concurrent_tasks?: number;
   model?: string;
+  chat_empty_state_title?: string;
+  chat_table_config?: ChatTableConfig;
+  reconciliation_config?: ReconciliationConfig;
+  inventory_config?: InventoryConfig;
 }
 
 // Skills

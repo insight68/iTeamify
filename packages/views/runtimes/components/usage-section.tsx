@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, useMemo, useState, Suspense } from "react";
+import { useMemo, useState } from "react";
 import { BarChart3, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@teamify/ui/components/ui/skeleton";
@@ -21,22 +21,19 @@ import {
   aggregateCostByModel,
   aggregateCostByHour,
   collectUnmappedModels,
+  formatCny,
   pctChange,
+  usesFallbackPricing,
   type CostByKey,
 } from "../utils";
 import { KpiCard } from "./shared";
 import { ActorAvatar } from "../../common/actor-avatar";
+import {
+  DailyCostChart,
+  HourlyActivityChart,
+  ActivityHeatmap,
+} from "./charts";
 import { useT } from "../../i18n";
-
-const DailyCostChart = lazy(() =>
-  import("./charts/daily-cost-chart").then((m) => ({ default: m.DailyCostChart })),
-);
-const HourlyActivityChart = lazy(() =>
-  import("./charts/hourly-activity-chart").then((m) => ({ default: m.HourlyActivityChart })),
-);
-const ActivityHeatmap = lazy(() =>
-  import("./charts/activity-heatmap").then((m) => ({ default: m.ActivityHeatmap })),
-);
 
 // Single source of truth for the period selector. KPIs, the When-chart, the
 // Cost-by tabs, and the CSV export all read from the same `days` value so
@@ -89,11 +86,6 @@ function Segmented<T extends string | number>({
       ))}
     </div>
   );
-}
-
-function fmtMoney(n: number): string {
-  if (n >= 100) return `$${n.toFixed(0)}`;
-  return `$${n.toFixed(2)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -157,7 +149,7 @@ export function UsageSection({ runtimeId }: { runtimeId: string }) {
       <div className="grid grid-cols-3 divide-x rounded-lg border bg-card">
         <KpiCard
           label={t(($) => $.usage.kpi_cost_label, { days })}
-          value={fmtMoney(totals.cost)}
+          value={formatCny(totals.cost, { estimated: totals.estimated })}
           hint={
             costDelta == null ? undefined : (
               <span
@@ -179,7 +171,9 @@ export function UsageSection({ runtimeId }: { runtimeId: string }) {
         />
         <KpiCard
           label={t(($) => $.usage.kpi_cache_label, { days })}
-          value={fmtMoney(totals.cacheSavings)}
+          value={formatCny(totals.cacheSavings, {
+            estimated: totals.estimated,
+          })}
           accent={totals.cacheSavings > 0 ? "success" : "default"}
           hint={
             <span>
@@ -263,6 +257,7 @@ function WhenChart({
       aggregateCostByHour(byHourRows).map((row) => ({
         hour: Number(row.key),
         cost: row.cost,
+        estimated: row.estimated,
       })),
     [byHourRows],
   );
@@ -300,21 +295,9 @@ function WhenChart({
           switching never collapses or stretches the card vertically (and
           the right-rail / lower sections never reflow as a side effect). */}
       <div className="min-h-[260px]">
-        {tab === "daily" && (
-          <Suspense fallback={<Skeleton className="h-[260px] rounded-md" />}>
-            <DailyTab data={dailyCostStack} usage={filtered} />
-          </Suspense>
-        )}
-        {tab === "hourly" && (
-          <Suspense fallback={<Skeleton className="h-[260px] rounded-md" />}>
-            <HourlyTab data={hourlyCost} usage={filtered} />
-          </Suspense>
-        )}
-        {tab === "heatmap" && (
-          <Suspense fallback={<Skeleton className="h-[260px] rounded-md" />}>
-            <ActivityHeatmap usage={usage} />
-          </Suspense>
-        )}
+        {tab === "daily" && <DailyTab data={dailyCostStack} usage={filtered} />}
+        {tab === "hourly" && <HourlyTab data={hourlyCost} usage={filtered} />}
+        {tab === "heatmap" && <ActivityHeatmap usage={usage} />}
       </div>
     </div>
   );
@@ -324,7 +307,7 @@ function DailyTab({
   data,
   usage,
 }: {
-  data: { total: number }[];
+  data: { total: number; estimated: boolean }[];
   usage: RuntimeUsage[];
 }) {
   const totalCost = data.reduce((s, d) => s + d.total, 0);
@@ -336,7 +319,7 @@ function HourlyTab({
   data,
   usage,
 }: {
-  data: { hour: number; cost: number }[];
+  data: { hour: number; cost: number; estimated: boolean }[];
   usage: RuntimeUsage[];
 }) {
   const totalCost = data.reduce((s, d) => s + d.cost, 0);
@@ -348,9 +331,9 @@ function HourlyTab({
 // EmptyChartState — drop-in replacement for "the chart would render empty".
 // Two cases worth distinguishing:
 //   1. No tokens at all → "no usage" (genuinely nothing happened).
-//   2. Tokens present but cost is $0 → almost always means the model name
+//   2. Tokens present but cost is ¥0 → almost always means the model name
 //      reported by the daemon isn't in our pricing table. List the offenders
-//      so a developer can update MODEL_PRICING in one go.
+//      so a developer can update MODEL_PRICING_CNY in one go.
 // ---------------------------------------------------------------------------
 
 function EmptyChartState({ usage }: { usage: RuntimeUsage[] }) {
@@ -547,8 +530,15 @@ function CostByList({
             <div className="text-right text-xs tabular-nums text-muted-foreground">
               {formatTokens(row.tokens)}
             </div>
-            <div className="text-right text-sm font-medium tabular-nums">
-              ${row.cost.toFixed(2)}
+            <div
+              className="text-right text-sm font-medium tabular-nums"
+              title={
+                row.estimated
+                  ? t(($) => $.usage.cost_estimated_title)
+                  : undefined
+              }
+            >
+              {formatCny(row.cost, { estimated: row.estimated })}
             </div>
           </div>
         );
@@ -688,6 +678,7 @@ interface UsageTotals {
   cacheWrite: number;
   cost: number;
   cacheSavings: number;
+  estimated: boolean;
 }
 
 function computeTotals(rows: RuntimeUsage[]): UsageTotals {
@@ -699,8 +690,16 @@ function computeTotals(rows: RuntimeUsage[]): UsageTotals {
       cacheWrite: acc.cacheWrite + u.cache_write_tokens,
       cost: acc.cost + estimateCost(u),
       cacheSavings: acc.cacheSavings + estimateCacheSavings(u),
+      estimated: acc.estimated || usesFallbackPricing(u.model),
     }),
-    { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, cacheSavings: 0 },
+    {
+      input: 0,
+      output: 0,
+      cacheRead: 0,
+      cacheWrite: 0,
+      cost: 0,
+      cacheSavings: 0,
+      estimated: false,
+    },
   );
 }
-

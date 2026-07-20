@@ -1,0 +1,48 @@
+{
+  "header": {
+    "title": "数据源",
+    "subtitle": "登记数据源、数据表，并查看组织权限矩阵"
+  },
+  "empty": "暂无数据源",
+  "no_description": "暂无描述",
+  "tabs": {
+    "detail": "详情",
+    "permissions": "权限矩阵"
+  },
+  "source_dialog": {
+    "trigger": "新建数据源",
+    "title": "新建数据源",
+    "name_placeholder": "数据源名称",
+    "description_placeholder": "描述",
+    "types": {
+      "database": "数据库",
+      "api": "API",
+      "file": "文件"
+    },
+    "submit": "创建"
+  },
+  "detail": {
+    "empty": "选择左侧数据源查看详情",
+    "tables_heading": "数据表"
+  },
+  "table_dialog": {
+    "trigger": "添加数据表",
+    "title": "添加数据表",
+    "name_placeholder": "表名",
+    "schema_placeholder": "Schema，可选",
+    "description_placeholder": "描述",
+    "submit": "添加"
+  },
+  "tables": {
+    "empty": "这个数据源下还没有数据表"
+  },
+  "matrix": {
+    "empty": "暂无权限矩阵数据",
+    "columns": {
+      "org_unit": "组织节点",
+      "data_source": "数据源",
+      "data_table": "数据表",
+      "permission": "权限"
+    }
+  }
+}

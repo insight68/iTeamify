@@ -1,24 +1,19 @@
 {
-  "name": "iTeamify",
-  "version": "1.11.0-rc2",
+  "name": "Teamify",
+  "version": "1.81.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev:web": "turbo dev --filter=@teamify/web",
     "dev:desktop": "turbo dev --filter=@teamify/desktop",
     "dev:desktop:staging": "turbo dev:staging --filter=@teamify/desktop",
-    "dev:mobile": "turbo dev --filter=@teamify/mobile",
     "build": "turbo build",
-    "build:web": "turbo build --filter=@teamify/web",
-    "build:desktop": "turbo build --filter=@teamify/desktop",
-    "build:mobile": "turbo build --filter=@teamify/mobile",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "lint": "turbo lint",
-    "check": "turbo typecheck && turbo test && turbo lint",
     "clean": "turbo clean && rm -rf node_modules",
     "ui:add": "cd packages/ui && npx shadcn@latest add",
-    "generate:reserved-slugs": "echo 'Reserved slugs are now hand-maintained in packages/core/paths/reserved-slugs.ts. No generator needed in the frontend-only repo.'"
+    "generate:reserved-slugs": "node scripts/generate-reserved-slugs.mjs"
   },
   "packageManager": "pnpm@10.28.2",
   "pnpm": {
@@ -32,11 +27,14 @@
     }
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0",
+    "@playwright/test": "^1.58.2",
     "@types/node": "catalog:",
-    "next": "^16.2.3",
-    "sharp": "^0.34.5",
-    "turbo": "^2.9.16",
+    "@types/pg": "^8.20.0",
+    "pg": "^8.20.0",
+    "turbo": "^2.5.4",
     "typescript": "catalog:"
+  },
+  "dependencies": {
+    "sharp": "^0.34.5"
   }
 }

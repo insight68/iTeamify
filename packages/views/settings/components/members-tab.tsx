@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Crown, Shield, User, Plus, MoreHorizontal, UserMinus, Users, Clock, X, Mail, Phone, Info } from "lucide-react";
+import { Crown, Shield, User, Plus, MoreHorizontal, UserMinus, Users, Clock, X, Phone, Mail, Info } from "lucide-react";
 import { ActorAvatar } from "../../common/actor-avatar";
 import type { MemberWithUser, MemberRole, Invitation } from "@teamify/core/types";
 import { Input } from "@teamify/ui/components/ui/input";
@@ -44,13 +44,13 @@ import { memberListOptions, invitationListOptions, workspaceKeys } from "@teamif
 import { api } from "@teamify/core/api";
 import { useT } from "../../i18n";
 
-type InviteMethod = "email" | "phone";
-
 const ROLE_ICONS: Record<MemberRole, typeof Crown> = {
   owner: Crown,
   admin: Shield,
   member: User,
 };
+
+type InviteMethod = "email" | "phone";
 
 function useRoleLabels() {
   const { t } = useT("settings");
@@ -198,12 +198,11 @@ function InvitationRow({
   const roleConfig = useRoleLabels();
   const rc = roleConfig[invitation.role];
   const inviteeContact = invitation.invitee_phone || invitation.invitee_email;
-  const ContactIcon = invitation.invitee_phone ? Phone : Mail;
 
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-        <ContactIcon className="h-4 w-4 text-muted-foreground" />
+        <Phone className="h-4 w-4 text-muted-foreground" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium truncate">{inviteeContact}</div>

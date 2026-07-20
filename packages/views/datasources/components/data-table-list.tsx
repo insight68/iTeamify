@@ -1,14 +1,16 @@
 "use client";
 
 import type { DataTableResponse } from "@teamify/core/types";
+import { useT } from "../../i18n";
 
 export function DataTableList({ tables }: { tables: DataTableResponse[] }) {
+  const { t } = useT("datasources");
   const rows = Array.isArray(tables) ? tables : [];
 
   if (rows.length === 0) {
     return (
       <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-        这个数据源下还没有数据表
+        {t(($) => $.tables.empty)}
       </div>
     );
   }

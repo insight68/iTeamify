@@ -16,9 +16,14 @@ export interface UploadContext {
   commentId?: string;
 }
 
+export interface FileUploadOptions {
+  direct?: boolean;
+}
+
 export function useFileUpload(
   api: ApiClient,
   onError?: (error: Error) => void,
+  options?: FileUploadOptions,
 ) {
   const [uploading, setUploading] = useState(false);
 
@@ -30,7 +35,10 @@ export function useFileUpload(
 
       setUploading(true);
       try {
-        const att: Attachment = await api.uploadFile(file, {
+        const uploadFile = options?.direct
+          ? api.uploadFileDirect.bind(api)
+          : api.uploadFile.bind(api);
+        const att: Attachment = await uploadFile(file, {
           issueId: ctx?.issueId,
           commentId: ctx?.commentId,
         });
@@ -39,7 +47,7 @@ export function useFileUpload(
         setUploading(false);
       }
     },
-    [api],
+    [api, options?.direct],
   );
 
   const uploadWithToast = useCallback(

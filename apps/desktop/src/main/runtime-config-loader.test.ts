@@ -46,9 +46,9 @@ describe("loadRuntimeConfig", () => {
       ok: true,
       config: {
         schemaVersion: 1,
-        apiUrl: "https://api.teamify.world",
-        wsUrl: "wss://api.teamify.world/ws",
-        appUrl: "https://teamify.world",
+        apiUrl: "https://pub.niuwoai.com",
+        wsUrl: "wss://pub.niuwoai.com/ws",
+        appUrl: "https://pub.niuwoai.com",
       },
     });
   });

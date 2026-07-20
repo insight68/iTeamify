@@ -249,10 +249,6 @@ function useStatusLabel(status: AgentTask["status"]): string {
     case "completed": return t(($) => $.execution_log.status_completed);
     case "failed": return t(($) => $.execution_log.status_failed);
     case "cancelled": return t(($) => $.execution_log.status_cancelled);
-    // Enum drift: a server adding a new task status (e.g. "paused") on a
-    // backend newer than this installed build must degrade to a generic
-    // label, not render `undefined`. See CLAUDE.md "API Response Compatibility".
-    default: return t(($) => $.execution_log.status_unknown);
   }
 }
 

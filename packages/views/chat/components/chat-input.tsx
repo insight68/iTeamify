@@ -1,13 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useCallback, useRef, useState, lazy } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { UploadResult } from "@teamify/core/hooks/use-file-upload";
 import { cn } from "@teamify/ui/lib/utils";
-import { type ContentEditorRef } from "../../editor";
-const ContentEditor = lazy(() =>
-  import("../../editor/content-editor").then((m) => ({ default: m.ContentEditor })),
-);
+import { ContentEditor, type ContentEditorRef } from "../../editor";
 import { SubmitButton } from "@teamify/ui/components/common/submit-button";
 import { FileUploadButton } from "@teamify/ui/components/common/file-upload-button";
 import { useChatStore, DRAFT_NEW_SESSION } from "@teamify/core/chat";
@@ -182,6 +179,13 @@ export function ChatInput({
             <FileUploadButton
               size="sm"
               onSelect={(file) => editorRef.current?.uploadFile(file)}
+              onSelectFiles={(files) => {
+                for (const file of files) {
+                  editorRef.current?.uploadFile(file);
+                }
+              }}
+              multiple
+              label={t(($) => $.input.attach_file)}
               disabled={noAgent || disabled}
             />
           )}

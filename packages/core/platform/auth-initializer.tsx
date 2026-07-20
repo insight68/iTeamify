@@ -86,21 +86,6 @@ export function AuthInitializer({
       // Cookie mode: the HttpOnly cookie is sent automatically by the browser.
       // Call the API to check if the session is still valid.
       //
-      // Fast path: if the teamify_logged_in sentinel cookie is absent, there
-      // is no session to validate. Skip the API calls and go straight to the
-      // unauthenticated state. This mirrors the token-mode guard below and
-      // avoids two unnecessary 401s for every landing-page visit.
-      const hasSessionCookie =
-        typeof document !== "undefined" &&
-        document.cookie
-          .split(";")
-          .some((c) => c.trim().startsWith("teamify_logged_in="));
-
-      if (!hasSessionCookie) {
-        onAuthFailure();
-        return;
-      }
-
       // Seed the workspace list into React Query so the URL-driven layout can
       // resolve the slug without a second fetch. The active workspace itself
       // is derived from the URL by [workspaceSlug]/layout.tsx — no imperative

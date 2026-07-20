@@ -5,8 +5,10 @@ import { allPermissionsOptions } from "@teamify/core/datasources/queries";
 import { useWorkspaceId } from "@teamify/core/hooks";
 import { Badge } from "@teamify/ui/components/ui/badge";
 import { Skeleton } from "@teamify/ui/components/ui/skeleton";
+import { useT } from "../../i18n";
 
 export function PermissionMatrix() {
+  const { t } = useT("datasources");
   const wsId = useWorkspaceId();
   const { data: permissions = [], isLoading } = useQuery(allPermissionsOptions(wsId));
 
@@ -17,7 +19,7 @@ export function PermissionMatrix() {
   if (permissions.length === 0) {
     return (
       <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-        暂无权限矩阵数据
+        {t(($) => $.matrix.empty)}
       </div>
     );
   }
@@ -25,10 +27,10 @@ export function PermissionMatrix() {
   return (
     <div className="overflow-hidden rounded-md border">
       <div className="grid grid-cols-[1.1fr_1fr_1fr_auto] gap-3 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
-        <span>组织节点</span>
-        <span>数据源</span>
-        <span>数据表</span>
-        <span>权限</span>
+        <span>{t(($) => $.matrix.columns.org_unit)}</span>
+        <span>{t(($) => $.matrix.columns.data_source)}</span>
+        <span>{t(($) => $.matrix.columns.data_table)}</span>
+        <span>{t(($) => $.matrix.columns.permission)}</span>
       </div>
       <div className="divide-y">
         {permissions.map((permission) => (

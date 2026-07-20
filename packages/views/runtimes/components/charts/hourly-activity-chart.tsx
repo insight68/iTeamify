@@ -12,6 +12,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@teamify/ui/components/ui/chart";
+import { formatCny } from "../../utils";
 
 // Hour-of-day cost. The "WHEN" tab in the runtime detail uses this to show
 // "during what hours of the day did this runtime spend money", which is
@@ -24,19 +25,21 @@ const hourlyChartConfig = {
 export interface HourlyCostPoint {
   hour: number;
   cost: number;
+  estimated: boolean;
 }
 
 export function HourlyActivityChart({ data }: { data: HourlyCostPoint[] }) {
   // Always render 24 buckets so the X axis is continuous. The parent passes
   // pre-aggregated server data which may omit hours with zero activity;
-  // we fill those in with $0 here so visual gaps are intentional ("nothing
+  // we fill those in with ¥0 here so visual gaps are intentional ("nothing
   // ran at 03:00") rather than missing data.
   const chartData = useMemo(() => {
-    const map = new Map(data.map((d) => [d.hour, d.cost]));
+    const map = new Map(data.map((d) => [d.hour, d]));
     return Array.from({ length: 24 }, (_, i) => ({
       hour: i,
       label: `${i.toString().padStart(2, "0")}:00`,
-      cost: map.get(i) ?? 0,
+      cost: map.get(i)?.cost ?? 0,
+      estimated: map.get(i)?.estimated ?? false,
     }));
   }, [data]);
 
@@ -56,15 +59,17 @@ export function HourlyActivityChart({ data }: { data: HourlyCostPoint[] }) {
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={(v: number) => `$${v}`}
-          width={40}
+          tickFormatter={(v: number) => formatCny(v)}
+          width={72}
         />
         <ChartTooltip
           content={
             <ChartTooltipContent
-              formatter={(value) =>
+              formatter={(value, _name, item) =>
                 typeof value === "number"
-                  ? `$${value.toFixed(2)}`
+                  ? formatCny(value, {
+                      estimated: item.payload?.estimated === true,
+                    })
                   : String(value)
               }
             />

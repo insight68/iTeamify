@@ -11,7 +11,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@teamify/ui/components/ui/chart";
-import type { DailyCostStackData } from "../../utils";
+import { formatCny, type DailyCostStackData } from "../../utils";
 
 // Three-segment stack (input / output / cache write) — keeps the user's
 // attention on what's actually driving spend. Cache reads are excluded
@@ -47,15 +47,17 @@ export function DailyCostChart({ data }: { data: DailyCostStackData[] }) {
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={(v: number) => `$${v}`}
-          width={50}
+          tickFormatter={(v: number) => formatCny(v)}
+          width={72}
         />
         <ChartTooltip
           content={
             <ChartTooltipContent
-              formatter={(value, name) =>
+              formatter={(value, name, item) =>
                 typeof value === "number"
-                  ? `$${value.toFixed(2)} ${name}`
+                  ? `${formatCny(value, {
+                      estimated: item.payload?.estimated === true,
+                    })} ${name}`
                   : `${value} ${name}`
               }
             />

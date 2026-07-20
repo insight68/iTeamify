@@ -1,6 +1,5 @@
 "use client";
 
-import { memo } from "react";
 import { StatusIcon } from "../../issues/components";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { Archive } from "lucide-react";
@@ -26,25 +25,24 @@ export function useTimeAgo() {
   };
 }
 
-export const InboxListItem = memo(function InboxListItem({
+export function InboxListItem({
   item,
   isSelected,
-  onSelect,
+  onClick,
   onArchive,
 }: {
   item: InboxItem;
   isSelected: boolean;
-  onSelect: (itemId: string) => void;
-  onArchive: (itemId: string) => void;
+  onClick: () => void;
+  onArchive: () => void;
 }) {
   const { t } = useT("inbox");
   const timeAgo = useTimeAgo();
   const displayTitle = getInboxDisplayTitle(item);
-  const itemId = item.issue_id ?? item.id;
 
   return (
     <button
-      onClick={() => onSelect(itemId)}
+      onClick={onClick}
       className={`group flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
         isSelected ? "bg-accent" : "hover:bg-accent/50"
       }`}
@@ -74,12 +72,12 @@ export const InboxListItem = memo(function InboxListItem({
               title={t(($) => $.list.archive_tooltip)}
               onClick={(e) => {
                 e.stopPropagation();
-                onArchive(item.id);
+                onArchive();
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.stopPropagation();
-                  onArchive(item.id);
+                  onArchive();
                 }
               }}
               className="hidden rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground group-hover:inline-flex"
@@ -102,4 +100,4 @@ export const InboxListItem = memo(function InboxListItem({
       </div>
     </button>
   );
-});
+}

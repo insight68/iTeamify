@@ -6,7 +6,7 @@ import { Card, CardContent } from "@teamify/ui/components/ui/card";
 import { useT } from "../../i18n";
 
 const INSTALL_CMD =
-  "curl -fsSL https://raw.githubusercontent.com/teamify-ai/teamify/main/scripts/install.sh | bash";
+  "curl -fsSL https://raw.githubusercontent.com/Insight86/Teamify/main/scripts/install.sh | bash";
 const SETUP_CMD = "teamify setup";
 
 function CopyButton({ text }: { text: string }) {

@@ -84,6 +84,8 @@ export function LandingFooter() {
                 src="/logo.png"
                 alt="Teamify"
                 className="h-7 w-7 rounded-md"
+                loading="lazy"
+                decoding="async"
               />
               <span>iTeamify</span>
             </div>

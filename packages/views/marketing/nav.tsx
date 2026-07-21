@@ -1,17 +1,17 @@
 "use client";
 
 import { Button } from "@teamify/ui/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@teamify/ui/components/ui/sheet";
 import { Menu } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useT } from "../i18n";
 import { AppLink, useNavigation } from "../navigation";
+
+// The mobile menu (base-ui Sheet/dialog) is only ever opened on touch
+// devices. Lazy-loading it keeps the dialog implementation out of the
+// initial nav chunk that every visitor — desktop or mobile — downloads.
+const MobileMenu = lazy(() =>
+  import("./mobile-menu").then((m) => ({ default: m.MobileMenu })),
+);
 
 /**
  * Sticky top nav for the operating-agent landing page.
@@ -55,6 +55,7 @@ export function LandingNav() {
             alt=""
             aria-hidden
             className="h-7 w-7 rounded-md"
+            decoding="async"
           />
           <span>iTeamify</span>
         </AppLink>
@@ -102,36 +103,15 @@ export function LandingNav() {
           </Button>
         </div>
       </div>
-      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="right" className="w-[min(20rem,85vw)] gap-0 p-0">
-          <SheetHeader className="border-b border-border px-5 py-5">
-            <SheetTitle>iTeamify</SheetTitle>
-            <SheetDescription className="sr-only">
-              {t(($) => $.nav.primary_navigation)}
-            </SheetDescription>
-          </SheetHeader>
-          <nav
-            aria-label={t(($) => $.nav.primary_navigation)}
-            className="flex flex-col px-3 py-4"
-          >
-            {navItems.map((item) => (
-              <AppLink
-                key={item.href}
-                href={item.href}
-                aria-current={item.active ? "page" : undefined}
-                className={
-                  item.active
-                    ? "rounded-md bg-muted px-3 py-3 text-sm font-medium text-foreground"
-                    : "rounded-md px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                }
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {item.label}
-              </AppLink>
-            ))}
-          </nav>
-        </SheetContent>
-      </Sheet>
+      {mobileMenuOpen && (
+        <Suspense fallback={null}>
+          <MobileMenu
+            open={mobileMenuOpen}
+            onOpenChange={setMobileMenuOpen}
+            items={navItems}
+          />
+        </Suspense>
+      )}
     </header>
   );
 }

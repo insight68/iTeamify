@@ -6,6 +6,10 @@
 // preference. `h-svh` creates a fixed-viewport-height scroll container
 // within body's `overflow-hidden` boundary — same pattern as the
 // dashboard layout.
+//
+// The <link rel="preload"> lets the browser discover the hero LCP image
+// before the client bundle parses, shaving time off LCP. fetchPriority=high
+// races it ahead of other eager resources.
 export default function LandingLayout({
   children,
 }: {
@@ -13,6 +17,12 @@ export default function LandingLayout({
 }) {
   return (
     <div className="landing-light-tech h-svh overflow-y-auto bg-background text-foreground">
+      <link
+        rel="preload"
+        as="image"
+        href="/marketing/hero-inventory-dashboard.webp"
+        fetchPriority="high"
+      />
       {children}
     </div>
   );

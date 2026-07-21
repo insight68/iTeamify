@@ -1,14 +1,8 @@
-"use client"
+import { redirect } from "next/navigation"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-
+// Server-side redirect: avoids a client-side round-trip (no "use client" JS
+// download + hydration + router.replace). Next.js issues a 302 to the demo
+// workflow before any client JS is shipped.
 export default function Page() {
-  const router = useRouter()
-
-  useEffect(() => {
-    router.replace("/source-ai/demo-procurement")
-  }, [router])
-
-  return null
+  redirect("/source-ai/demo-procurement")
 }

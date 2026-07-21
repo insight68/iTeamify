@@ -76,6 +76,11 @@ function HeroVisual() {
         alt={t(($) => $.hero.visual.alt)}
         className="block w-full object-contain"
         loading="eager"
+        // fetchPriority=high tells the browser to start fetching the LCP image
+        // immediately (ahead of other eager assets). decoding=async keeps the
+        // main thread free during image decode. width/height prevent CLS.
+        fetchPriority="high"
+        decoding="async"
         width={770}
         height={854}
       />

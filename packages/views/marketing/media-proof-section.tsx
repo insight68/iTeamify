@@ -69,6 +69,7 @@ export function MediaProofSection() {
                 alt={t(($) => $.media.procurement.image_alt)}
                 className="aspect-[16/10] w-full rounded-md border border-border/70 bg-background object-contain"
                 loading="lazy"
+                decoding="async"
                 width={3236}
                 height={2160}
               />

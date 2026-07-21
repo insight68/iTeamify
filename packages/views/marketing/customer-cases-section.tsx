@@ -66,6 +66,7 @@ export function CustomerCasesSection() {
                   alt={t(($) => $.customers.items[key].image_alt)}
                   className="aspect-[16/7] w-full bg-muted object-cover object-top"
                   loading="lazy"
+                  decoding="async"
                   width={image.width}
                   height={image.height}
                 />

@@ -100,7 +100,16 @@ async function exists(p) {
   }
 }
 
-if (hasGo()) {
+// Frontend-only checkout: server/ has no Go source (no go.mod, no cmd/teamify).
+// The Go backend lives in a separate repo. In that case skip the build and
+// fall through to the runtime auto-install fallback below — same as when go
+// itself is missing. A genuine Go compile error (go.mod present but build
+// fails) is still fatal.
+async function hasGoSource() {
+  return exists(join(serverDir, "go.mod"));
+}
+
+if (hasGo() && (await hasGoSource())) {
   const version = sh("git describe --tags --always --dirty") || "dev";
   const commit = sh("git rev-parse --short HEAD") || "unknown";
   const date = new Date().toISOString().replace(/\.\d+Z$/, "Z");
@@ -131,9 +140,16 @@ if (hasGo()) {
       },
     },
   );
-} else {
+} else if (!hasGo()) {
   console.warn(
     "[bundle-cli] `go` not found in PATH — skipping CLI build. " +
+      "Desktop will use whatever is already in resources/bin/, or fall back " +
+      "to auto-installing the latest release at runtime.",
+  );
+} else {
+  console.warn(
+    `[bundle-cli] ${serverDir} has no go.mod — skipping CLI build ` +
+      "(frontend-only checkout, Go backend lives elsewhere). " +
       "Desktop will use whatever is already in resources/bin/, or fall back " +
       "to auto-installing the latest release at runtime.",
   );

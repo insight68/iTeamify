@@ -34,7 +34,7 @@ describe("LandingNav", () => {
 
     for (const [name, href] of [
       ["Home", "/"],
-      ["Reconciliation assistant", "/duizhang"],
+      ["Reconciliation assistant", "/recon-ai"],
       ["Pricing", "/#pricing"],
       ["FAQ", "/#faq"],
     ] as const) {
@@ -59,7 +59,7 @@ describe("LandingNav", () => {
     );
     expect(
       within(menu).getByRole("link", { name: "Reconciliation assistant" }),
-    ).toHaveAttribute("href", "/duizhang");
+    ).toHaveAttribute("href", "/recon-ai");
   });
 
   it("uses the approved Chinese navigation labels", () => {
@@ -68,7 +68,7 @@ describe("LandingNav", () => {
     expect(screen.getByRole("link", { name: "首页" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "对账助理" })).toHaveAttribute(
       "href",
-      "/duizhang",
+      "/recon-ai",
     );
   });
 });

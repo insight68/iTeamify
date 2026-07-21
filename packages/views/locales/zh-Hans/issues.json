@@ -83,7 +83,8 @@
     "hide_column": "隐藏列",
     "show_column": "显示列",
     "add_issue_tooltip": "新建事项",
-    "empty_column": "无事项"
+    "empty_column": "无事项",
+    "show_more": "再显示 {{count}} 条"
   },
   "detail": {
     "not_found": "这个事项不存在或已在该工作区被删除。",
@@ -222,7 +223,8 @@
     "status_running": "处理中",
     "status_completed": "已完成",
     "status_failed": "失败",
-    "status_cancelled": "已取消"
+    "status_cancelled": "已取消",
+    "status_unknown": "未知状态"
   },
   "batch": {
     "selected": "已选择 {{count}} 个",

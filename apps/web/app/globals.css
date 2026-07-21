@@ -54,3 +54,116 @@
     --scrollbar-thumb-hover: oklch(0 0 0 / 18%);
     --scrollbar-track: transparent;
 }
+
+
+/* Deep Space landing theme — dark mode with electric cyan brand + amber gold
+ * CTA. Overrides all semantic tokens so the entire landing surface renders
+ * with deep-space blacks, blue-shifted grays, and sharp cyan/amber accents,
+ * regardless of the user's system preference or the .dark class. */
+.landing-deep-space,
+.landing-deep-space * {
+    color-scheme: dark;
+}
+.landing-deep-space {
+    /* Core backgrounds */
+    --background: oklch(0.13 0.02 255);           /* Deep space black */
+    --foreground: oklch(0.92 0.01 255);           /* Cold white */
+
+    /* Card / surface layers */
+    --card: oklch(0.18 0.03 255);                 /* Deep blue-gray */
+    --card-foreground: oklch(0.92 0.01 255);
+    --popover: oklch(0.16 0.03 255);
+    --popover-foreground: oklch(0.92 0.01 255);
+
+    /* Primary action — amber gold for CTAs */
+    --primary: oklch(0.75 0.16 75);               /* Amber gold */
+    --primary-foreground: oklch(0.13 0.02 255);   /* Deep space black */
+
+    /* Muted / secondary surfaces */
+    --secondary: oklch(0.25 0.03 255);
+    --secondary-foreground: oklch(0.92 0.01 255);
+    --muted: oklch(0.22 0.03 255);
+    --muted-foreground: oklch(0.65 0.02 255);
+    --accent: oklch(0.25 0.03 255);
+    --accent-foreground: oklch(0.92 0.01 255);
+
+    /* Brand — electric cyan */
+    --brand: oklch(0.75 0.15 195);                /* Electric cyan */
+    --brand-foreground: oklch(0.13 0.02 255);     /* Deep space black */
+
+    /* Semantic colors */
+    --destructive: oklch(0.65 0.20 25);
+    --success: oklch(0.65 0.15 145);
+    --warning: oklch(0.75 0.16 75);               /* Matches primary */
+    --info: oklch(0.75 0.15 195);                 /* Matches brand */
+
+    /* Borders / inputs / focus */
+    --border: oklch(0.30 0.03 255);
+    --input: oklch(0.30 0.03 255);
+    --ring: oklch(0.75 0.15 195);                 /* Cyan focus ring */
+
+    /* Scrollbar */
+    --scrollbar-thumb: oklch(1 0 0 / 15%);
+    --scrollbar-thumb-hover: oklch(1 0 0 / 25%);
+    --scrollbar-track: transparent;
+
+    /* Sidebar (if ever rendered in landing context) */
+    --sidebar: oklch(0.16 0.03 255);
+    --sidebar-foreground: oklch(0.92 0.01 255);
+    --sidebar-primary: oklch(0.75 0.15 195);
+    --sidebar-primary-foreground: oklch(0.13 0.02 255);
+    --sidebar-accent: oklch(0.25 0.03 255);
+    --sidebar-accent-foreground: oklch(0.92 0.01 255);
+    --sidebar-border: oklch(0.30 0.03 255);
+    --sidebar-ring: oklch(0.75 0.15 195);
+
+    /* Chart — cyan gradient */
+    --chart-1: oklch(0.75 0.15 195);
+    --chart-2: oklch(0.65 0.12 195);
+    --chart-3: oklch(0.55 0.10 195);
+    --chart-4: oklch(0.45 0.06 195);
+    --chart-5: oklch(0.35 0.03 195);
+}
+
+/* Light Tech landing theme — near-white backgrounds with cool blue undertones,
+ * vibrant blue-purple brand, and clean card surfaces. Gives a futuristic,
+ * polished feel while staying readable and bright. */
+.landing-light-tech,
+.landing-light-tech * {
+    color-scheme: light;
+}
+.landing-light-tech {
+    --background: oklch(0.985 0.002 260);         /* Near-white, cool blue */
+    --foreground: oklch(0.15 0.02 260);           /* Deep navy */
+
+    --card: oklch(1 0 0);                         /* Pure white */
+    --card-foreground: oklch(0.15 0.02 260);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.15 0.02 260);
+
+    --primary: oklch(0.55 0.2 260);               /* Vibrant blue-purple */
+    --primary-foreground: oklch(1 0 0);           /* White on CTA */
+
+    --secondary: oklch(0.95 0.01 260);
+    --secondary-foreground: oklch(0.15 0.02 260);
+    --muted: oklch(0.96 0.005 260);               /* Light gray bg */
+    --muted-foreground: oklch(0.50 0.02 260);     /* Medium gray text */
+    --accent: oklch(0.93 0.02 260);
+    --accent-foreground: oklch(0.15 0.02 260);
+
+    --brand: oklch(0.64 0.15 195);                 /* Teal brand for suanpan */
+    --brand-foreground: oklch(1 0 0);
+
+    --destructive: oklch(0.58 0.22 25);
+    --success: oklch(0.55 0.16 145);
+    --warning: oklch(0.75 0.16 75);
+    --info: oklch(0.55 0.18 250);
+
+    --border: oklch(0.91 0.01 260);               /* Subtle blue-gray */
+    --input: oklch(0.91 0.01 260);
+    --ring: oklch(0.55 0.2 260);
+
+    --scrollbar-thumb: oklch(0 0 0 / 10%);
+    --scrollbar-thumb-hover: oklch(0 0 0 / 18%);
+    --scrollbar-track: transparent;
+}

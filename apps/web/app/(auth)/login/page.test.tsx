@@ -83,11 +83,19 @@ vi.mock("@/features/auth/auth-cookie", () => ({
 vi.mock("@teamify/core/api", () => ({
   api: {
     listWorkspaces: vi.fn().mockResolvedValue([]),
+    listMyInvitations: vi.fn().mockResolvedValue([]),
     verifyCode: vi.fn(),
     setToken: vi.fn(),
     getMe: vi.fn(),
     issueCliToken: mockIssueCliToken,
   },
+}));
+
+// AuthEntryPage wraps the form in LandingNav + LandingFooter; stub them so the
+// form-level assertions stay focused and don't need the marketing namespace.
+vi.mock("@teamify/views/marketing", () => ({
+  LandingNav: () => null,
+  LandingFooter: () => null,
 }));
 
 import LoginPage from "./page";

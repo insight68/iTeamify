@@ -7,7 +7,7 @@ const TAG_KEYS = ["tag_1", "tag_2", "tag_3"] as const;
 
 const CASE_IMAGES = {
   commerce: {
-    src: "/marketing/订单对账.webp",
+    src: "/marketing/procurement-assistant-workbench.jpg",
     width: 3236,
     height: 2160,
   },

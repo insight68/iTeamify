@@ -2,6 +2,7 @@
 
 import type { ComponentType } from "react";
 import {
+  ArrowRight,
   BarChart3,
   ClipboardCheck,
   LineChart,
@@ -11,6 +12,7 @@ import {
   Warehouse,
 } from "lucide-react";
 import { useT } from "../i18n";
+import { AppLink } from "../navigation";
 
 const AGENT_KEYS = [
   "reconciliation",
@@ -29,6 +31,13 @@ const AGENT_ICONS = {
   analytics: BarChart3,
   compliance: ShieldCheck,
 } satisfies Record<(typeof AGENT_KEYS)[number], ComponentType<{ className?: string }>>;
+
+// Agents with a dedicated product page. Clicking the card navigates there;
+// the rest stay as static cards.
+const AGENT_HREFS: Partial<Record<(typeof AGENT_KEYS)[number], string>> = {
+  reconciliation: "/recon-ai",
+  procurement: "/source-ai",
+};
 
 export function FeatureCards() {
   const { t } = useT("marketing");
@@ -58,18 +67,26 @@ export function FeatureCards() {
         <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {AGENT_KEYS.map((key, index) => {
             const Icon = AGENT_ICONS[key];
-            return (
-              <article
-                key={key}
-                className="flex min-h-[320px] flex-col rounded-lg border border-border/70 bg-card p-6 transition-colors duration-200 hover:border-brand/40"
-              >
+            const href = AGENT_HREFS[key];
+            const cardClassName =
+              "group flex min-h-[320px] flex-col rounded-lg border border-border/70 bg-card p-6 transition-colors duration-200 hover:border-brand/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+            const body = (
+              <>
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-mono text-xs font-medium text-muted-foreground">
                     0{index + 1}
                   </span>
-                  <span className="flex size-11 items-center justify-center rounded-lg border border-border/70 bg-background text-brand">
-                    <Icon className="size-5" aria-hidden />
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {href && (
+                      <ArrowRight
+                        className="size-4 text-brand/70 transition-transform group-hover:translate-x-0.5"
+                        aria-hidden
+                      />
+                    )}
+                    <span className="flex size-11 items-center justify-center rounded-lg border border-border/70 bg-background text-brand">
+                      <Icon className="size-5" aria-hidden />
+                    </span>
+                  </div>
                 </div>
                 <h3 className="mt-6 font-heading text-xl font-semibold leading-snug text-foreground">
                   {t(($) => $.features.items[key].title)}
@@ -88,6 +105,23 @@ export function FeatureCards() {
                   />
                   <AgentDecision value={t(($) => $.features.items[key].human)} />
                 </div>
+              </>
+            );
+            if (href) {
+              return (
+                <AppLink
+                  key={key}
+                  href={href}
+                  className={cardClassName}
+                  aria-label={t(($) => $.features.items[key].title)}
+                >
+                  {body}
+                </AppLink>
+              );
+            }
+            return (
+              <article key={key} className={cardClassName}>
+                {body}
               </article>
             );
           })}

@@ -64,6 +64,7 @@
     "@floating-ui/dom": "^1.7.6",
     "@teamify/core": "workspace:*",
     "@teamify/ui": "workspace:*",
+    "@tanstack/react-virtual": "catalog:",
     "@tiptap/core": "^3.22.1",
     "@tiptap/extension-code-block-lowlight": "^3.22.1",
     "@tiptap/extension-document": "^3.22.1",
@@ -97,7 +98,8 @@
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "remark-math": "catalog:",
-    "sonner": "^2.0.7"
+    "sonner": "^2.0.7",
+    "xlsx": "catalog:"
   },
   "peerDependencies": {
     "@tanstack/react-query": "catalog:",

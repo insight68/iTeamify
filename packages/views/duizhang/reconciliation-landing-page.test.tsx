@@ -18,7 +18,7 @@ vi.mock("../navigation", () => ({
     push: vi.fn(),
     replace: vi.fn(),
     back: vi.fn(),
-    pathname: "/duizhang",
+    pathname: "/recon-ai",
     searchParams: new URLSearchParams(),
     getShareableUrl: (path: string) => path,
   }),
@@ -41,7 +41,7 @@ describe("ReconciliationLandingPage", () => {
     );
     expect(
       screen.getByRole("link", { name: "Reconciliation assistant" }),
-    ).toHaveAttribute("href", "/duizhang");
+    ).toHaveAttribute("href", "/recon-ai");
 
     const features = await screen.findByRole("region", {
       name: /4 core capabilities/i,

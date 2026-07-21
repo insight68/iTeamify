@@ -232,7 +232,7 @@ function AuthEntryPageContent({ intent }: { intent: AuthEntryIntent }) {
       <LoginPage
         fullPage={false}
         intent={intent}
-        defaultMode={isSignup ? "code" : "password"}
+        defaultMode="code"
         defaultCodeChannel={isSignup ? "email" : undefined}
         codeChannels={isSignup ? ["email"] : undefined}
         allowPasswordMode={!isSignup}

@@ -1,4 +1,10 @@
 import "@testing-library/jest-dom/vitest";
+import { configure } from "@testing-library/react";
+
+// Lazy-loaded landing-page sections (Suspense + React.lazy) can take longer
+// than the default 1000ms to resolve when the full suite runs in parallel.
+// Raise the async query timeout so findByRole/findByText don't flake under load.
+configure({ asyncUtilTimeout: 5000 });
 
 function createMemoryStorage(): Storage {
   const values = new Map<string, string>();

@@ -27,9 +27,9 @@ export function LandingNav() {
       active: pathname === "/",
     },
     {
-      href: "/duizhang",
+      href: "/recon-ai",
       label: t(($) => $.nav.reconciliation),
-      active: pathname === "/duizhang",
+      active: pathname === "/recon-ai",
     },
     {
       href: "/#pricing",

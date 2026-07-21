@@ -25,6 +25,9 @@ import enDatasources from "./en/datasources.json";
 import enInventory from "./en/inventory.json";
 import enProductCategories from "./en/product-categories.json";
 import enSupplyReconciliation from "./en/supply-reconciliation.json";
+import enMarketing from "./en/marketing.json";
+import enDuizhang from "./en/duizhang.json";
+import enWorkflows from "./en/workflows.json";
 import zhHansCommon from "./zh-Hans/common.json";
 import zhHansAuth from "./zh-Hans/auth.json";
 import zhHansSettings from "./zh-Hans/settings.json";
@@ -51,6 +54,9 @@ import zhHansDatasources from "./zh-Hans/datasources.json";
 import zhHansInventory from "./zh-Hans/inventory.json";
 import zhHansProductCategories from "./zh-Hans/product-categories.json";
 import zhHansSupplyReconciliation from "./zh-Hans/supply-reconciliation.json";
+import zhHansMarketing from "./zh-Hans/marketing.json";
+import zhHansDuizhang from "./zh-Hans/duizhang.json";
+import zhHansWorkflows from "./zh-Hans/workflows.json";
 
 // Single source of truth for the resource bundle. Both apps (web layout +
 // desktop App.tsx) import from here so adding a locale or namespace happens
@@ -83,6 +89,9 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     inventory: enInventory,
     "product-categories": enProductCategories,
     "supply-reconciliation": enSupplyReconciliation,
+    marketing: enMarketing,
+    duizhang: enDuizhang,
+    workflows: enWorkflows,
   },
   "zh-Hans": {
     common: zhHansCommon,
@@ -111,5 +120,8 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     inventory: zhHansInventory,
     "product-categories": zhHansProductCategories,
     "supply-reconciliation": zhHansSupplyReconciliation,
+    marketing: zhHansMarketing,
+    duizhang: zhHansDuizhang,
+    workflows: zhHansWorkflows,
   },
 };

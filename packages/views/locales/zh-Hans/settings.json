@@ -81,7 +81,9 @@
     "password_error_change_failed": "修改密码失败",
     "password_error_code_required": "请输入验证码",
     "toast_password_set": "密码设置成功",
-    "toast_password_changed": "密码修改成功"
+    "toast_password_changed": "密码修改成功",
+    "phone_label": "手机号",
+    "phone_not_set": "未设置"
   },
   "notifications": {
     "title": "收件箱通知",
@@ -162,7 +164,7 @@
     "slug_label": "Slug",
     "save": "保存",
     "saving": "保存中...",
-    "manage_hint": "只有工作区所有者可以修改工作区设置。",
+    "manage_hint": "只有管理员和所有者可以修改工作区设置。",
     "issues_nav_title": "事项",
     "issues_nav_description": "在左侧工作区导航中显示共享事项面板。",
     "projects_nav_title": "项目",
@@ -230,9 +232,9 @@
     "invite_title": "邀请成员",
     "invite_method_email": "邮箱",
     "invite_method_phone": "手机号",
-    "invite_email_placeholder": "name@example.com",
+    "invite_email_placeholder": "user@company.com",
     "invite_phone_placeholder": "+86 138 0000 0000",
-    "invite_phone_notify_hint": "手机号邀请不会自动发送邀请短信。请管理员通过微信、电话或其它方式通知用户：用该手机号登录后即可看到待处理邀请。",
+    "invite_phone_notify_hint": "手机号邀请不会自动发送邀请短信。请通过微信、电话或其它方式通知用户：用该手机号登录后即可看到待处理邀请。",
     "invite_button": "邀请",
     "inviting": "邀请中...",
     "toast_invitation_sent": "已发送邀请",

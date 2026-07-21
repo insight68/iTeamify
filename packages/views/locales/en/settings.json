@@ -84,7 +84,9 @@
     "password_error_change_failed": "Failed to change password",
     "password_error_code_required": "Verification code is required",
     "toast_password_set": "Password set successfully",
-    "toast_password_changed": "Password changed successfully"
+    "toast_password_changed": "Password changed successfully",
+    "phone_label": "Phone",
+    "phone_not_set": "Not set"
   },
   "notifications": {
     "title": "Inbox Notifications",
@@ -165,7 +167,7 @@
     "slug_label": "Slug",
     "save": "Save",
     "saving": "Saving...",
-    "manage_hint": "Only workspace owners can update workspace settings.",
+    "manage_hint": "Only admins and owners can update workspace settings.",
     "issues_nav_title": "Issues",
     "issues_nav_description": "Show the shared issue board in the left workspace navigation.",
     "projects_nav_title": "Projects",
@@ -233,9 +235,9 @@
     "invite_title": "Invite member",
     "invite_method_email": "Email",
     "invite_method_phone": "Phone",
-    "invite_email_placeholder": "name@example.com",
-    "invite_phone_placeholder": "+1 555 010 1234",
-    "invite_phone_notify_hint": "Phone invitations do not send an invite SMS automatically. Ask an admin to notify the user by chat, phone, or another channel; they can log in with that phone number to see the pending invitation.",
+    "invite_email_placeholder": "user@company.com",
+    "invite_phone_placeholder": "+86 138 0000 0000",
+    "invite_phone_notify_hint": "Phone invitations do not send an invite SMS automatically. Notify the user by chat, phone, or another channel; they can log in with that phone number to see the pending invitation.",
     "invite_button": "Invite",
     "inviting": "Inviting...",
     "toast_invitation_sent": "Invitation sent",

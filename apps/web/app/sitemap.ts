@@ -10,5 +10,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1.0,
     },
+    {
+      url: `${baseUrl}/careers`,
+      lastModified: new Date("2026-07-10"),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/recon-ai`,
+      lastModified: new Date("2026-07-11"),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
   ];
 }

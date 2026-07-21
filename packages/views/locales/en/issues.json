@@ -84,7 +84,8 @@
     "hide_column": "Hide column",
     "show_column": "Show column",
     "add_issue_tooltip": "Add issue",
-    "empty_column": "No issues"
+    "empty_column": "No issues",
+    "show_more": "Show {{count}} more"
   },
   "detail": {
     "not_found": "This issue does not exist or has been deleted in this workspace.",
@@ -227,7 +228,8 @@
     "status_running": "Working",
     "status_completed": "Completed",
     "status_failed": "Failed",
-    "status_cancelled": "Cancelled"
+    "status_cancelled": "Cancelled",
+    "status_unknown": "Unknown status"
   },
   "batch": {
     "selected": "{{count}} selected",

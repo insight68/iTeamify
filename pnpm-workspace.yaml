@@ -4,7 +4,14 @@ packages:
 
 updateNotifier: false
 shamefullyHoist: true
-pmOnFail: error
+# `error` turns any pnpm version drift into a fatal `ERR_PNPM_BAD_PM_VERSION`,
+# and Vercel's build image ships its own pnpm (12.2.1) instead of the version in
+# package.json#packageManager unless Corepack is explicitly enabled. Verified
+# against 12.2.1: it recognises every setting in this file (no "not recognized"
+# warnings), so a drift here is harmless — keep it visible as a warning rather
+# than a failed deploy. Exact-version builds are still available by enabling
+# Corepack on the platform (`ENABLE_EXPERIMENTAL_COREPACK=1`).
+pmOnFail: warn
 verifyDepsBeforeRun: error
 strictDepBuilds: true
 

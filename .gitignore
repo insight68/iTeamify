@@ -23,3 +23,9 @@ server/server
 
 # runtime uploaded files (user data, never commit)
 server/data/uploads/
+
+# AI/agent session artifacts (generated locally, never commit)
+/output/
+/outputs/
+/tasks/
+/test-results/

@@ -1,1 +1,0 @@
-We return to the existing connection. Gmail sending is not implemented in this build, and no message was sent. This video demonstrates the current connection workflow. It is not a completed Gmail send verification demonstration.

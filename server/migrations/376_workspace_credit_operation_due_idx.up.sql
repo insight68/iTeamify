@@ -1,0 +1,1 @@
+CREATE INDEX CONCURRENTLY workspace_credit_operation_due_idx ON public.workspace_credit_operation_outbox USING btree (next_attempt_at, created_at, id) WHERE (status = ANY (ARRAY['pending'::text, 'processing'::text]));

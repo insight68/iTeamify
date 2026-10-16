@@ -20,3 +20,6 @@ dist
 .next-*/
 server/bin/
 server/server
+
+# runtime uploaded files (user data, never commit)
+server/data/uploads/

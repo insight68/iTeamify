@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY project_workflow_project_uidx;

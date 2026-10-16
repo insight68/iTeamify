@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY lark_chat_session_binding_installation_id_lark_chat_id_key ON public.lark_chat_session_binding USING btree (installation_id, lark_chat_id);

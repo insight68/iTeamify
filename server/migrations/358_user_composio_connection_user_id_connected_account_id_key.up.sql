@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY user_composio_connection_user_id_connected_account_id_key ON public.user_composio_connection USING btree (user_id, connected_account_id);

@@ -1,0 +1,1 @@
+CREATE INDEX CONCURRENTLY user_gmail_connection_watch_renewal_idx ON public.user_gmail_connection USING btree (watch_expiration NULLS FIRST) WHERE ((status = ANY (ARRAY['active'::text, 'attention'::text])) AND (COALESCE(last_error_code, ''::text) <> ALL (ARRAY['gmail_auth_expired'::text, 'gmail_permission_denied'::text])));

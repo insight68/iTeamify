@@ -1,0 +1,1 @@
+CREATE INDEX CONCURRENTLY idx_chat_direct_creator ON public.chat_session USING btree (workspace_id, creator_id, peer_user_id, COALESCE(direct_last_message_at, created_at) DESC, id DESC) WHERE (kind = 'direct'::text);

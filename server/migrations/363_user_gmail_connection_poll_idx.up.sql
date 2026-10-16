@@ -1,0 +1,1 @@
+CREATE INDEX CONCURRENTLY user_gmail_connection_poll_idx ON public.user_gmail_connection USING btree (last_sync_at NULLS FIRST) WHERE ((status = ANY (ARRAY['active'::text, 'attention'::text])) AND (COALESCE(last_error_code, ''::text) <> ALL (ARRAY['gmail_auth_expired'::text, 'gmail_permission_denied'::text])));

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY workspace_credit_operation_key_uidx ON public.workspace_credit_operation_outbox USING btree (operation_key);

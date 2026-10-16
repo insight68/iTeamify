@@ -1,0 +1,1 @@
+CREATE INDEX CONCURRENTLY gmail_message_analysis_claim_idx ON public.gmail_message USING btree (analysis_available_at, internal_date) WHERE (analysis_status = ANY (ARRAY['pending'::text, 'processing'::text, 'failed'::text]));

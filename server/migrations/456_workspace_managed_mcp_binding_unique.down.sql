@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS workspace_managed_mcp_binding_unique;

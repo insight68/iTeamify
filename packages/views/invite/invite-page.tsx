@@ -1,25 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@teamify/core/api";
-import { useAuthStore } from "@teamify/core/auth";
+import { api } from "@iteamify/core/api";
+import { useAuthStore } from "@iteamify/core/auth";
 import {
   workspaceKeys,
   workspaceListOptions,
-} from "@teamify/core/workspace/queries";
+} from "@iteamify/core/workspace/queries";
 import {
   paths,
   resolvePostAuthDestination,
   useHasOnboarded,
-} from "@teamify/core/paths";
+} from "@iteamify/core/paths";
 import { useNavigation } from "../navigation";
+import { useLogout } from "../auth";
+import { DragStrip } from "../platform";
 import { useT } from "../i18n";
-import { InviteShell } from "./invite-shell";
-import { Button } from "@teamify/ui/components/ui/button";
-import { Card, CardContent } from "@teamify/ui/components/ui/card";
-import { Skeleton } from "@teamify/ui/components/ui/skeleton";
-import { Users, Check, X } from "lucide-react";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { Card, CardContent } from "@iteamify/ui/components/ui/card";
+import { Skeleton } from "@iteamify/ui/components/ui/skeleton";
+import { ArrowLeft, LogOut, Users, Check, X } from "lucide-react";
 
 export interface InvitePageProps {
   invitationId: string;
@@ -241,5 +242,49 @@ export function InvitePage({ invitationId, onBack }: InvitePageProps) {
         </CardContent>
       </Card>
     </InviteShell>
+  );
+}
+
+/**
+ * Shared chrome for every InvitePage render state (loading, error,
+ * default, accepted, declined). Keeps Back + Log out buttons in a
+ * consistent position across all branches and across platforms.
+ */
+function InviteShell({
+  onBack,
+  children,
+}: {
+  onBack?: () => void;
+  children: ReactNode;
+}) {
+  const { t } = useT("invite");
+  const logout = useLogout();
+  return (
+    <div className="relative flex min-h-svh flex-col bg-background">
+      <DragStrip />
+      {onBack && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute top-16 left-12 text-muted-foreground"
+          onClick={onBack}
+        >
+          <ArrowLeft />
+          {t(($) => $.header.back)}
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="absolute top-16 right-12 text-muted-foreground hover:text-destructive"
+        onClick={logout}
+      >
+        <LogOut />
+        {t(($) => $.header.log_out)}
+      </Button>
+      <div className="flex flex-1 flex-col items-center justify-center px-6 pb-12">
+        {children}
+      </div>
+    </div>
   );
 }

@@ -1,0 +1,1 @@
+CREATE INDEX CONCURRENTLY public_expert_reservation_platform_daily_usage_idx ON public_expert_usage_reservation (created_at) INCLUDE (status, reserved_cost_minor, reserved_tokens);

@@ -19,7 +19,7 @@ export const useIssuesScopeStore = create<IssuesScopeState>()(
       setScope: (scope) => set({ scope }),
     }),
     {
-      name: "teamify_issues_scope",
+      name: "iteamify_issues_scope",
       storage: createJSONStorage(() => createWorkspaceAwareStorage(defaultStorage)),
     },
   ),

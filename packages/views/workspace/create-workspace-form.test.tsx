@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { I18nProvider } from "@teamify/core/i18n/react";
+import { I18nProvider } from "@iteamify/core/i18n/react";
+import { configStore } from "@iteamify/core/config";
 import enCommon from "../locales/en/common.json";
 import enWorkspace from "../locales/en/workspace.json";
 import { CreateWorkspaceForm } from "./create-workspace-form";
@@ -12,7 +13,7 @@ const TEST_RESOURCES = {
 };
 
 const mockMutate = vi.fn();
-vi.mock("@teamify/core/workspace/mutations", () => ({
+vi.mock("@iteamify/core/workspace/mutations", () => ({
   useCreateWorkspace: () => ({ mutate: mockMutate, isPending: false }),
 }));
 
@@ -35,7 +36,22 @@ function renderForm(onSuccess = vi.fn()) {
 }
 
 describe("CreateWorkspaceForm", () => {
-  beforeEach(() => mockMutate.mockReset());
+  beforeEach(() => {
+    mockMutate.mockReset();
+    configStore.setState({ daemonAppUrl: "" });
+  });
+
+  it("shows the brand host as the URL prefix when no app URL is configured", () => {
+    renderForm();
+    expect(screen.getByText("aurocreator.com/")).toBeInTheDocument();
+  });
+
+  it("shows the deployment host as the URL prefix for self-hosted instances", () => {
+    configStore.setState({ daemonAppUrl: "https://iteamify.example.com" });
+    renderForm();
+    expect(screen.getByText("iteamify.example.com/")).toBeInTheDocument();
+    expect(screen.queryByText("aurocreator.com/")).not.toBeInTheDocument();
+  });
 
   it("auto-generates slug from name until user edits slug", () => {
     renderForm();

@@ -1,16 +1,7 @@
 export { createChatStore, DRAFT_NEW_SESSION } from "./store";
-export type { ChatStoreOptions, ChatState, ChatTimelineItem, ContextAnchor } from "./store";
-export { useAgentTableFilterStore } from "./filter-store";
-export type { AgentTableFilterState } from "./filter-store";
-export {
-  getAgentTableRowBackground,
-  getAgentTableRowColor,
-  getTableCellValue,
-  normalizeHexColor,
-} from "./table-colors";
-export {
-  buildAgentTableExportXlsxFileName,
-} from "./table-export";
+export type { ChatStoreOptions, ChatState, ChatTimelineItem } from "./store";
+export { useRecentContextStore, selectRecentContexts } from "./recent-context-store";
+export type { RecentContextEntry, RecentContextType } from "./recent-context-store";
 
 import type { createChatStore as CreateChatStoreFn } from "./store";
 
@@ -47,3 +38,5 @@ export const useChatStore: ChatStoreInstance = new Proxy(
     },
   },
 );
+
+export { chatSendIdentity, clearChatSendIdentity } from "./send-identity";

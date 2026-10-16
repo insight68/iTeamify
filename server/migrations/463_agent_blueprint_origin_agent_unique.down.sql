@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS agent_blueprint_origin_agent_uidx;

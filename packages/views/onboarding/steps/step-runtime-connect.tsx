@@ -1,25 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
-import { captureEvent, setPersonProperties } from "@teamify/core/analytics";
-import { Button } from "@teamify/ui/components/ui/button";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { cn } from "@iteamify/ui/lib/utils";
+import { useScrollFade } from "@iteamify/ui/hooks/use-scroll-fade";
+import { runtimeKeys } from "@iteamify/core/runtimes/queries";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@teamify/ui/components/ui/dialog";
-import { cn } from "@teamify/ui/lib/utils";
-import { useScrollFade } from "@teamify/ui/hooks/use-scroll-fade";
-import type { AgentRuntime } from "@teamify/core/types";
-import { DragStrip } from "@teamify/views/platform";
+  runtimeDisplayLabel,
+  runtimeDisplayName,
+} from "@iteamify/core/runtimes";
+import type { AgentRuntime } from "@iteamify/core/types";
+import { DragStrip } from "@iteamify/views/platform";
 import { StepHeader } from "../components/step-header";
 import { RuntimeAsidePanel } from "../components/runtime-aside-panel";
 import { useRuntimePicker } from "../components/use-runtime-picker";
-import { CloudWaitlistExpand } from "../components/cloud-waitlist-expand";
 import { ProviderLogo } from "../../runtimes/components/provider-logo";
 import { useT } from "../../i18n";
 
@@ -43,18 +39,30 @@ export function StepRuntimeConnect({
   wsId,
   onNext,
   onBack,
-  onWaitlistSubmitted,
+  onRefresh,
+  runtimesPending,
+  initialRuntimeId,
+  onRuntimeSelected,
 }: {
   wsId: string;
   onNext: (runtime: AgentRuntime | null) => void | Promise<void>;
   onBack?: () => void;
-  /** Parent-level latch used to label the onboarding completion path
-   *  as `cloud_waitlist` when the user ends up skipping this step
-   *  after submitting the waitlist form. */
-  onWaitlistSubmitted?: () => void;
+  /** Platform-level rescan hook. Desktop wires this to restart the
+   *  bundled daemon so a freshly-installed CLI shows up — otherwise the
+   *  daemon's PATH probe runs once at boot and never re-probes. */
+  onRefresh?: () => void | Promise<void>;
+  /** Desktop-only signal: the local daemon is still booting or is known to
+   *  have agent CLIs on this host that haven't finished registering yet.
+   *  While true, the step keeps showing the scanning skeleton past the normal
+   *  timeout instead of flashing the "no runtime found" empty state — that
+   *  empty state is a false negative when the daemon is mid-probe (MUL-5119).
+   *  Web omits it and keeps the plain wall-clock timeout. */
+  runtimesPending?: boolean;
+  initialRuntimeId?: string;
+  onRuntimeSelected?: (id: string) => void;
 }) {
   const { runtimes, selected, selectedId, setSelectedId } =
-    useRuntimePicker(wsId);
+    useRuntimePicker(wsId, initialRuntimeId);
 
   return (
     <FancyView
@@ -62,10 +70,11 @@ export function StepRuntimeConnect({
       runtimes={runtimes}
       selected={selected}
       selectedId={selectedId}
-      setSelectedId={setSelectedId}
+      setSelectedId={(id) => { setSelectedId(id); onRuntimeSelected?.(id); }}
       onNext={onNext}
       onBack={onBack}
-      onWaitlistSubmitted={onWaitlistSubmitted}
+      onRefresh={onRefresh}
+      runtimesPending={runtimesPending}
     />
   );
 }
@@ -76,8 +85,14 @@ export function StepRuntimeConnect({
 
 type Phase = "scanning" | "found" | "empty";
 
-/** Input ms before an empty list flips from "scanning" to "empty". */
+/** Idle ms before an empty list flips from "scanning" to "empty" — unless the
+ *  platform reports runtimes are still pending (see `runtimesPending`). */
 const EMPTY_TIMEOUT_MS = 5000;
+
+/** Absolute ceiling: even while the platform still reports runtimes pending,
+ *  fall back to the empty exits after this so a wedged version probe can never
+ *  hang the step on the scanning skeleton forever. */
+const EMPTY_HARD_TIMEOUT_MS = 20000;
 
 function FancyView({
   wsId,
@@ -87,7 +102,8 @@ function FancyView({
   setSelectedId,
   onNext,
   onBack,
-  onWaitlistSubmitted,
+  onRefresh,
+  runtimesPending,
 }: {
   wsId: string;
   runtimes: AgentRuntime[];
@@ -96,83 +112,79 @@ function FancyView({
   setSelectedId: (id: string) => void;
   onNext: (runtime: AgentRuntime | null) => void | Promise<void>;
   onBack?: () => void;
-  onWaitlistSubmitted?: () => void;
+  onRefresh?: () => void | Promise<void>;
+  runtimesPending?: boolean;
 }) {
   const { t } = useT("onboarding");
+  const qc = useQueryClient();
   const mainRef = useRef<HTMLElement>(null);
   const fadeStyle = useScrollFade(mainRef);
 
-  // Flip to "empty" only after we've waited long enough for the daemon
-  // to report. The 5s budget covers the bundled daemon's typical 1–3s
-  // boot; anything past that is a genuine "no runtime" situation and we
-  // switch from scanning skeletons to the skip / cloud-waitlist exits.
-  const [hasTimedOut, setHasTimedOut] = useState(false);
+  // Decide when an empty runtime list stops being "still scanning" and becomes
+  // the genuine "no runtime" exits. Two timers run while the list is empty:
+  //
+  //   - soft (EMPTY_TIMEOUT_MS): the normal budget. Once it fires we flip to
+  //     empty UNLESS `runtimesPending` says the platform (desktop daemon) is
+  //     still booting or mid-probe — registration on a host with several CLIs
+  //     can outlast the soft budget, and flashing "no runtime found" while the
+  //     daemon is still working is a false negative (MUL-5119).
+  //   - hard (EMPTY_HARD_TIMEOUT_MS): an absolute ceiling so a wedged probe
+  //     that never resolves `runtimesPending` back to false can't pin the step
+  //     on the scanning skeleton forever.
+  //
+  // `scanEpoch` resets both timers when the user hits Refresh, so a
+  // freshly-installed CLI gets another scanning window before falling back to
+  // the empty state.
+  const [scanEpoch, setScanEpoch] = useState(0);
+  const [softTimedOut, setSoftTimedOut] = useState(false);
+  const [hardTimedOut, setHardTimedOut] = useState(false);
   useEffect(() => {
     if (runtimes.length > 0) return;
-    const t = window.setTimeout(() => setHasTimedOut(true), EMPTY_TIMEOUT_MS);
-    return () => window.clearTimeout(t);
-  }, [runtimes.length]);
+    setSoftTimedOut(false);
+    setHardTimedOut(false);
+    const soft = window.setTimeout(() => setSoftTimedOut(true), EMPTY_TIMEOUT_MS);
+    const hard = window.setTimeout(
+      () => setHardTimedOut(true),
+      EMPTY_HARD_TIMEOUT_MS,
+    );
+    return () => {
+      window.clearTimeout(soft);
+      window.clearTimeout(hard);
+    };
+  }, [runtimes.length, scanEpoch]);
 
   const phase: Phase =
-    runtimes.length > 0 ? "found" : hasTimedOut ? "empty" : "scanning";
+    runtimes.length > 0
+      ? "found"
+      : hardTimedOut || (softTimedOut && runtimesPending !== true)
+        ? "empty"
+        : "scanning";
 
   const onlineCount = runtimes.filter((r) => r.status === "online").length;
 
-  // One-shot analytics event when the scan window resolves. Answers the
-  // question "did the user actually have any AI CLI installed on this
-  // machine when they hit Step 3" — currently unanswerable from the
-  // existing funnel because a zero-CLI daemon fails to register at all,
-  // so `runtime_registered` is silent on that cohort. Emitting from here
-  // (rather than the daemon) keeps the signal in sync with what the UI
-  // actually showed the user: "scanning → found" vs "scanning → empty"
-  // after the 5s grace period.
-  const detectStartRef = useRef<number | null>(null);
-  if (detectStartRef.current === null) {
-    detectStartRef.current =
-      typeof performance !== "undefined" ? performance.now() : Date.now();
-  }
-  const detectedEmittedRef = useRef(false);
-  useEffect(() => {
-    if (detectedEmittedRef.current) return;
-    if (phase === "scanning") return;
-    detectedEmittedRef.current = true;
-
-    const providers = Array.from(
-      new Set(runtimes.map((r) => r.provider).filter(Boolean)),
-    ).sort();
-    const now =
-      typeof performance !== "undefined" ? performance.now() : Date.now();
-    const detectMs = Math.round(now - (detectStartRef.current ?? now));
-
-    captureEvent("onboarding_runtime_detected", {
-      source: "onboarding",
-      surface: "step3_desktop",
-      workspace_id: wsId,
-      outcome: phase,
-      runtime_count: runtimes.length,
-      online_count: onlineCount,
-      providers,
-      has_claude: providers.includes("claude"),
-      has_codex: providers.includes("codex"),
-      has_cursor: providers.includes("cursor"),
-      detect_ms: detectMs,
-    });
-
-    setPersonProperties({
-      has_any_cli: runtimes.length > 0,
-      detected_cli_count: runtimes.length,
-    });
-  }, [phase, runtimes, onlineCount, wsId]);
-
   const [submitting, setSubmitting] = useState(false);
-  // Cloud waitlist submission state lives here (rather than in EmptyView)
-  // so it survives phase flips — e.g. a runtime coming online after the
-  // user has already submitted the waitlist form.
-  const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Refresh triggers a re-scan: restart the daemon (if the platform
+  // wired `onRefresh`) so its PATH probe runs again, invalidate the
+  // runtime query, and reset the empty-state timeout so the user sees
+  // the scanning skeleton instead of the empty exits while the daemon
+  // boots back up.
+  const handleRefresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      if (onRefresh) await onRefresh();
+      await qc.invalidateQueries({ queryKey: runtimeKeys.all(wsId) });
+      setScanEpoch((n) => n + 1);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [onRefresh, qc, wsId, refreshing]);
 
   // Skip is always available — regardless of phase. Hitting Skip routes
-  // the flow through the self-serve branch (agent=null), which still
-  // completes onboarding and seeds a Getting Started project.
+  // through the runtime-less branch, which creates one focused self-serve
+  // onboarding issue instead of seeding the old starter project.
   const handleSkip = async () => {
     if (submitting) return;
     setSubmitting(true);
@@ -184,7 +196,7 @@ function FancyView({
   };
   // Continue only makes sense when a runtime is selected. Otherwise
   // there's nothing to pass to Step 4.
-  const canContinue = phase === "found" && selected !== null;
+  const canContinue = phase === "found" && selected?.status === "online";
   const handleContinue = async () => {
     if (!canContinue || submitting) return;
     setSubmitting(true);
@@ -197,14 +209,14 @@ function FancyView({
 
   const footerHint =
     phase === "found" && selected
-      ? t(($) => $.step_runtime.hint_selected, { name: selected.name })
+      ? t(($) => $.step_runtime.hint_selected, {
+          name: runtimeDisplayLabel(selected),
+        })
       : phase === "found"
         ? t(($) => $.step_runtime.hint_pick)
         : phase === "scanning"
           ? t(($) => $.step_runtime.hint_waiting)
-          : waitlistSubmitted
-            ? t(($) => $.step_runtime.hint_waitlist_done)
-            : t(($) => $.step_runtime.hint_skip_or_waitlist);
+          : t(($) => $.step_runtime.hint_skip_or_refresh);
 
   return (
     <div className="animate-onboarding-enter grid h-full min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_480px]">
@@ -218,6 +230,7 @@ function FancyView({
             <button
               type="button"
               onClick={onBack}
+              disabled={submitting || refreshing}
               className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
@@ -227,13 +240,18 @@ function FancyView({
             <span aria-hidden className="w-0" />
           )}
           <div className="flex-1">
-            <StepHeader currentStep="runtime" />
+            <StepHeader currentStep="assistant" />
           </div>
         </header>
 
         {/* Scrollable middle — content changes by phase but always wraps
             at max-w-[620px] so the 2-column runtime grid has room to
-            breathe without stretching into readability territory. */}
+            breathe without stretching into readability territory.
+
+            Skip + Continue sit inline directly below the phase view
+            (not in a sticky bottom footer) so the action bar stays
+            close to the form content and the page doesn't leave a
+            large dead zone when the runtime list is short. */}
         <main
           ref={mainRef}
           style={fadeStyle}
@@ -254,49 +272,61 @@ function FancyView({
                 selectedId={selectedId}
                 onSelect={setSelectedId}
                 onlineCount={onlineCount}
+                onRefresh={handleRefresh}
+                refreshing={refreshing}
               />
             )}
             {phase === "empty" && (
               <EmptyView
-                waitlistSubmitted={waitlistSubmitted}
-                onWaitlistSubmitted={() => {
-                  setWaitlistSubmitted(true);
-                  onWaitlistSubmitted?.();
-                }}
-                onSkip={() => onNext(null)}
+                onSkip={handleSkip}
+                onRefresh={handleRefresh}
+                refreshing={refreshing}
               />
             )}
+
+            {/* Footer action bar. The controls are phase-scoped so no dead or
+                duplicated affordance ever shows:
+                  - Skip: shown while scanning / found. The empty phase owns its
+                    own prominent Skip card, so the footer Skip is dropped there
+                    to avoid two "Skip for now" buttons on one screen.
+                  - Start exploring: only actionable once a runtime is picked, so
+                    it renders only in the found phase instead of sitting
+                    permanently disabled through scanning / empty. */}
+            <div className="mt-8 flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+              <span
+                aria-live="polite"
+                className="mr-auto text-xs text-muted-foreground"
+              >
+                {footerHint}
+              </span>
+              {phase !== "empty" && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    disabled={submitting}
+                    onClick={handleSkip}
+                  >
+                    {t(($) => $.step_runtime.skip)}
+                  </Button>
+                  {phase === "found" && (
+                    <Button
+                      size="lg"
+                      disabled={!canContinue || submitting}
+                      onClick={handleContinue}
+                    >
+                      {submitting && (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
+                      {t(($) => $.step_runtime.start_exploring)}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </main>
-
-        {/* Sticky footer — Skip (always) on the left, hint + Continue
-            (gated on runtime selection) on the right. Skip is the
-            self-serve exit: onNext(null) → bootstrap runs the no-agent
-            branch, onboarding still completes. */}
-        <footer className="flex shrink-0 items-center justify-end gap-4 bg-background px-6 py-4 sm:px-10 md:px-14 lg:px-16">
-          <span
-            aria-live="polite"
-            className="mr-auto text-xs text-muted-foreground"
-          >
-            {footerHint}
-          </span>
-          <Button
-            variant="secondary"
-            disabled={submitting}
-            onClick={handleSkip}
-          >
-            {t(($) => $.step_runtime.skip)}
-          </Button>
-          <Button
-            size="lg"
-            disabled={!canContinue || submitting}
-            onClick={handleContinue}
-          >
-            {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t(($) => $.common.continue)}
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </footer>
       </div>
 
       {/* Right — always-visible educational aside. "You picked" subsection
@@ -344,11 +374,15 @@ function FoundView({
   selectedId,
   onSelect,
   onlineCount,
+  onRefresh,
+  refreshing,
 }: {
   runtimes: AgentRuntime[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onlineCount: number;
+  onRefresh: () => void;
+  refreshing: boolean;
 }) {
   const { t } = useT("onboarding");
   const total = runtimes.length;
@@ -385,6 +419,11 @@ function FoundView({
           />
           {statusLabel}
         </span>
+        <RefreshButton
+          onClick={onRefresh}
+          refreshing={refreshing}
+          className="ml-auto"
+        />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -402,22 +441,28 @@ function FoundView({
 }
 
 function EmptyView({
-  waitlistSubmitted,
-  onWaitlistSubmitted,
   onSkip,
+  onRefresh,
+  refreshing,
 }: {
-  waitlistSubmitted: boolean;
-  onWaitlistSubmitted: () => void;
   onSkip: () => void;
+  onRefresh: () => void;
+  refreshing: boolean;
 }) {
   const { t } = useT("onboarding");
-  const [waitlistOpen, setWaitlistOpen] = useState(false);
 
   return (
     <div>
-      <h1 className="text-balance font-serif text-[36px] font-medium leading-[1.1] tracking-tight text-foreground">
-        {t(($) => $.step_runtime.empty_headline)}
-      </h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-balance font-serif text-[36px] font-medium leading-[1.1] tracking-tight text-foreground">
+          {t(($) => $.step_runtime.empty_headline)}
+        </h1>
+        <RefreshButton
+          onClick={onRefresh}
+          refreshing={refreshing}
+          className="mt-2 shrink-0"
+        />
+      </div>
       <p className="mt-4 max-w-[560px] text-[15.5px] leading-[1.55] text-muted-foreground">
         {t(($) => $.step_runtime.empty_lede_prefix)}
         <span className="font-medium text-foreground">{"Claude Code"}</span>
@@ -436,47 +481,39 @@ function EmptyView({
           onAction={onSkip}
         />
 
-        <EmptyCard
-          title={t(($) => $.step_runtime.empty_waitlist_title)}
-          subtitle={t(($) => $.step_runtime.empty_waitlist_subtitle)}
-          actionLabel={
-            waitlistSubmitted
-              ? t(($) => $.step_runtime.empty_waitlist_done)
-              : t(($) => $.step_runtime.empty_waitlist_action)
-          }
-          onAction={() => setWaitlistOpen(true)}
-        />
+
       </div>
-
-      <Dialog
-        open={waitlistOpen}
-        onOpenChange={(o) => (o ? null : setWaitlistOpen(false))}
-      >
-        <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle>{t(($) => $.step_runtime.dialog_title)}</DialogTitle>
-            <DialogDescription>
-              {t(($) => $.step_runtime.dialog_description)}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="min-h-0 flex-1 overflow-y-auto pt-2">
-            <CloudWaitlistExpand
-              submitted={waitlistSubmitted}
-              onSubmitted={onWaitlistSubmitted}
-            />
-          </div>
-
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setWaitlistOpen(false)}>
-              {waitlistSubmitted
-                ? t(($) => $.step_runtime.dialog_close)
-                : t(($) => $.step_runtime.dialog_cancel)}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
+  );
+}
+
+function RefreshButton({
+  onClick,
+  refreshing,
+  className,
+}: {
+  onClick: () => void;
+  refreshing: boolean;
+  className?: string;
+}) {
+  const { t } = useT("onboarding");
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      disabled={refreshing}
+      onClick={onClick}
+      className={className}
+    >
+      <RefreshCw
+        className={cn("h-3.5 w-3.5", refreshing && "animate-spin")}
+        aria-hidden
+      />
+      {refreshing
+        ? t(($) => $.step_runtime.refreshing)
+        : t(($) => $.step_runtime.refresh)}
+    </Button>
   );
 }
 
@@ -553,7 +590,7 @@ function RuntimeCard({
       </div>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium text-foreground">
-          {runtime.name}
+          {runtimeDisplayName(runtime)}
         </div>
         <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
           <span

@@ -14,8 +14,10 @@ import { createPortal } from "react-dom";
 import { computePosition, offset, flip, shift } from "@floating-ui/dom";
 import { ExternalLink, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@teamify/ui/components/ui/button";
-import { useWorkspaceSlug } from "@teamify/core/paths";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { copyText } from "@iteamify/ui/lib/clipboard";
+import { useWorkspaceSlug } from "@iteamify/core/paths";
+import { useAppOrigin } from "../navigation";
 import { useT } from "../i18n";
 import { openLink, isMentionHref } from "./utils/link-handler";
 
@@ -136,6 +138,7 @@ function LinkHoverCard({
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const [positioned, setPositioned] = useState(false);
   const slug = useWorkspaceSlug();
+  const appOrigin = useAppOrigin();
   const { t } = useT("editor");
 
   // Position the card when the portal div is mounted (ref callback).
@@ -170,10 +173,9 @@ function LinkHoverCard({
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    try {
-      await navigator.clipboard.writeText(href);
+    if (await copyText(href)) {
       toast.success(t(($) => $.link_hover.link_copied));
-    } catch {
+    } else {
       toast.error(t(($) => $.link_hover.copy_failed));
     }
   };
@@ -181,7 +183,7 @@ function LinkHoverCard({
   const handleOpen = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    openLink(href, slug);
+    openLink(href, slug, appOrigin);
   };
 
   return createPortal(

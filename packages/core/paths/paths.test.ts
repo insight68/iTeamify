@@ -4,7 +4,9 @@ import { paths, isGlobalPath } from "./paths";
 describe("paths.workspace(slug)", () => {
   const ws = paths.workspace("acme");
 
-  it("builds dashboard paths with slug prefix", () => {
+  it("builds workspace paths with slug prefix", () => {
+    expect(ws.root()).toBe("/acme");
+    expect(ws.usage()).toBe("/acme/usage");
     expect(ws.issues()).toBe("/acme/issues");
     expect(ws.issueDetail("abc-123")).toBe("/acme/issues/abc-123");
     expect(ws.projects()).toBe("/acme/projects");
@@ -12,18 +14,21 @@ describe("paths.workspace(slug)", () => {
     expect(ws.autopilots()).toBe("/acme/autopilots");
     expect(ws.autopilotDetail("a1")).toBe("/acme/autopilots/a1");
     expect(ws.agents()).toBe("/acme/agents");
+    expect(ws.newAgent()).toBe("/acme/agents/new");
+    expect(ws.memberDetail("u1")).toBe("/acme/members/u1");
     expect(ws.inbox()).toBe("/acme/inbox");
     expect(ws.myIssues()).toBe("/acme/my-issues");
     expect(ws.runtimes()).toBe("/acme/runtimes");
+    expect(ws.runtimeSettings("machine/runtime", "runtime one")).toBe(
+      "/acme/runtimes/machine%2Fruntime/runtime/runtime%20one",
+    );
     expect(ws.skills()).toBe("/acme/skills");
     expect(ws.skillDetail("skl_123")).toBe("/acme/skills/skl_123");
+    expect(ws.squads()).toBe("/acme/squads");
+    expect(ws.squadDetail("sq_1")).toBe("/acme/squads/sq_1");
     expect(ws.settings()).toBe("/acme/settings");
-    expect(ws.inventory()).toBe("/acme/inventory");
-    expect(ws.inventoryMonitor()).toBe("/acme/inventory/monitor");
-    expect(ws.supplyReconciliation()).toBe("/acme/supply-reconciliation");
-    expect(ws.supplyReconciliationBills()).toBe("/acme/supply-reconciliation/bills");
-    expect(ws.supplyReconciliationResults()).toBe("/acme/supply-reconciliation/results");
-    expect(ws.supplyReconciliationResult("result/42")).toBe("/acme/supply-reconciliation/results/result%2F42");
+    expect(ws.business()).toBe("/acme/business");
+    expect(ws.attachmentPreview("att_42")).toBe("/acme/attachments/att_42/preview");
   });
 
   it("URL-encodes special characters in ids", () => {

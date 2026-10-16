@@ -1,45 +1,38 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
-import { CoreProvider } from "@teamify/core/platform";
-import { createBrowserCookieLocaleAdapter } from "@teamify/core/i18n/browser";
-import type { LocaleResources, SupportedLocale } from "@teamify/core/i18n";
+import { useMemo } from "react";
+import { usePathname } from "next/navigation";
+import { CoreProvider } from "@iteamify/core/platform";
+import { createBrowserCookieLocaleAdapter } from "@iteamify/core/i18n/browser";
+import type { LocaleResources, SupportedLocale } from "@iteamify/core/i18n";
 import packageJson from "../package.json";
 import { WebNavigationProvider } from "@/platform/navigation";
 import {
   setLoggedInCookie,
   clearLoggedInCookie,
 } from "@/features/auth/auth-cookie";
-import { PageviewTracker } from "./pageview-tracker";
+import { detectWebOS } from "@/platform/client-os";
+import { isPublicCapabilityPath } from "@/lib/public-route-mode";
 
 // Legacy token in localStorage → keep this session in token mode so users who
 // logged in before the cookie-auth migration stay authed. They migrate to
-// cookie mode on their next logout/login cycle (logout clears teamify_token).
-// Sunset: once telemetry shows <1% of sessions still carry teamify_token,
+// cookie mode on their next logout/login cycle (logout clears iteamify_token).
+// Sunset: once telemetry shows <1% of sessions still carry iteamify_token,
 // delete this branch and hard-code `cookieAuth` — the localStorage token is
 // XSS-exposed and is the exact thing the cookie migration exists to remove.
 function hasLegacyToken(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return Boolean(window.localStorage.getItem("teamify_token"));
+    return Boolean(window.localStorage.getItem("iteamify_token"));
   } catch {
     return false;
   }
 }
 
-// Derive WebSocket URL.  In development we bypass the Next.js rewrite proxy
-// because it doesn't reliably sustain long-lived WebSocket connections (the
-// connection drops every ~3s, triggering a reconnect loop).  Production still
-// goes through the /ws rewrite (or a reverse proxy in front of it).
+// Derive WebSocket URL from the page origin so self-hosted / LAN deployments
+// work without an explicit runtime wsUrl. The Next.js runtime proxy handles
+// /ws -> backend when the deployment keeps WebSockets same-origin.
 function deriveWsUrl(): string | undefined {
-  if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
-
-  // Dev: connect directly to the Go backend, skipping the Next.js proxy.
-  if (process.env.NODE_ENV === "development") {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-    return `${apiUrl.replace(/^http/, "ws")}/ws`;
-  }
-
   if (typeof window === "undefined") return undefined;
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
   return `${proto}//${window.location.host}/ws`;
@@ -55,36 +48,40 @@ export function WebProviders({
   children,
   locale,
   resources,
+  apiBaseUrl,
+  wsUrl,
 }: {
   children: React.ReactNode;
   locale: SupportedLocale;
   resources: Record<string, LocaleResources>;
+  apiBaseUrl?: string;
+  wsUrl?: string;
 }) {
+  const pathname = usePathname();
   const cookieAuth = !hasLegacyToken();
   // Stable identity reference so downstream effects keyed on it don't see a
   // new object on every parent render.
   const identity = useMemo(
-    () => ({ platform: "web", version: WEB_VERSION }),
+    () => ({ platform: "web", version: WEB_VERSION, os: detectWebOS() }),
     [],
   );
   const localeAdapter = useMemo(() => createBrowserCookieLocaleAdapter(), []);
   return (
     <CoreProvider
-      apiBaseUrl={process.env.NEXT_PUBLIC_API_URL}
-      wsUrl={deriveWsUrl()}
+      logLevel={process.env.NODE_ENV === "production" ? "warn" : "debug"}
+      apiBaseUrl={apiBaseUrl}
+      wsUrl={wsUrl || deriveWsUrl()}
       cookieAuth={cookieAuth}
       onLogin={setLoggedInCookie}
-      onLogout={clearLoggedInCookie}
+      onLogout={() => {
+        clearLoggedInCookie();
+      }}
       identity={identity}
       locale={locale}
       resources={resources}
       localeAdapter={localeAdapter}
+      sessionEnabled={!isPublicCapabilityPath(pathname)}
     >
-      {/* Suspense boundary is required by Next.js for useSearchParams in
-          a client component mounted this high in the tree. */}
-      <Suspense fallback={null}>
-        <PageviewTracker />
-      </Suspense>
       <WebNavigationProvider>{children}</WebNavigationProvider>
     </CoreProvider>
   );

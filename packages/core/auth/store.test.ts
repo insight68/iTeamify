@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ApiClient } from "../api/client";
-import { ApiError } from "../api/client";
 import type { StorageAdapter, User } from "../types";
 import { createAuthStore } from "./store";
 
@@ -27,67 +26,194 @@ function makeStorage(initial: Record<string, string> = {}): StorageAdapter & {
   };
 }
 
-function makeApi(getMe: () => Promise<User>): ApiClient {
+function makeApi(): ApiClient {
   return {
     setToken: vi.fn(),
-    getMe,
-    // Only the methods touched by store.initialize are needed. Cast to
-    // ApiClient for type compatibility — the store treats it opaquely.
+    advanceAuthSession: vi.fn(),
   } as unknown as ApiClient;
 }
 
-describe("authStore.initialize — token mode", () => {
-  it("keeps the stored token when getMe fails with a non-401 ApiError (e.g. 500)", async () => {
-    const storage = makeStorage({ teamify_token: "t" });
-    const api = makeApi(() =>
-      Promise.reject(new ApiError("server error", 500, "Internal Server Error")),
-    );
+describe("authStore", () => {
+  it("rotates a changed password credential and cancels work using the old cookie", async () => {
+    const storage = makeStorage();
+    const api = makeApi();
+    api.changePassword = vi.fn().mockResolvedValue({ token: "rotated", user: fakeUser });
+    const store = createAuthStore({ api, storage, cookieAuth: true });
+    store.setState({ user: fakeUser, status: "authenticated", isLoading: false });
+    await store.getState().changePassword({ password: "new long password phrase", current_password: "old password phrase" });
+    expect(api.advanceAuthSession).toHaveBeenCalledTimes(2);
+    expect(store.getState().status).toBe("authenticated");
+    expect(storage.snapshot().iteamify_token).toBeUndefined();
+  });
+
+  it("does not restore a late password login after logout", async () => {
+    let resolve!: (value: { token: string; user: User }) => void;
+    const api = makeApi();
+    api.loginWithPassword = vi.fn().mockReturnValue(new Promise((done) => { resolve = done; }));
+    const storage = makeStorage();
+    const store = createAuthStore({ api, storage });
+    const request = store.getState().loginWithPassword("alice@example.com", "password phrase");
+    store.getState().logout();
+    resolve({ token: "late-token", user: fakeUser });
+    await expect(request).rejects.toMatchObject({ name: "AbortError" });
+    expect(store.getState().user).toBeNull();
+    expect(storage.snapshot().iteamify_token).toBeUndefined();
+  });
+  it("publishes a retry request instead of silently ignoring it", () => {
+    const storage = makeStorage({ iteamify_token: "t" });
+    const api = makeApi();
     const store = createAuthStore({ api, storage });
 
-    await store.getState().initialize();
+    store.setState({ isLoading: true, status: "recovering" });
+    store.getState().retryAuthentication();
 
+    expect(store.getState().status).toBe("authenticating");
+    expect(store.getState().retryGeneration).toBe(1);
+  });
+
+  it("explicit logout still clears credentials and publishes unauthenticated state", () => {
+    const storage = makeStorage({ iteamify_token: "t" });
+    const api = makeApi();
+    const onLogout = vi.fn();
+    const store = createAuthStore({ api, storage, onLogout });
+
+    store.setState({ user: fakeUser, status: "authenticated", isLoading: false });
+    store.getState().logout();
+
+    expect(storage.snapshot().iteamify_token).toBeUndefined();
+    expect(api.setToken).toHaveBeenCalledWith(null);
+    expect(onLogout).toHaveBeenCalledOnce();
+    expect(store.getState().user).toBeNull();
+    expect(store.getState().status).toBe("unauthenticated");
+    expect(store.getState().expired).toBe(false);
+  });
+
+  it("ends the session when the server rejects the credential", () => {
+    const storage = makeStorage({ iteamify_token: "t" });
+    const api = makeApi();
+    const onLogout = vi.fn();
+    const store = createAuthStore({ api, storage, onLogout });
+
+    store.setState({ user: fakeUser, status: "authenticated", isLoading: false });
+    store.getState().sessionExpired();
+
+    expect(storage.snapshot().iteamify_token).toBeUndefined();
+    expect(api.setToken).toHaveBeenCalledWith(null);
+    expect(onLogout).toHaveBeenCalledOnce();
     expect(store.getState().user).toBeNull();
     expect(store.getState().isLoading).toBe(false);
-    expect(storage.snapshot().teamify_token).toBe("t");
+    expect(store.getState().status).toBe("unauthenticated");
+    expect(store.getState().expired).toBe(true);
   });
 
-  it("keeps the stored token on a network failure (non-ApiError throw)", async () => {
-    const storage = makeStorage({ teamify_token: "t" });
-    const api = makeApi(() => Promise.reject(new TypeError("fetch failed")));
+  // Desktop's deep link writes the token, then verifies it. A rejected token
+  // never leaves "unauthenticated", so an idempotence guard placed before the
+  // credential teardown would return with the invalid token still in storage,
+  // to be replayed at the next launch. The old 401 handler always removed it.
+  it("drops a rejected token even when there was no session to end", async () => {
+    const storage = makeStorage();
+    const api = {
+      setToken: vi.fn(),
+    advanceAuthSession: vi.fn(),
+      getMe: vi.fn().mockRejectedValue(new Error("unauthorized")),
+    } as unknown as ApiClient;
     const store = createAuthStore({ api, storage });
+    store.setState({ user: null, status: "unauthenticated", isLoading: false });
 
-    await store.getState().initialize();
+    await expect(
+      store.getState().loginWithToken("stale-deep-link-token"),
+    ).rejects.toThrow();
+    // Stands in for the api client's 401 hook, which fires inside getMe.
+    store.getState().sessionExpired();
 
-    expect(store.getState().user).toBeNull();
-    expect(storage.snapshot().teamify_token).toBe("t");
+    expect(storage.snapshot().iteamify_token).toBeUndefined();
+    expect(api.setToken).toHaveBeenLastCalledWith(null);
   });
 
-  it("on 401, leaves storage cleanup to ApiClient.onUnauthorized and resets state", async () => {
-    // Simulate the real path: ApiClient fires onUnauthorized on 401, which
-    // removes the token from storage. The store's catch block must not
-    // duplicate or short-circuit this — it should only reset in-memory
-    // auth state.
-    const storage = makeStorage({ teamify_token: "t" });
-    const api = makeApi(() => {
-      storage.removeItem("teamify_token"); // stand-in for onUnauthorized
-      return Promise.reject(new ApiError("unauthorized", 401, "Unauthorized"));
-    });
-    const store = createAuthStore({ api, storage });
+  it("does not claim a session expired for a client that never had one", () => {
+    const storage = makeStorage();
+    const api = makeApi();
+    const store = createAuthStore({ api, storage, cookieAuth: true });
 
-    await store.getState().initialize();
+    // Boot-time identity probe on a first visit: still "authenticating",
+    // no stored credential.
+    store.getState().sessionExpired();
 
-    expect(store.getState().user).toBeNull();
-    expect(storage.snapshot().teamify_token).toBeUndefined();
+    expect(store.getState().status).toBe("unauthenticated");
+    expect(store.getState().expired).toBe(false);
   });
 
-  it("populates user when getMe succeeds", async () => {
-    const storage = makeStorage({ teamify_token: "t" });
-    const api = makeApi(() => Promise.resolve(fakeUser));
+  it("flags expiry when a stored token is rejected at boot", () => {
+    const storage = makeStorage({ iteamify_token: "stale" });
+    const api = makeApi();
     const store = createAuthStore({ api, storage });
 
-    await store.getState().initialize();
+    store.getState().sessionExpired();
 
-    expect(store.getState().user).toEqual(fakeUser);
-    expect(storage.snapshot().teamify_token).toBe("t");
+    expect(store.getState().expired).toBe(true);
+    expect(storage.snapshot().iteamify_token).toBeUndefined();
+  });
+
+  it("runs the expiry handler instead of the logout one when given both", () => {
+    const storage = makeStorage({ iteamify_token: "t" });
+    const api = makeApi();
+    const onLogout = vi.fn();
+    const onSessionExpired = vi.fn();
+    const store = createAuthStore({ api, storage, onLogout, onSessionExpired });
+
+    store.setState({ user: fakeUser, status: "authenticated", isLoading: false });
+    store.getState().sessionExpired();
+
+    // Desktop's logout teardown stops the local daemon, which is the wrong
+    // answer for a session the user did not choose to end (MUL-7028).
+    expect(onSessionExpired).toHaveBeenCalledOnce();
+    expect(onLogout).not.toHaveBeenCalled();
+  });
+
+  it("still runs the logout teardown for an explicit logout", () => {
+    const storage = makeStorage({ iteamify_token: "t" });
+    const api = makeApi();
+    const onLogout = vi.fn();
+    const onSessionExpired = vi.fn();
+    const store = createAuthStore({ api, storage, onLogout, onSessionExpired });
+
+    store.setState({ user: fakeUser, status: "authenticated", isLoading: false });
+    store.getState().logout();
+
+    expect(onLogout).toHaveBeenCalledOnce();
+    expect(onSessionExpired).not.toHaveBeenCalled();
+  });
+
+  it("treats a burst of parallel 401s as the one expiry it is", () => {
+    const storage = makeStorage({ iteamify_token: "t" });
+    const api = makeApi();
+    const onLogout = vi.fn();
+    const store = createAuthStore({ api, storage, onLogout });
+
+    store.setState({ user: fakeUser, status: "authenticated", isLoading: false });
+    store.getState().sessionExpired();
+    store.getState().sessionExpired();
+    store.getState().sessionExpired();
+
+    expect(onLogout).toHaveBeenCalledOnce();
+  });
+
+  it("clears the expired notice once the user signs back in", async () => {
+    const storage = makeStorage();
+    const api = {
+      setToken: vi.fn(),
+    advanceAuthSession: vi.fn(),
+      getMe: vi.fn().mockResolvedValue(fakeUser),
+    } as unknown as ApiClient;
+    const store = createAuthStore({ api, storage });
+
+    store.setState({ user: fakeUser, status: "authenticated", isLoading: false });
+    store.getState().sessionExpired();
+    expect(store.getState().expired).toBe(true);
+
+    await store.getState().loginWithToken("fresh-token");
+
+    expect(store.getState().status).toBe("authenticated");
+    expect(store.getState().expired).toBe(false);
   });
 });

@@ -38,7 +38,7 @@ export const useNavigationStore = create<NavigationState>()(
       },
     }),
     {
-      name: "teamify_navigation",
+      name: "iteamify_navigation",
       storage: createJSONStorage(() => createWorkspaceAwareStorage(defaultStorage)),
       partialize: (state) => ({ lastPath: state.lastPath }),
     },

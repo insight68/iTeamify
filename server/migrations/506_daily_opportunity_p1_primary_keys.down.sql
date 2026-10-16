@@ -1,0 +1,2 @@
+ALTER TABLE daily_opportunity_event DROP CONSTRAINT IF EXISTS daily_opportunity_event_pkey;
+ALTER TABLE daily_opportunity_candidate DROP CONSTRAINT IF EXISTS daily_opportunity_candidate_pkey;

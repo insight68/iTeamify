@@ -1,0 +1,1 @@
+ALTER TABLE workspace_credit_operation_outbox DROP CONSTRAINT IF EXISTS workspace_credit_operation_outbox_primary_key;

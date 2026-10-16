@@ -15,13 +15,14 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { cn } from "@teamify/ui/lib/utils";
-import { Button } from "@teamify/ui/components/ui/button";
+import { cn } from "@iteamify/ui/lib/utils";
+import { copyText } from "@iteamify/ui/lib/clipboard";
+import { Button } from "@iteamify/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
-} from "@teamify/ui/components/ui/dialog";
+} from "@iteamify/ui/components/ui/dialog";
 import { toast } from "sonner";
 import type { DaemonStatus } from "../../../shared/daemon-types";
 import {
@@ -194,15 +195,12 @@ export function DaemonPanel({
 
   const handleCopy = useCallback(async () => {
     const text = filtered.map((l) => l.raw).join("\n");
-    try {
-      await navigator.clipboard.writeText(text);
+    if (await copyText(text)) {
       toast.success(
         `Copied ${filtered.length} line${filtered.length === 1 ? "" : "s"}`,
       );
-    } catch (err) {
-      toast.error("Failed to copy", {
-        description: err instanceof Error ? err.message : String(err),
-      });
+    } else {
+      toast.error("Failed to copy");
     }
   }, [filtered]);
 

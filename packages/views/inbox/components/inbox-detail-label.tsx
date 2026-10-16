@@ -1,10 +1,11 @@
 "use client";
 
-import { STATUS_CONFIG, PRIORITY_CONFIG } from "@teamify/core/issues/config";
-import { useActorName } from "@teamify/core/workspace/hooks";
+import { STATUS_CONFIG, PRIORITY_CONFIG } from "@iteamify/core/issues/config";
+import { formatDateOnly } from "@iteamify/core/issues/date";
+import { useActorName } from "@iteamify/core/workspace/hooks";
 import { StatusIcon, PriorityIcon } from "../../issues/components";
-import type { InboxItem, InboxItemType, IssueStatus, IssuePriority } from "@teamify/core/types";
-import { getQuickCreateFailureDetail } from "./inbox-display";
+import type { InboxItem, InboxItemType, IssueStatus, IssuePriority } from "@iteamify/core/types";
+import { getQuickCreateOutcomeDetail } from "./inbox-display";
 import { useT } from "../../i18n";
 
 // Hook returning the inbox-item type → human label map. Replaces the
@@ -14,10 +15,12 @@ export function useTypeLabels(): Record<InboxItemType, string> {
   const { t } = useT("inbox");
   return {
     issue_assigned: t(($) => $.types.issue_assigned),
+    issue_subscribed: t(($) => $.types.issue_subscribed),
     unassigned: t(($) => $.types.unassigned),
     assignee_changed: t(($) => $.types.assignee_changed),
     status_changed: t(($) => $.types.status_changed),
     priority_changed: t(($) => $.types.priority_changed),
+    start_date_changed: t(($) => $.types.start_date_changed),
     due_date_changed: t(($) => $.types.due_date_changed),
     new_comment: t(($) => $.types.new_comment),
     mentioned: t(($) => $.types.mentioned),
@@ -29,15 +32,15 @@ export function useTypeLabels(): Record<InboxItemType, string> {
     reaction_added: t(($) => $.types.reaction_added),
     quick_create_done: t(($) => $.types.quick_create_done),
     quick_create_failed: t(($) => $.types.quick_create_failed),
+    quick_create_unconfirmed: t(($) => $.types.quick_create_unconfirmed),
+    gmail_analysis: t(($) => $.types.gmail_analysis),
   };
 }
 
+// start_date / due_date are calendar days — format timezone-safely so the day
+// never shifts with the viewer's offset (see @iteamify/core/issues/date).
 function shortDate(dateStr: string): string {
-  if (!dateStr) return "";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  return formatDateOnly(dateStr, { month: "short", day: "numeric" }, "en-US");
 }
 
 export function InboxDetailLabel({ item }: { item: InboxItem }) {
@@ -83,6 +86,10 @@ export function InboxDetailLabel({ item }: { item: InboxItem }) {
       }
       return <span>{typeLabels[item.type]}</span>;
     }
+    case "start_date_changed": {
+      if (details.to) return <span>{t(($) => $.labels.set_start_date_to, { date: shortDate(details.to) })}</span>;
+      return <span>{t(($) => $.labels.removed_start_date)}</span>;
+    }
     case "due_date_changed": {
       if (details.to) return <span>{t(($) => $.labels.set_due_date_to, { date: shortDate(details.to) })}</span>;
       return <span>{t(($) => $.labels.removed_due_date)}</span>;
@@ -102,8 +109,15 @@ export function InboxDetailLabel({ item }: { item: InboxItem }) {
       return <span>{typeLabels[item.type]}</span>;
     }
     case "quick_create_failed": {
-      const detail = getQuickCreateFailureDetail(item);
+      const detail = getQuickCreateOutcomeDetail(item);
       if (detail) return <span>{t(($) => $.labels.failed_with_detail, { detail })}</span>;
+      return <span>{typeLabels[item.type]}</span>;
+    }
+    case "quick_create_unconfirmed": {
+      // Deliberately NOT the failed_with_detail label: the outcome is unknown,
+      // so the detail is shown as-is with no "Failed:" framing.
+      const detail = getQuickCreateOutcomeDetail(item);
+      if (detail) return <span>{detail}</span>;
       return <span>{typeLabels[item.type]}</span>;
     }
     default:

@@ -10,5 +10,40 @@
     "detail_link": "Detail →",
     "more_agents_one": "and {{count}} other agent",
     "more_agents_other": "and {{count}} other agents"
+  },
+  "detail": {
+    "workspace_fallback": "Workspace",
+    "members_breadcrumb": "Members",
+    "breadcrumb_fallback": "Member",
+    "not_found_title": "Member not found",
+    "not_found_description": "This member may have left the workspace.",
+    "open": "View {{name}} details",
+    "manage": "Manage {{name}}",
+    "message": "Message",
+    "tasks": "Tasks",
+    "agents": "Agents",
+    "applications": "Applications",
+    "membership": "Workspace membership",
+    "no_agents": "No visible agents owned by this member",
+    "applications_description": "Services provided by this member in this workspace.",
+    "no_applications": "No additional applications enabled",
+    "no_applications_hint": "A workspace owner or administrator can configure a service for this member.",
+    "unknown_status": "Unknown status"
+  },
+  "list": {
+    "title": "Members",
+    "invitations": "Pending invitations",
+    "search": "Search name or email…",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "all_roles": "All roles",
+    "joined": "Joined",
+    "sort": "Sort members",
+    "loading": "Loading members…",
+    "load_failed": "Could not load members",
+    "retry": "Retry",
+    "no_matches": "No matching members",
+    "no_invitations": "No pending invitations"
   }
 }

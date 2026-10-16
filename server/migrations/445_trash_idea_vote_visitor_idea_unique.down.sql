@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS trash_idea_vote_visitor_idea_uidx;

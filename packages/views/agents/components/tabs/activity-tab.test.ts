@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AgentTask } from "@teamify/core/types";
+import type { AgentTask } from "@iteamify/core/types";
 import {
   deriveAvgDurationLast30d,
   formatDurationMs,

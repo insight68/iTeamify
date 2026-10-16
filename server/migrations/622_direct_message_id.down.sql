@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS direct_message_id_idx;

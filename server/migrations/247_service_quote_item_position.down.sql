@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS service_quote_item_quote_position_uidx;

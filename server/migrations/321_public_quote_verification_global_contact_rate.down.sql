@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS public_quote_verification_global_contact_rate_idx;

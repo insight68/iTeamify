@@ -1,14 +1,78 @@
+import type { AgentTask } from "./agent";
+
+/** A user's pinned "quick agent" for the Chat list top bar. */
+export interface ChatPinnedAgent {
+  agent_id: string;
+  position: number;
+}
+
+/**
+ * Kind of a chat message. Additive (MUL-4351): the server always sends a
+ * concrete value, but treat a missing/unknown value as "message" so an older
+ * server or a future kind never breaks rendering.
+ * - "message"     — an ordinary user/assistant message.
+ * - "no_response" — a completed direct-chat turn that produced no text reply.
+ */
+export type ChatMessageKind = "message" | "no_response";
+
+/** Preview of a session's most recent message, for the IM-style list. */
+export interface ChatLastMessage {
+  content: string;
+  role: "user" | "assistant";
+  created_at: string;
+  /** Present when the last message is a failed assistant reply. */
+  failure_reason?: string | null;
+  /** "message" (default) or "no_response". Optional for older servers. */
+  message_kind?: ChatMessageKind;
+}
+
 export interface ChatSession {
+  container?: import("../session-containers/schemas").SessionContainer;
+  container_has_unread?: boolean;
+  last_activity_at?: string | null;
   id: string;
   workspace_id: string;
   agent_id: string;
   creator_id: string;
+  /** Durable project context for every turn in this session. Null when the
+   *  conversation uses workspace context only; optional for older servers. */
+  project_id?: string | null;
   title: string;
   status: "active" | "archived";
-  /** True when the session has any unread assistant replies. List-only. */
+  /** True when the session has any unread assistant replies. List-only.
+   *  Convenience for `unread_count > 0`. */
   has_unread: boolean;
+  /** Number of unread assistant messages (after the read cursor). List-only;
+   *  optional so older clients / non-list payloads stay valid. */
+  unread_count?: number;
+  /** Latest message in the session, or null when empty. List-only. */
+  last_message?: ChatLastMessage | null;
+  /** True when the user has pinned this chat to the top of the list.
+   *  Optional so older clients / non-list payloads stay valid. */
+  pinned?: boolean;
   created_at: string;
   updated_at: string;
+}
+
+/** A registry-backed application record explicitly selected for one Chat. */
+export interface ChatContextResource {
+  id: string;
+  resource_type: string;
+  resource_id: string;
+  /** Optimistic-concurrency hint captured when the record was selected. */
+  resource_version?: number;
+  label?: string;
+  source: "page" | "user" | "system";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpsertChatContextResourceInput {
+  resource_type: string;
+  resource_id: string;
+  resource_version?: number;
+  label?: string;
+  source?: "page" | "user";
 }
 
 export interface PendingChatTaskItem {
@@ -21,6 +85,15 @@ export interface PendingChatTasksResponse {
   tasks: PendingChatTaskItem[];
 }
 
+/**
+ * Boolean fast-path payload for the FAB "running" indicator — returned by
+ * GET /api/chat/pending-tasks/has-any. The FAB only needs to know whether any
+ * in-flight chat task exists, so it avoids fetching the full task list.
+ */
+export interface HasPendingChatTasksResponse {
+  has_pending: boolean;
+}
+
 export interface ChatMessage {
   id: string;
   chat_session_id: string;
@@ -28,6 +101,14 @@ export interface ChatMessage {
   content: string;
   task_id: string | null;
   created_at: string;
+  /**
+   * Attachments linked to this message via the attachment table's
+   * chat_message_id FK. Populated by ListChatMessages. UI renders these
+   * as file/image cards inside the bubble; the markdown URL inline in
+   * `content` may have an expiring signature, while attachment metadata
+   * here is stable and the source of truth for click-time download.
+   */
+  attachments?: import("./attachment").Attachment[];
   /**
    * When set, this is an assistant message synthesized by the server's
    * FailTask fallback (mirrors the issue path's failure system comment).
@@ -45,6 +126,24 @@ export interface ChatMessage {
    * and on legacy assistant messages predating migration 063.
    */
   elapsed_ms?: number | null;
+  /**
+   * "message" (default) or "no_response" — a completed direct-chat turn that
+   * produced no text reply (MUL-4351). Optional/additive: absent on older
+   * servers and on user messages; treat a missing value as "message".
+   */
+  message_kind?: ChatMessageKind;
+}
+
+export interface ChatMessagesCursor {
+  created_at: string;
+  id: string;
+}
+
+export interface ChatMessagesPage {
+  messages: ChatMessage[];
+  limit: number;
+  has_more: boolean;
+  next_cursor?: ChatMessagesCursor | null;
 }
 
 export interface SendChatMessageResponse {
@@ -57,6 +156,55 @@ export interface SendChatMessageResponse {
    * timer "snaps backwards" later when WS events update the cache.
    */
   created_at: string;
+  /**
+   * Attachment ids the server actually bound to this message. The client
+   * diffs these against the ids it requested to warn when an attachment
+   * silently failed to bind — no extra fetch needed. Optional for forward
+   * compat with servers that predate the field.
+   */
+  attachment_ids?: string[];
+}
+
+export interface CancelledChatMessage {
+  chat_session_id: string;
+  message_id: string;
+  content: string;
+  restore_to_input: boolean;
+  /**
+   * Attachments detached from the deleted message so a restored draft can
+   * re-bind them on re-send. Absent on servers that predate the field.
+   */
+  attachments?: import("./attachment").Attachment[];
+}
+
+export interface CancelTaskResponse extends AgentTask {
+  cancelled_chat_message?: CancelledChatMessage;
+}
+
+/**
+ * One durable draft restore from GET /api/chat/sessions/{id}/draft-restores
+ * (#5219): a deferred cancellation settled as empty-transcript after the
+ * cancel HTTP response had returned, so the deleted prompt is held
+ * server-side until the creator's client applies it to the composer and
+ * consumes it (DELETE, idempotent). The chat:cancel_finalized event is only
+ * an invalidation hint for this fetch.
+ */
+export interface ChatDraftRestore {
+  /** The deleted user chat message id — stable dedup and consume key. */
+  id: string;
+  chat_session_id: string;
+  task_id?: string;
+  content: string;
+  /**
+   * Attachments detached from the deleted message so a restored draft can
+   * re-bind them on re-send.
+   */
+  attachments?: import("./attachment").Attachment[];
+  created_at?: string;
+}
+
+export interface ChatDraftRestoresResponse {
+  restores: ChatDraftRestore[];
 }
 
 /**

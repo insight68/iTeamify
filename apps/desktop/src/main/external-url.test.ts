@@ -9,7 +9,7 @@ import { isSafeExternalHttpUrl, openExternalSafely } from "./external-url";
 
 describe("isSafeExternalHttpUrl", () => {
   it("allows http and https URLs", () => {
-    expect(isSafeExternalHttpUrl("https://teamify.world")).toBe(true);
+    expect(isSafeExternalHttpUrl("https://aurocreator.com")).toBe(true);
     expect(isSafeExternalHttpUrl("http://localhost:3000/auth")).toBe(true);
   });
 
@@ -60,8 +60,8 @@ describe("openExternalSafely", () => {
   });
 
   it("forwards http/https URLs to shell.openExternal", () => {
-    openExternalSafely("https://teamify.world");
-    expect(shell.openExternal).toHaveBeenCalledWith("https://teamify.world");
+    openExternalSafely("https://aurocreator.com");
+    expect(shell.openExternal).toHaveBeenCalledWith("https://aurocreator.com");
   });
 
   it("does not call shell.openExternal for rejected schemes", () => {

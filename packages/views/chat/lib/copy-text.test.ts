@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import type { ChatMessage } from "@teamify/core/types";
-import type { ChatTimelineItem } from "@teamify/core/chat";
+import type { ChatMessage } from "@iteamify/core/types";
+import type { ChatTimelineItem } from "@iteamify/core/chat";
 import { splitTimeline, extractCopyText } from "./copy-text";
 
 const text = (seq: number, content: string): ChatTimelineItem => ({
@@ -35,6 +35,7 @@ describe("splitTimeline", () => {
   it("treats an all-text timeline as final (no fold)", () => {
     const items = [text(1, "hello"), text(2, "world")];
     expect(splitTimeline(items)).toEqual({
+      preface: [],
       middle: [],
       final: items,
     });
@@ -43,6 +44,7 @@ describe("splitTimeline", () => {
   it("treats an all-non-text timeline as middle with no final", () => {
     const items = [thinking(1), tool(2), thinking(3)];
     const out = splitTimeline(items);
+    expect(out.preface).toEqual([]);
     expect(out.middle).toEqual(items);
     expect(out.final).toEqual([]);
   });
@@ -54,6 +56,7 @@ describe("splitTimeline", () => {
     const u2 = tool(4);
     const f1 = text(5, "final answer");
     const out = splitTimeline([t1, u1, x1, u2, f1]);
+    expect(out.preface).toEqual([]);
     expect(out.middle).toEqual([t1, u1, x1, u2]);
     expect(out.final).toEqual([f1]);
   });
@@ -67,11 +70,12 @@ describe("splitTimeline", () => {
     expect(out.final).toEqual([f1, f2]);
   });
 
-  it("silently discards preface (text before first non-text)", () => {
+  it("collects leading text into preface", () => {
     const p = text(1, "preface");
     const u = tool(2);
     const f = text(3, "final");
     const out = splitTimeline([p, u, f]);
+    expect(out.preface).toEqual([p]);
     expect(out.middle).toEqual([u]);
     expect(out.final).toEqual([f]);
   });
@@ -100,7 +104,7 @@ describe("extractCopyText", () => {
     ).toBe("final answer");
   });
 
-  it("silently discards preface and returns only final", () => {
+  it("includes preface and final, excludes middle text", () => {
     expect(
       extractCopyText(message(""), [
         text(1, "preface"),
@@ -109,7 +113,7 @@ describe("extractCopyText", () => {
         tool(4),
         text(5, "final"),
       ]),
-    ).toBe("final");
+    ).toBe("preface\n\nfinal");
   });
 
   it("falls back to message.content when timeline has no text items", () => {

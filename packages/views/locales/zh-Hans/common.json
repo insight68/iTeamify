@@ -1,7 +1,73 @@
 {
+  "avatar_upload": {
+    "change": "更换头像",
+    "remove": "移除",
+    "select_image": "请选择一张图片文件。",
+    "updated": "头像已更新",
+    "failed": "头像上传失败"
+  },
+  "avatar_crop": {
+    "title": "编辑头像",
+    "zoom": "缩放",
+    "zoom_in": "放大",
+    "zoom_out": "缩小",
+    "rotate": "旋转",
+    "reset": "重置",
+    "cancel": "取消",
+    "apply": "保存",
+    "uploading": "上传中…",
+    "loading": "加载中…",
+    "load_failed": "图片加载失败"
+  },
+  "color_picker": {
+    "saturation": "饱和度与明度",
+    "hue": "色相",
+    "hex": "十六进制颜色",
+    "eyedropper": "从屏幕取色",
+    "presets": "预设颜色",
+    "random": "随机"
+  },
   "save": "保存",
   "cancel": "取消",
   "delete": "删除",
   "confirm": "确认",
-  "loading": "加载中..."
+  "loading": "加载中…",
+  "time": {
+    "just_now": "刚刚",
+    "minutes_ago": "{{count}} 分钟前",
+    "hours_ago": "{{count}} 小时前",
+    "days_ago": "{{count}} 天前"
+  },
+  "lark_bind": {
+    "page_title": "绑定飞书账号",
+    "redeeming": "正在验证绑定链接…",
+    "needs_auth_description": "登录 iteamify 后才能完成绑定。此链接会把你的飞书账号绑定到当前登录的 iteamify 账号。",
+    "sign_in": "登录",
+    "done_title": "绑定成功",
+    "done_description": "以后在飞书中向机器人发送的消息会直接交给已绑定的智能体。现在可以关闭此页面。",
+    "error_title": "绑定未完成",
+    "error_admin_hint": "如果反复失败，请让工作区管理员从飞书重新发送绑定链接。",
+    "error_missing_token": "绑定链接不完整。请让机器人在飞书中重新发送。",
+    "error_expired": "绑定链接无效或已过期（有效期 15 分钟）。请让机器人重新发送一份。",
+    "error_already_bound": "这个飞书账号已绑定其他 iteamify 账号。如需更换，请先解除原绑定。",
+    "error_not_member": "你登录的 iteamify 账号不是当前工作区成员。",
+    "error_unknown": "绑定失败，请稍后重试。若仍然失败，请联系工作区管理员。"
+  },
+  "slack_bind": {
+    "page_title": "关联 Slack 账号",
+    "redeeming": "正在关联账号…",
+    "needs_auth_description": "登录 iteamify 后才能完成关联。此链接会把你的 Slack 账号关联到当前登录的 iteamify 账号。",
+    "sign_in": "登录",
+    "done_title": "关联成功",
+    "done_description": "以后在 Slack 中向机器人发送的消息会直接交给已绑定的智能体。现在可以关闭此页面。",
+    "error_title": "关联未完成",
+    "error_admin_hint": "如果反复失败，请在 Slack 重新向机器人发消息以获取新的链接。",
+    "error_missing_token": "链接缺少 token。请在 Slack 重新向机器人发消息以获取新的链接。",
+    "error_expired": "链接无效或已过期（有效期 15 分钟）。请重新向机器人发消息获取新的链接。",
+    "error_already_bound": "这个 Slack 账号已关联其他 iteamify 账号。如需更换，请先解除原关联。",
+    "error_not_member": "你登录的 iteamify 账号不是当前工作区成员。",
+    "error_unknown": "关联失败，请稍后重试。若仍然失败，请联系工作区管理员。"
+  },
+  "feature_load_failed": "无法打开，请重试。",
+  "retry": "重试"
 }

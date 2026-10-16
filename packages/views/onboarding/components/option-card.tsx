@@ -1,7 +1,7 @@
 "use client";
 
-import { Input } from "@teamify/ui/components/ui/input";
-import { cn } from "@teamify/ui/lib/utils";
+import { Input } from "@iteamify/ui/components/ui/input";
+import { cn } from "@iteamify/ui/lib/utils";
 import { useT } from "../../i18n";
 
 const OTHER_INPUT_MAX_LENGTH = 80;

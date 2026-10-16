@@ -1,0 +1,39 @@
+{
+  "duration_seconds": 52.795,
+  "width": 1920,
+  "height": 1080,
+  "capture": "Live browser screenshots sampled during actual UI actions; variable source frame rate, encoded at 30 fps.",
+  "audio": "Synthesized English narration, Samantha.",
+  "limitations": [
+    "Current implementation requests gmail.readonly.",
+    "OAuth consent not completed.",
+    "No Gmail send action is implemented or demonstrated."
+  ],
+  "redaction": "One unrelated signed-in Google account was covered with an explicit label.",
+  "segments": [
+    {
+      "name": "01-connections",
+      "start": 0.0,
+      "duration": 8.158,
+      "captured_frames": 36
+    },
+    {
+      "name": "02-open-google",
+      "start": 8.158,
+      "duration": 13.207,
+      "captured_frames": 14
+    },
+    {
+      "name": "03-google-check",
+      "start": 21.365000000000002,
+      "duration": 10.014,
+      "captured_frames": 24
+    },
+    {
+      "name": "04-return",
+      "start": 31.379,
+      "duration": 21.416,
+      "captured_frames": 36
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "page": {
+    "title": "Knowledge",
+    "description": "The governed source of truth shared by your team and agents"
+  },
+  "hero": {
+    "shared_truth": "Shared knowledge layer",
+    "production_version": "Production v{{version}}",
+    "not_published": "No production release",
+    "title": "Turn what your business knows into context every agent can safely use.",
+    "description": "Draft with humans or AI, review changes, and publish immutable releases. Production workflows only consume an approved snapshot."
+  },
+  "business": {
+    "title": "Business context",
+    "description": "Positioning, offers, ICPs, buyer personas, exclusions, proof, and canonical sources.",
+    "readiness": "{{percent}}% ready",
+    "completeness": "Production readiness",
+    "offers": "Offers",
+    "audiences": "Audiences",
+    "personas": "Personas",
+    "evidence": "Evidence",
+    "draft_policy": "Draft changes never reach production agents"
+  },
+  "contract": {
+    "title": "Knowledge contract",
+    "description": "How shared context moves from conversation to production",
+    "propose_title": "Draft or propose",
+    "propose_description": "People edit fields directly; AI submits typed, reviewable proposals.",
+    "review_title": "Review against a revision",
+    "review_description": "Concurrent edits are detected before a change can be applied.",
+    "publish_title": "Publish a release",
+    "publish_description": "Owner or Admin creates an immutable production snapshot.",
+    "consume_title": "Agents consume the snapshot",
+    "consume_description": "Agents use the published business context."
+  },
+  "signals": {
+    "releases_title": "Releases",
+    "releases_empty": "Publish the first approved business context.",
+    "proposals_title": "Pending proposals",
+    "proposals_description": "AI suggestions wait here until a human accepts or rejects them.",
+    "sources_title": "Proof and sources",
+    "sources_description": "Evidence makes positioning and targeting decisions traceable."
+  },
+  "actions": {
+    "open_business": "Open business context",
+    "manage_business": "Manage business context",
+    "retry": "Retry"
+  },
+  "error": {
+    "title": "Knowledge is unavailable",
+    "description": "Check your connection and try again."
+  }
+}

@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS gmail_message_connection_analysis_idx;

@@ -2,23 +2,23 @@
 
 import { useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@teamify/core/api";
-import { useAuthStore } from "@teamify/core/auth";
+import { api } from "@iteamify/core/api";
+import { useAuthStore } from "@iteamify/core/auth";
 import {
   myInvitationListOptions,
   workspaceKeys,
   workspaceListOptions,
-} from "@teamify/core/workspace/queries";
-import { paths } from "@teamify/core/paths";
-import type { Invitation } from "@teamify/core/types";
+} from "@iteamify/core/workspace/queries";
+import { paths } from "@iteamify/core/paths";
+import type { Invitation } from "@iteamify/core/types";
 import { useNavigation } from "../navigation";
 import { useLogout } from "../auth";
 import { DragStrip } from "../platform";
 import { useT } from "../i18n";
-import { Button } from "@teamify/ui/components/ui/button";
-import { Card, CardContent } from "@teamify/ui/components/ui/card";
-import { Checkbox } from "@teamify/ui/components/ui/checkbox";
-import { Skeleton } from "@teamify/ui/components/ui/skeleton";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { Card, CardContent } from "@iteamify/ui/components/ui/card";
+import { Checkbox } from "@iteamify/ui/components/ui/checkbox";
+import { Skeleton } from "@iteamify/ui/components/ui/skeleton";
 import { LogOut, Mail, Users } from "lucide-react";
 
 /**

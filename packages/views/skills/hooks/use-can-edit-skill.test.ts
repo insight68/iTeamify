@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { Skill } from "@teamify/core/types";
+import type { Skill } from "@iteamify/core/types";
 import { canEditSkill } from "./use-can-edit-skill";
 
 function makeSkill(createdBy: string | null): Skill {

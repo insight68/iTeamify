@@ -17,36 +17,37 @@ const encode = (id: string) => encodeURIComponent(id);
 function workspaceScoped(slug: string) {
   const ws = `/${encode(slug)}`;
   return {
-    root: () => `${ws}/issues`,
+    root: () => ws,
+    usage: () => `${ws}/usage`,
+    billing: () => `${ws}/billing`,
     issues: () => `${ws}/issues`,
     issueDetail: (id: string) => `${ws}/issues/${encode(id)}`,
     projects: () => `${ws}/projects`,
     projectDetail: (id: string) => `${ws}/projects/${encode(id)}`,
     autopilots: () => `${ws}/autopilots`,
     autopilotDetail: (id: string) => `${ws}/autopilots/${encode(id)}`,
+    knowledge: () => `${ws}/knowledge`,
+    business: () => `${ws}/business`,
     agents: () => `${ws}/agents`,
+    newAgent: () => `${ws}/agents/new`,
     agentDetail: (id: string) => `${ws}/agents/${encode(id)}`,
+    members: () => `${ws}/members`,
+    memberDetail: (id: string) => `${ws}/members/${encode(id)}`,
+    squads: () => `${ws}/squads`,
+    squadDetail: (id: string) => `${ws}/squads/${encode(id)}`,
     inbox: () => `${ws}/inbox`,
+    chat: () => `${ws}/chat`,
     myIssues: () => `${ws}/my-issues`,
     runtimes: () => `${ws}/runtimes`,
     runtimeDetail: (id: string) => `${ws}/runtimes/${encode(id)}`,
+    runtimeSettings: (machineId: string, runtimeId: string) =>
+      `${ws}/runtimes/${encode(machineId)}/runtime/${encode(runtimeId)}`,
+    applications: () => `${ws}/applications`,
     skills: () => `${ws}/skills`,
     skillDetail: (id: string) => `${ws}/skills/${encode(id)}`,
-    chats: () => `${ws}/chats`,
-    chatsWithSession: (id: string) => `${ws}/chats?session=${encode(id)}`,
-    chatsWithAgent: (id: string) => `${ws}/chats?agent=${encode(id)}`,
     settings: () => `${ws}/settings`,
-    org: () => `${ws}/org`,
-    datasources: () => `${ws}/datasources`,
-    reconciliation: () => `${ws}/reconciliation`,
-    reconciliationDetail: (batchNo: string) => `${ws}/reconciliation/${encode(batchNo)}`,
-    supplyReconciliation: () => `${ws}/supply-reconciliation`,
-    supplyReconciliationBills: () => `${ws}/supply-reconciliation/bills`,
-    supplyReconciliationResults: () => `${ws}/supply-reconciliation/results`,
-    supplyReconciliationResult: (resultId: string) => `${ws}/supply-reconciliation/results/${encode(resultId)}`,
-    inventory: () => `${ws}/inventory`,
-    inventoryMonitor: () => `${ws}/inventory/monitor`,
-    productCategories: () => `${ws}/product-categories`,
+    connections: () => `${ws}/connections`,
+    attachmentPreview: (id: string) => `${ws}/attachments/${encode(id)}/preview`,
   };
 }
 
@@ -58,8 +59,12 @@ export const paths = {
   newWorkspace: () => "/workspaces/new",
   invite: (id: string) => `/invite/${encode(id)}`,
   invitations: () => "/invitations",
-  onboarding: () => "/onboarding",
-  resetPassword: () => "/reset-password",
+  onboarding: (step?: import("../onboarding/types").OnboardingStep, workspaceId?: string) => {
+    const query = new URLSearchParams();
+    if (step) query.set("step", step);
+    if (workspaceId) query.set("workspace", workspaceId);
+    return `/onboarding${query.size ? `?${query}` : ""}`;
+  },
   authCallback: () => "/auth/callback",
   root: () => "/",
 };

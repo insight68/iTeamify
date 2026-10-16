@@ -5,88 +5,66 @@ import {
   Check,
   Clock,
   Copy,
+  FileText,
   Link2,
   Loader2,
   MessageSquare,
   Plus,
   SearchIcon,
-  Inbox,
-  CircleUser,
-  ListTodo,
-  FolderKanban,
-  Bot,
+  ListChevronsDownUp,
+  ListChevronsUpDown,
   Monitor,
   Moon,
   Sun,
-  BookOpenText,
-  User,
-  Building2,
   type LucideIcon,
 } from "lucide-react";
 import { Command as CommandPrimitive } from "cmdk";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { SearchIssueResult, SearchProjectResult } from "@teamify/core/types";
-import { api } from "@teamify/core/api";
-import { useRecentIssuesStore } from "@teamify/core/issues/stores";
-import { issueDetailOptions } from "@teamify/core/issues/queries";
-import { useWorkspaceId } from "@teamify/core";
-import { paths, useCurrentWorkspace, useWorkspacePaths } from "@teamify/core/paths";
-import type { WorkspacePaths } from "@teamify/core/paths";
-import { useModalStore } from "@teamify/core/modals";
-import { workspaceListOptions } from "@teamify/core/workspace/queries";
+import type {
+  MemberWithUser,
+  SearchIssueResult,
+  SearchProjectResult,
+} from "@iteamify/core/types";
+import { api } from "@iteamify/core/api";
+import {
+  openCreateIssueWithPreference,
+  selectRecentIssues,
+  useCommentCollapseStore,
+  useRecentIssuesStore,
+  useResolvedExpandStore,
+} from "@iteamify/core/issues/stores";
+import { issueDetailOptions, issueTimelineOptions } from "@iteamify/core/issues/queries";
+import { useWorkspaceId } from "@iteamify/core";
+import { useWorkspacePaths } from "@iteamify/core/paths";
+import type { WorkspacePaths } from "@iteamify/core/paths";
+import { useModalStore } from "@iteamify/core/modals";
+import { createShortcutChord } from "@iteamify/core/shortcuts";
+import { memberListOptions } from "@iteamify/core/workspace/queries";
+import { resolvePublicFileUrl } from "@iteamify/core/workspace/avatar-url";
 import { StatusIcon } from "../issues/components";
+import { resolvedThreadRootIds, rootCommentIds } from "../issues/components/thread-utils";
 import { ProjectIcon } from "../projects/components/project-icon";
-import { STATUS_CONFIG } from "@teamify/core/issues/config";
-import { PROJECT_STATUS_CONFIG } from "@teamify/core/projects/config";
-import type { ProjectStatus } from "@teamify/core/types";
+import { routeIconForPath } from "../layout/route-icon-components";
+import { PROJECT_STATUS_CONFIG } from "@iteamify/core/projects/config";
+import type { ProjectStatus } from "@iteamify/core/types";
+import { ActorAvatar } from "../common/actor-avatar";
+import { ShortcutKeycaps } from "../common/shortcut-keycaps";
+import { ActorAvatar as ActorAvatarBase } from "@iteamify/ui/components/common/actor-avatar";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@teamify/ui/components/ui/dialog";
-import { useTheme } from "@teamify/ui/components/common/theme-provider";
+} from "@iteamify/ui/components/ui/dialog";
+import { useTheme } from "@iteamify/ui/components/common/theme-provider";
+import { copyText } from "@iteamify/ui/lib/clipboard";
 import { useNavigation } from "../navigation";
 import { useT } from "../i18n";
+import { matchesPinyin } from "../editor/extensions/pinyin-match";
+import { HighlightText } from "./highlight-text";
 import { useSearchStore } from "./search-store";
-
-function HighlightText({ text, query }: { text: string; query: string }) {
-  const parts = useMemo(() => {
-    if (!query.trim()) return [{ text, highlight: false }];
-    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`(${escaped})`, "gi");
-    const result: { text: string; highlight: boolean }[] = [];
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        result.push({ text: text.slice(lastIndex, match.index), highlight: false });
-      }
-      result.push({ text: match[0], highlight: true });
-      lastIndex = regex.lastIndex;
-    }
-    if (lastIndex < text.length) {
-      result.push({ text: text.slice(lastIndex), highlight: false });
-    }
-    return result.length > 0 ? result : [{ text, highlight: false }];
-  }, [text, query]);
-
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.highlight ? (
-          <mark key={i} className="bg-yellow-200 dark:bg-yellow-900/60 text-inherit rounded-sm">
-            {part.text}
-          </mark>
-        ) : (
-          part.text
-        ),
-      )}
-    </>
-  );
-}
 
 // Nav items reference WorkspacePaths method names so they can be resolved
 // against the current workspace slug at render time (see SearchCommand body).
@@ -101,14 +79,53 @@ type NavKey =
   | "skills"
   | "settings";
 
+// No `icon` field: like the sidebar nav, a page's icon is derived from its
+// destination path via routeIconForPath, so all navigation surfaces show the
+// same icon for the same route.
 interface NavPage {
   key: NavKey;
   label: string;
-  icon: LucideIcon;
   keywords: string[];
 }
 
 type ThemeValue = "light" | "dark" | "system";
+
+function memberInitials(name: string) {
+  return name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function matchesMember(member: MemberWithUser, query: string) {
+  return (
+    member.name.toLowerCase().includes(query) ||
+    member.email.toLowerCase().includes(query) ||
+    (query.length >= 3 && member.role.startsWith(query)) ||
+    matchesPinyin(member.name, query)
+  );
+}
+
+function IssueAssigneeAvatar({
+  assigneeType,
+  assigneeId,
+}: {
+  assigneeType?: string | null;
+  assigneeId?: string | null;
+}) {
+  if (!assigneeType || !assigneeId) return null;
+  return (
+    <ActorAvatar
+      actorType={assigneeType}
+      actorId={assigneeId}
+      size="sm"
+      profileLink={false}
+      className="shrink-0"
+    />
+  );
+}
 
 interface CommandItem {
   key: string;
@@ -126,25 +143,24 @@ interface SearchResults {
 
 export function SearchCommand() {
   const { t } = useT("search");
-  const navPages = useMemo<NavPage[]>(() => [
-    { key: "inbox", label: t(($) => $.pages.inbox), icon: Inbox, keywords: ["inbox", "notifications", "事项进度"] },
-    { key: "myIssues", label: t(($) => $.pages.my_issues), icon: CircleUser, keywords: ["my", "issues", "assigned", "我的"] },
-    { key: "issues", label: t(($) => $.pages.issues), icon: ListTodo, keywords: ["issues", "tasks", "bugs"] },
-    { key: "projects", label: t(($) => $.pages.projects), icon: FolderKanban, keywords: ["projects", "kanban", "项目"] },
-    { key: "agents", label: t(($) => $.pages.agents), icon: Bot, keywords: ["agents", "bots", "ai"] },
-    { key: "runtimes", label: t(($) => $.pages.runtimes), icon: Monitor, keywords: ["runtimes", "environments"] },
-    { key: "skills", label: t(($) => $.pages.skills), icon: BookOpenText, keywords: ["skills", "library"] },
-    { key: "settings", label: t(($) => $.pages.settings), icon: User, keywords: ["settings", "config", "preferences", "profile", "我的信息"] },
-  ], [t]);
+  const navPages: NavPage[] = [
+    { key: "inbox", label: t(($) => $.pages.inbox), keywords: ["inbox", "notifications", "收件箱"] },
+    { key: "myIssues", label: t(($) => $.pages.my_issues), keywords: ["my", "issues", "assigned", "我的"] },
+    { key: "issues", label: t(($) => $.pages.issues), keywords: ["issues", "tasks", "bugs"] },
+    { key: "projects", label: t(($) => $.pages.projects), keywords: ["projects", "kanban", "项目"] },
+    { key: "agents", label: t(($) => $.pages.agents), keywords: ["agents", "bots", "ai"] },
+    { key: "runtimes", label: t(($) => $.pages.runtimes), keywords: ["runtimes", "environments"] },
+    { key: "skills", label: t(($) => $.pages.skills), keywords: ["skills", "library"] },
+    { key: "settings", label: t(($) => $.pages.settings), keywords: ["settings", "config", "preferences", "设置"] },
+  ];
   const { push, pathname, getShareableUrl } = useNavigation();
   const open = useSearchStore((s) => s.open);
   const setOpen = useSearchStore((s) => s.setOpen);
-  const recentItems = useRecentIssuesStore((s) => s.items);
   const wsId = useWorkspaceId();
+  const recentItems = useRecentIssuesStore(selectRecentIssues(wsId));
   const p: WorkspacePaths = useWorkspacePaths();
   const { theme, setTheme } = useTheme();
-  const currentWorkspace = useCurrentWorkspace();
-  const { data: workspaces = [] } = useQuery(workspaceListOptions());
+  const { data: members = [] } = useQuery(memberListOptions(wsId));
 
   // Resolve each recent issue via its cached detail entry. Recent items are
   // typically already in the detail cache because the user has opened them;
@@ -173,7 +189,7 @@ export function SearchCommand() {
         page.label.toLowerCase().includes(q) ||
         page.keywords.some((kw) => kw.includes(q)),
     );
-  }, [query, navPages]);
+  }, [query]);
 
   // Detect if current route is an issue detail page — /{slug}/issues/{id}.
   // Falls back to null on any other route; used to gate issue-specific commands.
@@ -186,6 +202,7 @@ export function SearchCommand() {
     ...issueDetailOptions(wsId, currentIssueId ?? ""),
     enabled: !!currentIssueId,
   });
+  const queryClient = useQueryClient();
 
   const commands = useMemo<CommandItem[]>(() => {
     const activeThemeCheck = (value: ThemeValue) =>
@@ -203,7 +220,7 @@ export function SearchCommand() {
         icon: Plus,
         keywords: ["new", "issue", "create", "add"],
         onSelect: () => {
-          useModalStore.getState().open("quick-create-issue");
+          openCreateIssueWithPreference();
           setOpen(false);
         },
       },
@@ -219,7 +236,7 @@ export function SearchCommand() {
       },
     ];
 
-    if (currentIssue) {
+    if (currentIssueId && currentIssue) {
       const identifier = currentIssue.identifier;
       items.push(
         {
@@ -228,8 +245,9 @@ export function SearchCommand() {
           icon: Link2,
           keywords: ["copy", "link", "share", "url", identifier.toLowerCase()],
           onSelect: () => {
-            void navigator.clipboard.writeText(getShareableUrl(pathname));
-            toast.success(t(($) => $.toast.link_copied));
+            void copyText(getShareableUrl(pathname)).then((ok) => {
+              if (ok) toast.success(t(($) => $.toast.link_copied));
+            });
             setOpen(false);
           },
         },
@@ -239,8 +257,49 @@ export function SearchCommand() {
           icon: Copy,
           keywords: ["copy", "id", "identifier", identifier.toLowerCase()],
           onSelect: () => {
-            void navigator.clipboard.writeText(identifier);
-            toast.success(t(($) => $.toast.copied_identifier, { identifier }));
+            void copyText(identifier).then((ok) => {
+              if (ok) toast.success(t(($) => $.toast.copied_identifier, { identifier }));
+            });
+            setOpen(false);
+          },
+        },
+        {
+          key: "fold-all-comments",
+          label: t(($) => $.commands.fold_all_comments),
+          icon: ListChevronsDownUp,
+          keywords: ["fold", "collapse", "comments", "收起", "折叠", "评论"],
+          onSelect: () => {
+            // The timeline is already cached whenever the issue page has
+            // rendered; ensureQueryData only fetches on a cold cache. If it
+            // still can't load, no comments are on screen — dropping the
+            // action matches the visible state.
+            void queryClient
+              .ensureQueryData(issueTimelineOptions(currentIssueId))
+              .then((entries) => {
+                useCommentCollapseStore
+                  .getState()
+                  .collapseAll(currentIssueId, rootCommentIds(entries));
+                useResolvedExpandStore.getState().collapseAll(currentIssueId);
+              })
+              .catch(() => {});
+            setOpen(false);
+          },
+        },
+        {
+          key: "unfold-all-comments",
+          label: t(($) => $.commands.unfold_all_comments),
+          icon: ListChevronsUpDown,
+          keywords: ["unfold", "expand", "comments", "展开", "评论"],
+          onSelect: () => {
+            void queryClient
+              .ensureQueryData(issueTimelineOptions(currentIssueId))
+              .then((entries) => {
+                useCommentCollapseStore.getState().expandAll(currentIssueId);
+                useResolvedExpandStore
+                  .getState()
+                  .expandAll(currentIssueId, resolvedThreadRootIds(entries));
+              })
+              .catch(() => {});
             setOpen(false);
           },
         },
@@ -284,7 +343,7 @@ export function SearchCommand() {
     );
 
     return items;
-  }, [currentIssue, getShareableUrl, pathname, setOpen, setTheme, theme, t]);
+  }, [currentIssue, currentIssueId, getShareableUrl, pathname, queryClient, setOpen, setTheme, theme, t]);
 
   const filteredCommands = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -299,35 +358,24 @@ export function SearchCommand() {
     );
   }, [commands, query]);
 
-  // Only show workspaces different from the current one, and only after the
-  // user types >=2 chars — one char would match everything (e.g. "w").
-  const filteredWorkspaces = useMemo(() => {
+  const filteredMembers = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    const others = workspaces.filter((w) => w.id !== currentWorkspace?.id);
-    const wantsAll =
-      q.length >= 2 && ("workspace".startsWith(q) || "switch".startsWith(q));
-    return others.filter(
-      (w) =>
-        wantsAll ||
-        w.name.toLowerCase().includes(q) ||
-        w.slug.toLowerCase().includes(q),
-    );
-  }, [workspaces, currentWorkspace?.id, query]);
+    const wantsAllMembers =
+      q.length >= 3 &&
+      ("members".startsWith(q) ||
+        "people".startsWith(q) ||
+        "users".startsWith(q) ||
+        "team".startsWith(q));
+    return members
+      .filter((member) => wantsAllMembers || matchesMember(member, q))
+      .slice(0, 10);
+  }, [members, query]);
 
-  const hasResults = results.issues.length > 0 || results.projects.length > 0;
-
-  // Global Cmd+K / Ctrl+K shortcut
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        useSearchStore.getState().toggle();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  const hasResults =
+    results.issues.length > 0 ||
+    results.projects.length > 0 ||
+    filteredMembers.length > 0;
 
   // Close on single ESC — capture phase fires before base-ui Dialog's handlers
   useEffect(() => {
@@ -433,12 +481,12 @@ export function SearchCommand() {
     [push, setOpen, p],
   );
 
-  const handleSwitchWorkspace = useCallback(
-    (slug: string) => {
-      push(paths.workspace(slug).issues());
+  const handleMemberSelect = useCallback(
+    (userId: string) => {
+      push(p.memberDetail(userId));
       setOpen(false);
     },
-    [push, setOpen],
+    [push, setOpen, p],
   );
 
   return (
@@ -465,11 +513,19 @@ export function SearchCommand() {
               placeholder={t(($) => $.placeholder)}
               value={query}
               onValueChange={handleValueChange}
+              onKeyDown={(e) => {
+                // cmdk's root handler intercepts Home/End for list navigation;
+                // stop propagation so the browser moves the text caret instead.
+                if (e.key === "Home" || e.key === "End") {
+                  e.stopPropagation();
+                }
+              }}
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
-            <kbd className="hidden shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline">
-              ESC
-            </kbd>
+            <ShortcutKeycaps
+              shortcut={createShortcutChord("Escape")}
+              className="hidden shrink-0 sm:inline-flex"
+            />
           </div>
 
           {/* Results list */}
@@ -480,19 +536,22 @@ export function SearchCommand() {
                 <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
                   {t(($) => $.groups.pages)}
                 </div>
-                {filteredPages.map((page) => (
+                {filteredPages.map((page) => {
+                  const PageIcon = routeIconForPath(p[page.key]());
+                  return (
                   <CommandPrimitive.Item
                     key={page.key}
                     value={`page:${page.key}`}
                     onSelect={() => handlePageSelect(page.key)}
                     className="flex cursor-default select-none items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-accent"
                   >
-                    <page.icon className="size-4 shrink-0 text-muted-foreground" />
+                    <PageIcon className="size-4 shrink-0 text-muted-foreground" />
                     <span className="truncate">
                       <HighlightText text={page.label} query={query} />
                     </span>
                   </CommandPrimitive.Item>
-                ))}
+                  );
+                })}
               </CommandPrimitive.Group>
             )}
 
@@ -519,26 +578,32 @@ export function SearchCommand() {
               </CommandPrimitive.Group>
             )}
 
-            {/* Workspaces section — switch to a different workspace, only shown when query matches */}
-            {filteredWorkspaces.length > 0 && (
+            {filteredMembers.length > 0 && (
               <CommandPrimitive.Group className="p-2">
                 <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
-                  {t(($) => $.groups.switch_workspace)}
+                  {t(($) => $.groups.members)}
                 </div>
-                {filteredWorkspaces.map((ws) => (
+                {filteredMembers.map((member) => (
                   <CommandPrimitive.Item
-                    key={ws.id}
-                    value={`workspace:${ws.id}`}
-                    onSelect={() => handleSwitchWorkspace(ws.slug)}
+                    key={member.user_id}
+                    value={`member:${member.user_id}`}
+                    onSelect={() => handleMemberSelect(member.user_id)}
                     className="flex cursor-default select-none items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-accent"
                   >
-                    <Building2 className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">
-                      <HighlightText text={ws.name} query={query} />
-                    </span>
-                    <span className="ml-auto text-xs text-muted-foreground truncate">
-                      {ws.slug}
-                    </span>
+                    <ActorAvatarBase
+                      name={member.name}
+                      initials={memberInitials(member.name)}
+                      avatarUrl={resolvePublicFileUrl(member.avatar_url)}
+                      size="md"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate">
+                        <HighlightText text={member.name} query={query} />
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        <HighlightText text={member.email} query={query} />
+                      </div>
+                    </div>
                   </CommandPrimitive.Item>
                 ))}
               </CommandPrimitive.Group>
@@ -554,8 +619,7 @@ export function SearchCommand() {
               query.trim() &&
               !hasResults &&
               filteredPages.length === 0 &&
-              filteredCommands.length === 0 &&
-              filteredWorkspaces.length === 0 && (
+              filteredCommands.length === 0 && (
                 <CommandPrimitive.Empty className="py-10 text-center text-sm text-muted-foreground">
                   {t(($) => $.empty.no_results)}
                 </CommandPrimitive.Empty>
@@ -620,27 +684,36 @@ export function SearchCommand() {
                       <span className="text-xs text-muted-foreground shrink-0">
                         {issue.identifier}
                       </span>
-                      <span className="truncate">
+                      <span className="min-w-0 flex-1 truncate">
                         <HighlightText text={issue.title} query={query} />
                       </span>
-                      <span
-                        className={`ml-auto text-xs shrink-0 ${STATUS_CONFIG[issue.status].iconColor}`}
-                      >
-                        {STATUS_CONFIG[issue.status].label}
-                      </span>
+                      <IssueAssigneeAvatar
+                        assigneeType={issue.assignee_type}
+                        assigneeId={issue.assignee_id}
+                      />
                     </div>
-                    {issue.match_source === "comment" &&
-                      issue.matched_snippet && (
-                        <div className="flex items-start gap-2 pl-[26px]">
-                          <MessageSquare className="size-3 shrink-0 text-muted-foreground mt-0.5" />
-                          <span className="text-xs text-muted-foreground truncate">
-                            <HighlightText
-                              text={issue.matched_snippet}
-                              query={query}
-                            />
-                          </span>
-                        </div>
-                      )}
+                    {issue.matched_description_snippet && (
+                      <div className="flex items-start gap-2 pl-[26px]">
+                        <FileText className="size-3 shrink-0 text-muted-foreground mt-0.5" />
+                        <span className="text-xs text-muted-foreground truncate">
+                          <HighlightText
+                            text={issue.matched_description_snippet}
+                            query={query}
+                          />
+                        </span>
+                      </div>
+                    )}
+                    {issue.matched_comment_snippet && (
+                      <div className="flex items-start gap-2 pl-[26px]">
+                        <MessageSquare className="size-3 shrink-0 text-muted-foreground mt-0.5" />
+                        <span className="text-xs text-muted-foreground truncate">
+                          <HighlightText
+                            text={issue.matched_comment_snippet}
+                            query={query}
+                          />
+                        </span>
+                      </div>
+                    )}
                   </CommandPrimitive.Item>
                 ))}
               </CommandPrimitive.Group>
@@ -666,12 +739,11 @@ export function SearchCommand() {
                     <span className="text-xs text-muted-foreground shrink-0">
                       {item.identifier}
                     </span>
-                    <span className="truncate">{item.title}</span>
-                    <span
-                      className={`ml-auto text-xs shrink-0 ${STATUS_CONFIG[item.status]?.iconColor ?? ""}`}
-                    >
-                      {STATUS_CONFIG[item.status]?.label ?? ""}
-                    </span>
+                    <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                    <IssueAssigneeAvatar
+                      assigneeType={item.assignee_type}
+                      assigneeId={item.assignee_id}
+                    />
                   </CommandPrimitive.Item>
                 ))}
               </CommandPrimitive.Group>

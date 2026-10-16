@@ -1,13 +1,20 @@
-export { ApiClient, ApiError } from "./client";
+export {
+  ApiClient,
+  ApiError,
+  dispatchReasonCode,
+  PreviewTooLargeError,
+  PreviewUnsupportedError,
+} from "./client";
 export type {
   ApiClientOptions,
-  ImportStarterContentPayload,
-  ImportStarterContentResponse,
-  ImportStarterIssuePayload,
-  ImportStarterWelcomeIssueTemplate,
+  RequestContext,
+  ClientRuntimeSnapshot,
+  ClientUsageRequest,
 } from "./client";
 export { parseWithFallback, setSchemaLogger } from "./schema";
 export type { ParseOptions } from "./schema";
+export { DuplicateIssueErrorBodySchema } from "./schemas";
+export type { DuplicateIssueErrorBody } from "./schemas";
 export { WSClient } from "./ws-client";
 
 import type { ApiClient as ApiClientType } from "./client";

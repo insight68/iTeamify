@@ -2,20 +2,26 @@
 
 import { useCallback, useMemo } from "react";
 import { useQuery, useQueryClient, useMutationState } from "@tanstack/react-query";
-import type { IssueReaction } from "@teamify/core/types";
+import type { IssueReaction } from "@iteamify/core/types";
 import type {
   IssueReactionAddedPayload,
   IssueReactionRemovedPayload,
-} from "@teamify/core/types";
-import { issueReactionsOptions, issueKeys } from "@teamify/core/issues/queries";
-import { useToggleIssueReaction, type ToggleIssueReactionVars } from "@teamify/core/issues/mutations";
-import { useWSEvent, useWSReconnect } from "@teamify/core/realtime";
+} from "@iteamify/core/types";
+import { issueReactionsOptions, issueKeys } from "@iteamify/core/issues/queries";
+import { useToggleIssueReaction, type ToggleIssueReactionVars } from "@iteamify/core/issues/mutations";
+import { useWSEvent, useWSReconnect } from "@iteamify/core/realtime";
 
-export function useIssueReactions(issueId: string, userId?: string) {
+export function useIssueReactions(issueId: string, userId: string | undefined, initialReactions: IssueReaction[] | undefined) {
   const qc = useQueryClient();
-  const { data: serverReactions = [], isLoading: loading } = useQuery(
-    issueReactionsOptions(issueId),
-  );
+  const { data: serverReactions = [], isLoading: loading } = useQuery({
+    ...issueReactionsOptions(issueId),
+    // The complete detail response already contains reactions. Wait for it
+    // before creating this projection; later WS/mutation invalidation still
+    // reads the server authoritatively through its existing query function.
+    initialData: initialReactions,
+    enabled: initialReactions !== undefined,
+    staleTime: Infinity,
+  });
 
   const toggleMutation = useToggleIssueReaction(issueId);
 

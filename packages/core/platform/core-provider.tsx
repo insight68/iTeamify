@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { ApiClient } from "../api/client";
+import { installFreezeWatchdog } from "../diagnostics/freeze-watchdog";
 import { setApiInstance, setSchemaLogger } from "../api";
 import { createAuthStore, registerAuthStore } from "../auth";
 import { createChatStore, registerChatStore } from "../chat";
@@ -12,11 +13,16 @@ import {
 } from "../i18n/react";
 import { WSProvider } from "../realtime";
 import { QueryProvider } from "../provider";
-import { createLogger } from "../logger";
+import { configureLogging, createLogger } from "../logger";
 import { defaultStorage } from "./storage";
 import { AuthInitializer } from "./auth-initializer";
 import type { CoreProviderProps, ClientIdentity } from "./types";
 import type { StorageAdapter } from "../types/storage";
+import { ClientUsageReporter } from "../client-usage";
+import {
+  configureShortcutPlatform,
+  configureShortcutRuntime,
+} from "../shortcuts/platform";
 
 // Module-level singletons — created once at first render, never recreated.
 // Vite HMR preserves module-level state, so these survive hot reloads.
@@ -28,15 +34,30 @@ function initCore(
   storage: StorageAdapter,
   onLogin?: () => void,
   onLogout?: () => void,
+  onSessionExpired?: () => void,
   cookieAuth?: boolean,
   identity?: ClientIdentity,
 ) {
   if (initialized) return;
 
+  configureShortcutPlatform(
+    identity?.os === "macos" ||
+      identity?.os === "windows" ||
+      identity?.os === "linux" ||
+      identity?.os === "unknown"
+      ? identity.os
+      : null,
+  );
+  // Authoritative override; before this runs (module-eval store hydration)
+  // detectShortcutRuntime() reads the preload globals and already agrees.
+  configureShortcutRuntime(
+    identity?.platform === "desktop" ? "desktop" : null,
+  );
+
   const api = new ApiClient(apiBaseUrl, {
     logger: createLogger("api"),
     onUnauthorized: () => {
-      storage.removeItem("teamify_token");
+      authStore.getState().sessionExpired();
     },
     identity,
   });
@@ -45,7 +66,7 @@ function initCore(
 
   // In token mode, hydrate token from storage.
   if (!cookieAuth) {
-    const token = storage.getItem("teamify_token");
+    const token = storage.getItem("iteamify_token");
     if (token) api.setToken(token);
   }
   // Workspace identity is URL-driven: the [workspaceSlug] layout resolves
@@ -53,7 +74,7 @@ function initCore(
   // client reads the slug from that singleton for the X-Workspace-Slug
   // header. No boot-time hydration from storage is required.
 
-  authStore = createAuthStore({ api, storage, onLogin, onLogout, cookieAuth });
+  authStore = createAuthStore({ api, storage, onLogin, onLogout, onSessionExpired, cookieAuth });
   registerAuthStore(authStore);
 
   chatStore = createChatStore({ storage });
@@ -70,28 +91,41 @@ export function CoreProvider({
   cookieAuth,
   onLogin,
   onLogout,
+  onSessionExpired,
   identity,
+  logLevel = "warn",
   locale,
   resources,
   localeAdapter,
+  sessionEnabled = true,
 }: CoreProviderProps) {
+  configureLogging(logLevel);
   // Initialize singletons on first render only. Dependencies are read-once:
   // apiBaseUrl, storage, and callbacks are set at app boot and never change at runtime.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useMemo(() => initCore(apiBaseUrl, storage, onLogin, onLogout, cookieAuth, identity), []);
+  useMemo(() => initCore(apiBaseUrl, storage, onLogin, onLogout, onSessionExpired, cookieAuth, identity), []);
+
+  // Client-only freeze watchdog — shared by web and desktop. No-op on the
+  // server and idempotent, so mounting it here covers both apps in one place.
+  useEffect(() => {
+    installFreezeWatchdog();
+  }, []);
 
   // I18nProvider wraps everything else: server and client must use the same
   // (locale, resources) to avoid hydration mismatch. Language switching goes
   // through window.location.reload(), never client-side changeLanguage.
-  const tree = (
-    <QueryProvider>
+  const sessionTree = sessionEnabled ? (
       <AuthInitializer
         onLogin={onLogin}
-        onLogout={onLogout}
         storage={storage}
         cookieAuth={cookieAuth}
         identity={identity}
       >
+        {/* Desktop's reporter owns both activity and runtime state so it must
+            be the only writer for that installation. */}
+        {identity?.platform !== "desktop" && (
+          <ClientUsageReporter storage={storage} identity={identity} />
+        )}
         <WSProvider
           wsUrl={wsUrl}
           authStore={authStore}
@@ -102,6 +136,13 @@ export function CoreProvider({
           {children}
         </WSProvider>
       </AuthInitializer>
+  ) : (
+    children
+  );
+
+  const tree = (
+    <QueryProvider>
+      {sessionTree}
     </QueryProvider>
   );
 
@@ -109,7 +150,7 @@ export function CoreProvider({
   // the host app provides one (web layout + desktop App both do).
   const withAdapter = localeAdapter ? (
     <LocaleAdapterProvider adapter={localeAdapter}>
-      <UserLocaleSync />
+      {sessionEnabled ? <UserLocaleSync /> : null}
       {tree}
     </LocaleAdapterProvider>
   ) : (

@@ -10,8 +10,9 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@teamify/ui/components/ui/chart";
-import { formatCny, type DailyCostStackData } from "../../utils";
+} from "@iteamify/ui/components/ui/chart";
+import type { DailyCostStackData } from "../../utils";
+import { useT } from "../../../i18n";
 
 // Three-segment stack (input / output / cache write) — keeps the user's
 // attention on what's actually driving spend. Cache reads are excluded
@@ -25,10 +26,18 @@ import { formatCny, type DailyCostStackData } from "../../utils";
 export const costStackConfig = {
   input: { label: "Input", color: "var(--chart-1)" },
   output: { label: "Output", color: "var(--chart-2)" },
+  cacheRead: { label: "Cache read", color: "var(--chart-4)" },
   cacheWrite: { label: "Cache write", color: "var(--chart-3)" },
 } satisfies ChartConfig;
 
-export function DailyCostChart({ data }: { data: DailyCostStackData[] }) {
+export function DailyCostChart({
+  data,
+  valueKind = "currency",
+}: {
+  data: DailyCostStackData[];
+  valueKind?: "currency" | "credits";
+}) {
+  const { t } = useT("runtimes");
   // No internal empty-state — the parent decides what to show in place of
   // the chart (often a diagnostic explaining *why* there's no cost). Letting
   // recharts render an empty axis would be both ugly and uninformative.
@@ -47,19 +56,33 @@ export function DailyCostChart({ data }: { data: DailyCostStackData[] }) {
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={(v: number) => formatCny(v)}
-          width={72}
+          tickFormatter={(v: number) => valueKind === "credits" ? `${v}` : `$${v}`}
+          width={50}
         />
         <ChartTooltip
           content={
             <ChartTooltipContent
-              formatter={(value, name, item) =>
+              formatter={(value, name) =>
                 typeof value === "number"
-                  ? `${formatCny(value, {
-                      estimated: item.payload?.estimated === true,
-                    })} ${name}`
+                  ? `${valueKind === "credits" ? "" : "$"}${value.toFixed(valueKind === "credits" ? 3 : 2)} ${name}`
                   : `${value} ${name}`
               }
+              footer={(payload) => {
+                const total = payload.reduce(
+                  (sum, item) =>
+                    sum +
+                    (typeof item.value === "number" ? item.value : 0),
+                  0,
+                );
+                return (
+                  <div className="flex items-center justify-between gap-2 font-medium">
+                    <span>{t(($) => $.charts.tooltip_total)}</span>
+                    <span className="font-mono tabular-nums">
+                      {valueKind === "credits" ? "" : "$"}{total.toFixed(valueKind === "credits" ? 3 : 2)}{valueKind === "credits" ? " credits" : ""}
+                    </span>
+                  </div>
+                );
+              }}
             />
           }
         />
@@ -76,6 +99,12 @@ export function DailyCostChart({ data }: { data: DailyCostStackData[] }) {
           dataKey="output"
           stackId="cost"
           fill="var(--color-output)"
+          radius={[0, 0, 0, 0]}
+        />
+        <Bar
+          dataKey="cacheRead"
+          stackId="cost"
+          fill="var(--color-cacheRead)"
           radius={[0, 0, 0, 0]}
         />
         <Bar

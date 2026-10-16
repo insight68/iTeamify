@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS user_gmail_connection_watch_renewal_idx;

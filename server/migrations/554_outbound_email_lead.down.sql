@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY outbound_email_lead_idx;

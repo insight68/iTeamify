@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 
-// Mock @teamify/core/issues/mutations to mimic TanStack Query v5's contract:
+// Mock @iteamify/core/issues/mutations to mimic TanStack Query v5's contract:
 // useMutation returns a fresh result wrapper on every render, but the
 // `mutate` / `mutateAsync` functions inside it are stable across renders.
 // This is exactly the shape that previously fooled the original deps lists
@@ -19,7 +19,7 @@ const stableHandles = vi.hoisted(() => ({
 // server pushes by invoking them directly.
 const wsHandlers = vi.hoisted(() => new Map<string, (payload: unknown) => void>());
 
-vi.mock("@teamify/core/issues/mutations", () => ({
+vi.mock("@iteamify/core/issues/mutations", () => ({
   useCreateComment: () => ({
     mutateAsync: stableHandles.createMutateAsync,
     mutate: vi.fn(),
@@ -47,7 +47,7 @@ vi.mock("@teamify/core/issues/mutations", () => ({
   }),
 }));
 
-vi.mock("@teamify/core/issues/queries", () => ({
+vi.mock("@iteamify/core/issues/queries", () => ({
   issueTimelineOptions: (id: string) => ({
     queryKey: ["issues", "timeline", id],
     queryFn: () => Promise.resolve([]),
@@ -94,7 +94,7 @@ vi.mock("@tanstack/react-query", async () => {
   };
 });
 
-vi.mock("@teamify/core/realtime", () => ({
+vi.mock("@iteamify/core/realtime", () => ({
   useWSEvent: (event: string, handler: (payload: unknown) => void) => {
     wsHandlers.set(event, handler);
   },
@@ -110,13 +110,18 @@ import { useIssueTimeline } from "./use-issue-timeline";
 describe("useIssueTimeline", () => {
   beforeEach(() => {
     wsHandlers.clear();
+    stableHandles.createMutateAsync.mockClear();
+    stableHandles.updateMutateAsync.mockClear();
+    stableHandles.deleteMutateAsync.mockClear();
+    stableHandles.resolveMutateAsync.mockClear();
+    stableHandles.toggleMutate.mockClear();
     queryState.data = [];
     queryState.isLoading = false;
     cacheUpdates.last = null;
   });
 
   // CommentCard is wrapped in React.memo (perf fix for long timelines, see
-  // teamify#1968). The memo only pays off if the callbacks passed down keep
+  // iteamify#1968). The memo only pays off if the callbacks passed down keep
   // the same identity across unrelated parent re-renders. TanStack Query v5
   // returns a *new* mutation result wrapper on every render, so a useCallback
   // listing the whole mutation object as a dep flips its identity every time
@@ -152,6 +157,21 @@ describe("useIssueTimeline", () => {
     expect(result.current.timeline.map((e) => e.id)).toEqual(["c1", "c2", "c3"]);
   });
 
+  it("passes suppressed agent ids through editComment", async () => {
+    const { result } = renderHook(() => useIssueTimeline("issue-1", "user-1"));
+
+    await act(async () => {
+      await result.current.editComment("comment-1", "updated", ["attachment-1"], ["agent-1"]);
+    });
+
+    expect(stableHandles.updateMutateAsync).toHaveBeenCalledWith({
+      commentId: "comment-1",
+      content: "updated",
+      attachmentIds: ["attachment-1"],
+      suppressAgentIds: ["agent-1"],
+    });
+  });
+
   it("comment:created appends the new entry to the cache", () => {
     queryState.data = [];
     renderHook(() => useIssueTimeline("issue-1", "user-1"));
@@ -175,6 +195,62 @@ describe("useIssueTimeline", () => {
     });
     const updated = cacheUpdates.last as Array<{ id: string }>;
     expect(updated.map((e) => e.id)).toEqual(["new-c"]);
+  });
+
+  it("comment:created inserts at the correct sorted position by created_at", () => {
+    queryState.data = [
+      { type: "comment", id: "c1", actor_type: "member", actor_id: "u", created_at: "2026-05-06T01:00:00Z" },
+      { type: "comment", id: "c3", actor_type: "member", actor_id: "u", created_at: "2026-05-06T03:00:00Z" },
+    ];
+    renderHook(() => useIssueTimeline("issue-1", "user-1"));
+    const handler = wsHandlers.get("comment:created");
+    act(() => {
+      handler!({
+        comment: {
+          id: "c2",
+          issue_id: "issue-1",
+          author_type: "member",
+          author_id: "u",
+          content: "",
+          parent_id: null,
+          created_at: "2026-05-06T02:00:00Z",
+          updated_at: "2026-05-06T02:00:00Z",
+          type: "comment",
+          reactions: [],
+          attachments: [],
+        },
+      });
+    });
+    const updated = cacheUpdates.last as Array<{ id: string }>;
+    expect(updated.map((e) => e.id)).toEqual(["c1", "c2", "c3"]);
+  });
+
+  it("comment:created re-sorts when the new entry is oldest", () => {
+    queryState.data = [
+      { type: "comment", id: "c2", actor_type: "member", actor_id: "u", created_at: "2026-05-06T02:00:00Z" },
+      { type: "comment", id: "c3", actor_type: "member", actor_id: "u", created_at: "2026-05-06T03:00:00Z" },
+    ];
+    renderHook(() => useIssueTimeline("issue-1", "user-1"));
+    const handler = wsHandlers.get("comment:created");
+    act(() => {
+      handler!({
+        comment: {
+          id: "c1",
+          issue_id: "issue-1",
+          author_type: "member",
+          author_id: "u",
+          content: "",
+          parent_id: null,
+          created_at: "2026-05-06T01:00:00Z",
+          updated_at: "2026-05-06T01:00:00Z",
+          type: "comment",
+          reactions: [],
+          attachments: [],
+        },
+      });
+    });
+    const updated = cacheUpdates.last as Array<{ id: string }>;
+    expect(updated.map((e) => e.id)).toEqual(["c1", "c2", "c3"]);
   });
 
   it("ignores WS events for other issues", () => {

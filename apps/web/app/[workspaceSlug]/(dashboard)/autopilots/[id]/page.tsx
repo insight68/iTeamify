@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { AutopilotDetailPage } from "@teamify/views/autopilots/components";
+import { AutopilotDetailPage } from "@iteamify/views/autopilots/components";
 
 export default function Page({
   params,

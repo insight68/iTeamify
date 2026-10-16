@@ -1,0 +1,9 @@
+{
+  "page": { "title": "지식 베이스", "description": "팀과 AI 에이전트가 공유하는 관리된 단일 사실 소스" },
+  "hero": { "shared_truth": "공유 지식 계층", "production_version": "운영 v{{version}}", "not_published": "게시된 운영 버전 없음", "title": "비즈니스 지식을 모든 에이전트가 안전하게 사용할 수 있는 컨텍스트로 전환합니다.", "description": "사람이나 AI가 초안을 만들고 변경을 검토한 뒤 변경 불가능한 버전을 게시합니다. 운영 워크플로는 승인된 스냅샷만 사용합니다." },
+  "business": { "title": "비즈니스 정보", "description": "포지셔닝, 서비스, ICP, 구매자 페르소나, 제외 조건, 증거와 공식 출처.", "readiness": "{{percent}}% 준비", "completeness": "운영 준비도", "offers": "서비스", "audiences": "타깃 고객", "personas": "페르소나", "evidence": "증거", "draft_policy": "초안 변경은 운영 에이전트에 전달되지 않습니다" },
+  "contract": { "title": "지식 사용 계약", "description": "공유 컨텍스트가 대화에서 운영으로 이동하는 방식", "propose_title": "편집 또는 제안", "propose_description": "사람은 직접 편집하고 AI는 검토 가능한 구조화 제안을 제출합니다.", "review_title": "버전 기준 검토", "review_description": "변경 적용 전에 동시 수정을 감지합니다.", "publish_title": "운영 버전 게시", "publish_description": "Owner 또는 Admin이 변경 불가능한 스냅샷을 만듭니다.", "consume_title": "에이전트가 스냅샷 사용", "consume_description": "에이전트는 게시된 비즈니스 정보를 사용합니다." },
+  "signals": { "releases_title": "게시 버전", "releases_empty": "첫 승인 비즈니스 정보를 게시하세요.", "proposals_title": "대기 중 제안", "proposals_description": "AI 제안은 사람이 승인하거나 거절할 때까지 대기합니다.", "sources_title": "증거와 출처", "sources_description": "근거가 있으면 포지셔닝과 타기팅 판단을 추적할 수 있습니다." },
+  "actions": { "open_business": "비즈니스 정보 열기", "manage_business": "비즈니스 정보 관리", "retry": "다시 시도" },
+  "error": { "title": "지식 베이스를 사용할 수 없습니다", "description": "연결을 확인하고 다시 시도하세요." }
+}

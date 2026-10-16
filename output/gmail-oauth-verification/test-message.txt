@@ -1,0 +1,31 @@
+Demo data only. Replace the recipient placeholder with a mailbox you control. No email has been sent.
+
+Assistant prompt:
+Draft a short customer follow-up email to [CONTROLLED_RECIPIENT_EMAIL].
+Use the subject "Aurocreator Gmail verification demo".
+Tell the recipient that the draft proposal is ready and ask whether Tuesday at 10:00 works for a brief review.
+Show me the message before sending.
+
+Expected editable message:
+Subject: Aurocreator Gmail verification demo
+
+Hello Alex,
+
+The draft proposal is ready for your review. Would Tuesday at 10:00 work for a brief call to discuss the next steps?
+
+Best regards,
+Aurocreator Demo
+
+Suggested edit during the recording:
+Change Tuesday to Wednesday.
+
+Final expected body:
+Hello Alex,
+
+The draft proposal is ready for your review. Would Wednesday at 10:00 work for a brief call to discuss the next steps?
+
+Best regards,
+Aurocreator Demo
+
+This fictional message is for a controlled test mailbox, not a real customer. Enter a valid test email before recording; do not send to the placeholder.
+

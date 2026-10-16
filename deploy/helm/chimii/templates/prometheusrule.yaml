@@ -1,0 +1,53 @@
+{{- if .Values.monitoring.prometheusRule.enabled }}
+{{- $samplerQueryNames := "active_users|active_workspaces|task_queued|task_running|task_stuck|runtime_online|runtime_heartbeat_age|workspace_total" -}}
+{{- $samplerErrorNames := printf "acquire|%s" $samplerQueryNames -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "iteamify.backend.fullname" . }}-sampler
+  labels:
+    {{- include "iteamify.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+    {{- with .Values.monitoring.prometheusRule.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: iteamify-business-sampler
+      rules:
+        - alert: iTeamifyBusinessSamplerQueryErrors
+          expr: |
+            sum by (name) (
+              rate(iteamify_business_sampler_query_errors_total{name=~"{{ $samplerErrorNames }}"}[10m])
+            ) > 0
+          for: {{ .Values.monitoring.prometheusRule.samplerQueryErrorsFor | quote }}
+          labels:
+            severity: {{ .Values.monitoring.prometheusRule.severity | quote }}
+          annotations:
+            summary: "Business sampler query errors"
+            description: "Business sampler query {{ "{{ $labels.name }}" }} is returning errors. Metrics may go stale if the query keeps timing out."
+        - alert: iTeamifyBusinessSamplerQueryLatencyHigh
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum by (le, name) (
+                rate(iteamify_business_sampler_query_seconds_bucket{name=~"{{ $samplerQueryNames }}"}[10m])
+              )
+            ) > 0.3
+          for: {{ .Values.monitoring.prometheusRule.samplerQueryLatencyFor | quote }}
+          labels:
+            severity: {{ .Values.monitoring.prometheusRule.severity | quote }}
+          annotations:
+            summary: "Business sampler query p95 is high"
+            description: "Business sampler query {{ "{{ $labels.name }}" }} p95 is above 300ms, leaving little headroom before the 500ms statement_timeout."
+    - name: iteamify-billing
+      rules:
+        - alert: iTeamifyStripeWebhookRateLimited
+          expr: |
+            sum(increase(iteamify_webhook_rate_limited_total{gate="stripe_ip"}[5m])) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "Stripe webhook deliveries are being rate limited"
+            description: "The Stripe ingress safety ceiling returned 429. Check sender IP resolution, traffic bursts and Stripe delivery retries; paid orders may be waiting for credits."
+{{- end }}

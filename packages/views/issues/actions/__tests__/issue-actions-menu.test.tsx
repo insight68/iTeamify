@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { Issue } from "@teamify/core/types";
-import { I18nProvider } from "@teamify/core/i18n/react";
+import type { Issue } from "@iteamify/core/types";
+import { I18nProvider } from "@iteamify/core/i18n/react";
 import enCommon from "../../../locales/en/common.json";
 import enIssues from "../../../locales/en/issues.json";
 
@@ -12,12 +12,12 @@ const TEST_RESOURCES = { en: { common: enCommon, issues: enIssues } };
 // Mocks — same pattern as the issue-detail test suite.
 // ---------------------------------------------------------------------------
 
-vi.mock("@teamify/core/hooks", () => ({
+vi.mock("@iteamify/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
 const mockOpenModal = vi.fn();
-vi.mock("@teamify/core/modals", () => ({
+vi.mock("@iteamify/core/modals", () => ({
   useModalStore: Object.assign(
     (selector?: any) => {
       const state = { open: mockOpenModal };
@@ -28,7 +28,7 @@ vi.mock("@teamify/core/modals", () => ({
 }));
 
 const mockAuthState = { user: { id: "user-1" }, isAuthenticated: true };
-vi.mock("@teamify/core/auth", () => ({
+vi.mock("@iteamify/core/auth", () => ({
   useAuthStore: Object.assign(
     (selector?: any) => (selector ? selector(mockAuthState) : mockAuthState),
     { getState: () => mockAuthState },
@@ -36,7 +36,7 @@ vi.mock("@teamify/core/auth", () => ({
   registerAuthStore: vi.fn(),
 }));
 
-vi.mock("@teamify/core/workspace/queries", () => ({
+vi.mock("@iteamify/core/workspace/queries", () => ({
   memberListOptions: () => ({
     queryKey: ["workspaces", "ws-1", "members"],
     queryFn: () =>
@@ -48,9 +48,21 @@ vi.mock("@teamify/core/workspace/queries", () => ({
     queryKey: ["workspaces", "ws-1", "agents"],
     queryFn: () => Promise.resolve([]),
   }),
+  squadListOptions: () => ({
+    queryKey: ["workspaces", "ws-1", "squads"],
+    queryFn: () => Promise.resolve([]),
+  }),
+  assigneeFrequencyOptions: () => ({
+    queryKey: ["workspaces", "ws-1", "assignee-frequency"],
+    queryFn: () => Promise.resolve([]),
+  }),
 }));
 
-vi.mock("@teamify/core/pins", () => ({
+vi.mock("@iteamify/core/workspace/hooks", () => ({
+  useActorName: () => ({ getActorName: (_t: string, _id: string) => "" }),
+}));
+
+vi.mock("@iteamify/core/pins", () => ({
   pinListOptions: () => ({
     queryKey: ["pins", "ws-1", "user-1"],
     queryFn: () => Promise.resolve([]),
@@ -59,13 +71,13 @@ vi.mock("@teamify/core/pins", () => ({
   useDeletePin: () => ({ mutate: vi.fn() }),
 }));
 
-vi.mock("@teamify/core/issues/mutations", () => ({
+vi.mock("@iteamify/core/issues/mutations", () => ({
   useUpdateIssue: () => ({ mutate: vi.fn() }),
 }));
 
-vi.mock("@teamify/core/paths", async () => {
-  const actual = await vi.importActual<typeof import("@teamify/core/paths")>(
-    "@teamify/core/paths",
+vi.mock("@iteamify/core/paths", async () => {
+  const actual = await vi.importActual<typeof import("@iteamify/core/paths")>(
+    "@iteamify/core/paths",
   );
   return {
     ...actual,
@@ -94,7 +106,10 @@ vi.mock("../../../common/actor-avatar", () => ({
 
 // Import after mocks.
 import { IssueActionsDropdown } from "../issue-actions-dropdown";
-import { IssueActionsContextMenu } from "../issue-actions-context-menu";
+import {
+  IssueActionsContextMenu,
+  IssueContextMenuProvider,
+} from "../issue-actions-context-menu";
 
 const mockIssue: Issue = {
   id: "issue-1",
@@ -110,6 +125,7 @@ const mockIssue: Issue = {
   creator_type: "member",
   creator_id: "user-1",
   parent_issue_id: null,
+  start_date: null,
   due_date: null,
   project_id: null,
   created_at: "2026-01-01T00:00:00Z",
@@ -150,12 +166,70 @@ describe("IssueActionsDropdown", () => {
     expect(screen.getByText("Assignee")).toBeInTheDocument();
     expect(screen.getByText("Due date")).toBeInTheDocument();
     expect(screen.getByText("Copy link")).toBeInTheDocument();
-    expect(screen.getByText("More")).toBeInTheDocument();
+    expect(screen.getByText("Relations")).toBeInTheDocument();
     expect(screen.getByText("Delete issue")).toBeInTheDocument();
-    // Relationship actions are hidden inside the "More" submenu by default.
+    // Relationship actions are hidden inside the "Relations" submenu by default.
     expect(screen.queryByText("Create sub-issue")).not.toBeInTheDocument();
     expect(screen.queryByText("Set parent issue...")).not.toBeInTheDocument();
     expect(screen.queryByText("Add sub-issue...")).not.toBeInTheDocument();
+  });
+
+  it("clicking the Assignee item opens the shared AssigneePicker popover", async () => {
+    render(
+      wrap(
+        <IssueActionsDropdown
+          issue={mockIssue}
+          trigger={<button data-testid="trigger">Menu</button>}
+        />,
+      ),
+    );
+
+    fireEvent.click(screen.getByTestId("trigger"));
+    fireEvent.click(await screen.findByText("Assignee"));
+
+    // The shared picker exposes a search input and renders the workspace
+    // member under a "Members" group — both come from `AssigneePicker`, not
+    // the legacy submenu (which had neither).
+    expect(
+      await screen.findByPlaceholderText("Assign to..."),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Members")).toBeInTheDocument();
+    expect(await screen.findByText("Test User")).toBeInTheDocument();
+  });
+
+  it("shows 'Remove parent issue' in the Relations submenu only when the issue has a parent", async () => {
+    const childIssue = { ...mockIssue, parent_issue_id: "parent-1" } as Issue;
+    render(
+      wrap(
+        <IssueActionsDropdown
+          issue={childIssue}
+          trigger={<button data-testid="trigger">Menu</button>}
+        />,
+      ),
+    );
+
+    fireEvent.click(screen.getByTestId("trigger"));
+    fireEvent.click(await screen.findByText("Relations"));
+
+    expect(await screen.findByText("Remove parent issue")).toBeInTheDocument();
+  });
+
+  it("hides 'Remove parent issue' when the issue has no parent", async () => {
+    render(
+      wrap(
+        <IssueActionsDropdown
+          issue={mockIssue}
+          trigger={<button data-testid="trigger">Menu</button>}
+        />,
+      ),
+    );
+
+    fireEvent.click(screen.getByTestId("trigger"));
+    fireEvent.click(await screen.findByText("Relations"));
+
+    // The sibling "Set parent issue..." proves the submenu opened.
+    expect(await screen.findByText("Set parent issue...")).toBeInTheDocument();
+    expect(screen.queryByText("Remove parent issue")).not.toBeInTheDocument();
   });
 
   it("clicking Delete issue opens the delete-confirm modal", async () => {
@@ -164,7 +238,7 @@ describe("IssueActionsDropdown", () => {
         <IssueActionsDropdown
           issue={mockIssue}
           trigger={<button data-testid="trigger">Menu</button>}
-          onDeletedNavigateTo="/test/issues"
+          onDeletedFallbackPath="/test/issues"
         />,
       ),
     );
@@ -176,7 +250,7 @@ describe("IssueActionsDropdown", () => {
     expect(mockOpenModal).toHaveBeenCalledWith("issue-delete-confirm", {
       issueId: "issue-1",
       identifier: "TES-1",
-      onDeletedNavigateTo: "/test/issues",
+      onDeletedFallbackPath: "/test/issues",
     });
   });
 });
@@ -185,9 +259,11 @@ describe("IssueActionsContextMenu", () => {
   it("renders the menu when the wrapped element receives a contextmenu event", async () => {
     render(
       wrap(
-        <IssueActionsContextMenu issue={mockIssue}>
-          <div data-testid="row">Row</div>
-        </IssueActionsContextMenu>,
+        <IssueContextMenuProvider>
+          <IssueActionsContextMenu issue={mockIssue}>
+            <div data-testid="row">Row</div>
+          </IssueActionsContextMenu>
+        </IssueContextMenuProvider>,
       ),
     );
 

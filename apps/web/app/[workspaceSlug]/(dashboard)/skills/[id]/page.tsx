@@ -1,8 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { SkillDetailPage } from "@teamify/views/skills";
-import { OwnerGuard } from "@teamify/views/layout";
+import { SkillDetailPage } from "@iteamify/views/skills";
 
 export default function SkillDetailRoute({
   params,
@@ -10,9 +9,5 @@ export default function SkillDetailRoute({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  return (
-    <OwnerGuard>
-      <SkillDetailPage skillId={id} />
-    </OwnerGuard>
-  );
+  return <SkillDetailPage skillId={id} />;
 }

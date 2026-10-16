@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { Issue } from "@teamify/core/types";
-import { I18nProvider } from "@teamify/core/i18n/react";
+import type { Issue } from "@iteamify/core/types";
+import { I18nProvider } from "@iteamify/core/i18n/react";
 import enCommon from "../../locales/en/common.json";
 import enIssues from "../../locales/en/issues.json";
 
 const TEST_RESOURCES = { en: { common: enCommon, issues: enIssues } };
-vi.mock("@teamify/core/hooks", () => ({
+vi.mock("@iteamify/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
@@ -15,9 +15,9 @@ vi.mock("@teamify/core/hooks", () => ({
 // Mocks
 // ---------------------------------------------------------------------------
 
-// Mock @teamify/core/auth
+// Mock @iteamify/core/auth
 const mockAuthUser = { id: "user-1", email: "test@test.com", name: "Test User" };
-vi.mock("@teamify/core/auth", () => ({
+vi.mock("@iteamify/core/auth", () => ({
   useAuthStore: Object.assign(
     (selector?: any) => {
       const state = { user: mockAuthUser, isAuthenticated: true };
@@ -29,12 +29,12 @@ vi.mock("@teamify/core/auth", () => ({
   createAuthStore: vi.fn(),
 }));
 
-// Mock @teamify/core/paths — after the URL-driven workspace refactor,
+// Mock @iteamify/core/paths — after the URL-driven workspace refactor,
 // useCurrentWorkspace derives from the workspace slug in URL Context. Tests
 // don't mount a real route, so we short-circuit to a fixed fixture.
-vi.mock("@teamify/core/paths", async () => {
-  const actual = await vi.importActual<typeof import("@teamify/core/paths")>(
-    "@teamify/core/paths",
+vi.mock("@iteamify/core/paths", async () => {
+  const actual = await vi.importActual<typeof import("@iteamify/core/paths")>(
+    "@iteamify/core/paths",
   );
   return {
     ...actual,
@@ -43,7 +43,7 @@ vi.mock("@teamify/core/paths", async () => {
   };
 });
 
-// Mock @teamify/views/navigation (AppLink + useNavigation)
+// Mock @iteamify/views/navigation (AppLink + useNavigation)
 vi.mock("../../navigation", () => ({
   AppLink: ({ children, href, ...props }: any) => (
     <a href={href} {...props}>
@@ -61,26 +61,207 @@ vi.mock("../../workspace/workspace-avatar", () => ({
 
 // Mock api (queries use api internally)
 const mockListIssues = vi.hoisted(() => vi.fn().mockResolvedValue({ issues: [], total: 0 }));
-vi.mock("@teamify/core/api", () => ({
+const mockListGroupedIssues = vi.hoisted(() => vi.fn().mockResolvedValue({ groups: [] }));
+const mockListIssueTableGroups = vi.hoisted(() =>
+  vi.fn(async (request: any) => {
+    if (request.group.kind !== "assignee") {
+      return {
+        query_fingerprint: "test",
+        total: 0,
+        groups: [],
+        next_cursor: null,
+      };
+    }
+    const response = await mockListGroupedIssues();
+    return {
+      query_fingerprint: "test",
+      total: response.groups.reduce(
+        (total: number, group: any) => total + group.total,
+        0,
+      ),
+      groups: response.groups.map((group: any) => ({
+        key: group.id,
+        value: {
+          kind: "assignee" as const,
+          actor:
+            group.assignee_type && group.assignee_id
+              ? { type: group.assignee_type, id: group.assignee_id }
+              : null,
+        },
+        count: group.total,
+      })),
+      next_cursor: null,
+    };
+  }),
+);
+const mockListIssueTableRows = vi.hoisted(() =>
+  vi.fn(async (request: any) => {
+    if (request.group.kind === "assignee") {
+      const response = await mockListGroupedIssues();
+      const group = response.groups.find(
+        (candidate: any) => candidate.id === request.group_key,
+      );
+      const issues = group?.issues ?? [];
+      return {
+        query_fingerprint: "test",
+        group_key: request.group_key,
+        parent_id: null,
+        total: 0,
+        rows: issues.map((issue: Issue) => ({
+          issue,
+          direct_child_count: 0,
+        })),
+        branch_total: issues.length,
+        next_cursor: null,
+      };
+    }
+    const status = request.group_key?.replace(/^status:/, "");
+    const response = await mockListIssues({
+      status,
+      limit: 50,
+      offset: 0,
+      ...(request.query.scope.assignee_types
+        ? { assignee_types: request.query.scope.assignee_types }
+        : {}),
+    });
+    return {
+      query_fingerprint: "test",
+      group_key: request.group_key,
+      parent_id: null,
+      total: 0,
+      rows: response.issues.map((issue: Issue) => ({
+        issue,
+        direct_child_count: 0,
+      })),
+      branch_total: response.issues.length,
+      next_cursor: null,
+    };
+  }),
+);
+const mockListIssueTableFacets = vi.hoisted(() =>
+  vi.fn(async (request: any) => {
+    const statuses = [
+      "backlog",
+      "todo",
+      "in_progress",
+      "in_review",
+      "done",
+      "blocked",
+      "cancelled",
+    ];
+    const groups = await Promise.all(
+      statuses.map(async (status) => ({
+        status,
+        response: await mockListIssues({
+          status,
+          limit: 50,
+          offset: 0,
+          ...(request.query.scope.assignee_types
+            ? { assignee_types: request.query.scope.assignee_types }
+            : {}),
+        }),
+      })),
+    );
+    return {
+      query_fingerprint: "test",
+      total: groups.reduce((sum, group) => sum + group.response.issues.length, 0),
+      facets: request.facets.map((facet: any) => ({
+        ...facet,
+        values:
+          facet.kind === "status"
+            ? groups
+                .filter((group) => group.response.issues.length > 0)
+                .map((group) => ({
+                  key: group.status,
+                  count: group.response.issues.length,
+                }))
+            : [],
+      })),
+    };
+  }),
+);
+const mockListMembers = vi.hoisted(() =>
+  vi.fn().mockResolvedValue([
+    {
+      id: "member-1",
+      workspace_id: "ws-1",
+      user_id: "user-1",
+      role: "member",
+      created_at: "2026-01-01T00:00:00Z",
+      name: "Test User",
+      email: "test@test.com",
+      avatar_url: null,
+    },
+  ]),
+);
+const mockListAgents = vi.hoisted(() =>
+  vi.fn().mockResolvedValue([
+    {
+      id: "agent-1",
+      workspace_id: "ws-1",
+      name: "Agent One",
+      description: "",
+      instructions: "",
+      status: "idle",
+      runtime_id: null,
+      owner_id: "user-1",
+      avatar_url: null,
+      visibility: "workspace",
+      archived_at: null,
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    },
+  ]),
+);
+const mockListSquads = vi.hoisted(() =>
+  vi.fn().mockResolvedValue([
+    {
+      id: "squad-1",
+      workspace_id: "ws-1",
+      name: "Squad One",
+      description: "",
+      instructions: "",
+      avatar_url: null,
+      leader_id: "agent-1",
+      creator_id: "user-1",
+      archived_at: null,
+      archived_by: null,
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    },
+  ]),
+);
+vi.mock("@iteamify/core/api", () => ({
   api: {
+    withRequestContext() { return this; },
+    getBaseUrl: () => "http://127.0.0.1:8080",
     listIssues: (...args: any[]) => mockListIssues(...args),
+    listGroupedIssues: (...args: any[]) => mockListGroupedIssues(...args),
+    listIssueTableGroups: (request: any) => mockListIssueTableGroups(request),
+    listIssueTableRows: (request: any) => mockListIssueTableRows(request),
+    listIssueTableFacets: (request: any) => mockListIssueTableFacets(request),
     updateIssue: vi.fn(),
-    listMembers: () => Promise.resolve([]),
-    listAgents: () => Promise.resolve([]),
+    listMembers: (...args: any[]) => mockListMembers(...args),
+    listAgents: (...args: any[]) => mockListAgents(...args),
+    listSquads: (...args: any[]) => mockListSquads(...args),
   },
   getApi: () => ({
     listIssues: (...args: any[]) => mockListIssues(...args),
+    listGroupedIssues: (...args: any[]) => mockListGroupedIssues(...args),
+    listIssueTableGroups: (request: any) => mockListIssueTableGroups(request),
+    listIssueTableRows: (request: any) => mockListIssueTableRows(request),
+    listIssueTableFacets: (request: any) => mockListIssueTableFacets(request),
     updateIssue: vi.fn(),
-    listMembers: () => Promise.resolve([]),
-    listAgents: () => Promise.resolve([]),
+    listMembers: (...args: any[]) => mockListMembers(...args),
+    listAgents: (...args: any[]) => mockListAgents(...args),
+    listSquads: (...args: any[]) => mockListSquads(...args),
   }),
   setApiInstance: vi.fn(),
 }));
 
 // Mock issue config
-vi.mock("@teamify/core/issues/config", () => ({
+vi.mock("@iteamify/core/issues/config", () => ({
   ALL_STATUSES: ["backlog", "todo", "in_progress", "in_review", "done", "blocked", "cancelled"],
-  BOARD_STATUSES: ["backlog", "todo", "in_progress", "in_review", "done", "blocked"],
   STATUS_ORDER: ["backlog", "todo", "in_progress", "in_review", "done", "blocked", "cancelled"],
   STATUS_CONFIG: {
     backlog: { label: "Backlog", iconColor: "text-muted-foreground", hoverBg: "hover:bg-accent" },
@@ -103,7 +284,8 @@ vi.mock("@teamify/core/issues/config", () => ({
 
 // Mock view store
 const mockViewState = {
-  viewMode: "board" as const,
+  viewMode: "board" as "board" | "list",
+  grouping: "status" as "status" | "assignee",
   statusFilters: [] as string[],
   priorityFilters: [] as string[],
   assigneeFilters: [] as { type: string; id: string }[],
@@ -112,11 +294,22 @@ const mockViewState = {
   projectFilters: [] as string[],
   includeNoProject: false,
   labelFilters: [] as string[],
+  propertyFilters: {} as Record<string, string[]>,
+  cardPropertyIds: [] as string[],
   sortBy: "position" as const,
   sortDirection: "asc" as const,
   cardProperties: { priority: true, description: true, assignee: true, dueDate: true, project: true, childProgress: true, labels: true },
+  tableColumns: [
+    { key: "title", width: 360 },
+    { key: "status", width: 150 },
+    { key: "priority", width: 130 },
+    { key: "assignee", width: 180 },
+    { key: "due_date", width: 140 },
+    { key: "labels", width: 220 },
+  ],
   listCollapsedStatuses: [] as string[],
   setViewMode: vi.fn(),
+  setGrouping: vi.fn(),
   toggleStatusFilter: vi.fn(),
   togglePriorityFilter: vi.fn(),
   toggleAssigneeFilter: vi.fn(),
@@ -125,6 +318,8 @@ const mockViewState = {
   toggleProjectFilter: vi.fn(),
   toggleNoProject: vi.fn(),
   toggleLabelFilter: vi.fn(),
+  togglePropertyFilter: vi.fn(),
+  toggleCardPropertyId: vi.fn(),
   hideStatus: vi.fn(),
   showStatus: vi.fn(),
   clearFilters: vi.fn(),
@@ -134,8 +329,11 @@ const mockViewState = {
   toggleListCollapsed: vi.fn(),
 };
 
-vi.mock("@teamify/core/issues/stores/view-store", () => ({
+vi.mock("@iteamify/core/issues/stores/view-store", () => ({
   useClearFiltersOnWorkspaceChange: () => {},
+  PROPERTY_VIEW_PREFIX: "property:",
+  propertyIdFromViewKey: (key: string) =>
+    key.startsWith("property:") ? key.slice("property:".length) : null,
   viewStorePersistOptions: () => ({ name: "test", storage: undefined, partialize: (s: any) => s }),
   mergeViewStatePersisted: (_p: unknown, c: any) => c,
   viewStoreSlice: vi.fn(),
@@ -155,6 +353,10 @@ vi.mock("@teamify/core/issues/stores/view-store", () => ({
     { value: "created_at", label: "Created date" },
     { value: "title", label: "Title" },
   ],
+  GROUPING_OPTIONS: [
+    { value: "status", label: "Status" },
+    { value: "assignee", label: "Assignee" },
+  ],
   CARD_PROPERTY_OPTIONS: [
     { key: "priority", label: "Priority" },
     { key: "description", label: "Description" },
@@ -166,23 +368,25 @@ vi.mock("@teamify/core/issues/stores/view-store", () => ({
   ],
 }));
 
-vi.mock("@teamify/core/issues/stores/view-store-context", () => ({
+vi.mock("@iteamify/core/issues/stores/view-store-context", () => ({
   ViewStoreProvider: ({ children }: { children: React.ReactNode }) => children,
   useViewStore: (selector?: any) => (selector ? selector(mockViewState) : mockViewState),
   useViewStoreApi: () => ({ getState: () => mockViewState, setState: vi.fn(), subscribe: vi.fn() }),
 }));
 
-vi.mock("@teamify/core/issues/stores/issues-scope-store", () => ({
+let mockScope = "all";
+
+vi.mock("@iteamify/core/issues/stores/issues-scope-store", () => ({
   useIssuesScopeStore: Object.assign(
     (selector?: any) => {
-      const state = { scope: "all", setScope: vi.fn() };
+      const state = { scope: mockScope, setScope: vi.fn() };
       return selector ? selector(state) : state;
     },
-    { getState: () => ({ scope: "all", setScope: vi.fn() }) },
+    { getState: () => ({ scope: mockScope, setScope: vi.fn() }) },
   ),
 }));
 
-vi.mock("@teamify/core/issues/stores/selection-store", () => ({
+vi.mock("@iteamify/core/issues/stores/selection-store", () => ({
   useIssueSelectionStore: Object.assign(
     (selector?: any) => {
       const state = { selectedIds: new Set(), toggle: vi.fn(), clear: vi.fn(), setAll: vi.fn() };
@@ -192,17 +396,24 @@ vi.mock("@teamify/core/issues/stores/selection-store", () => ({
   ),
 }));
 
-vi.mock("@teamify/core/issues/stores/recent-issues-store", () => ({
+vi.mock("@iteamify/core/issues/stores/recent-issues-store", () => ({
   useRecentIssuesStore: Object.assign(
     (selector?: any) => {
-      const state = { items: [], recordVisit: vi.fn() };
+      const state = { byWorkspace: {}, recordVisit: vi.fn(), pruneWorkspaces: vi.fn() };
       return selector ? selector(state) : state;
     },
-    { getState: () => ({ items: [], recordVisit: vi.fn() }) },
+    {
+      getState: () => ({
+        byWorkspace: {},
+        recordVisit: vi.fn(),
+        pruneWorkspaces: vi.fn(),
+      }),
+    },
   ),
+  selectRecentIssues: () => () => [],
 }));
 
-vi.mock("@teamify/core/modals", () => ({
+vi.mock("@iteamify/core/modals", () => ({
   useModalStore: Object.assign(
     () => ({ open: vi.fn() }),
     { getState: () => ({ open: vi.fn() }) },
@@ -215,16 +426,23 @@ vi.mock("sonner", () => ({
 }));
 
 // Mock dnd-kit
-vi.mock("@dnd-kit/core", () => ({
-  DndContext: ({ children }: any) => children,
-  DragOverlay: () => null,
-  PointerSensor: class {},
-  useSensor: () => ({}),
-  useSensors: () => [],
-  useDroppable: () => ({ setNodeRef: vi.fn(), isOver: false }),
-  pointerWithin: vi.fn(),
-  closestCenter: vi.fn(),
-}));
+vi.mock("@dnd-kit/core", () => {
+  // Real dnd-kit useDroppable returns a referentially stable setNodeRef
+  // (memoized internally). BoardColumn merges it with a state-setting
+  // callback ref for Virtuoso's customScrollParent, so a fresh function each
+  // render would loop the ref detach/reattach. Model the stable identity.
+  const stableSetNodeRef = () => {};
+  return {
+    DndContext: ({ children }: any) => children,
+    DragOverlay: () => null,
+    PointerSensor: class {},
+    useSensor: () => ({}),
+    useSensors: () => [],
+    useDroppable: () => ({ setNodeRef: stableSetNodeRef, isOver: false }),
+    pointerWithin: vi.fn(),
+    closestCenter: vi.fn(),
+  };
+});
 
 vi.mock("@dnd-kit/sortable", () => ({
   SortableContext: ({ children }: any) => children,
@@ -258,6 +476,21 @@ vi.mock("@base-ui/react/accordion", () => ({
   ),
 }));
 
+// Mock react-virtuoso: jsdom has no layout, so the real Virtuoso computes a
+// 0-height viewport and renders nothing (and throws on its resize plumbing).
+// Render every item inline so the virtualized board columns expose their
+// cards to the DOM, matching the non-virtualized behavior these tests assert.
+vi.mock("react-virtuoso", () => ({
+  Virtuoso: ({ data, itemContent, components }: any) => (
+    <div data-testid="virtuoso-mock">
+      {(data ?? []).map((item: any, i: number) => (
+        <div key={i}>{itemContent(i, item)}</div>
+      ))}
+      {components?.Footer ? <components.Footer /> : null}
+    </div>
+  ),
+}));
+
 // ---------------------------------------------------------------------------
 // Test data
 // ---------------------------------------------------------------------------
@@ -266,6 +499,9 @@ const issueDefaults = {
   parent_issue_id: null,
   project_id: null,
   position: 0,
+  stage: null,
+  metadata: {},
+  properties: {},
 };
 
 const mockIssues: Issue[] = [
@@ -283,6 +519,7 @@ const mockIssues: Issue[] = [
     assignee_id: "user-1",
     creator_type: "member",
     creator_id: "user-1",
+    start_date: null,
     due_date: null,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
@@ -301,6 +538,7 @@ const mockIssues: Issue[] = [
     assignee_id: "agent-1",
     creator_type: "member",
     creator_id: "user-1",
+    start_date: null,
     due_date: "2026-02-01T00:00:00Z",
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
@@ -319,11 +557,58 @@ const mockIssues: Issue[] = [
     assignee_id: null,
     creator_type: "member",
     creator_id: "user-1",
+    start_date: null,
+    due_date: null,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+  },
+  {
+    ...issueDefaults,
+    id: "issue-4",
+    workspace_id: "ws-1",
+    number: 4,
+    identifier: "TES-4",
+    title: "Squad task",
+    description: null,
+    status: "todo",
+    priority: "medium",
+    assignee_type: "squad",
+    assignee_id: "squad-1",
+    creator_type: "member",
+    creator_id: "user-1",
+    start_date: null,
     due_date: null,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
   },
 ];
+
+function mockAssigneeGroups(issues: Issue[]) {
+  const groups = new Map<string, { assignee_type: Issue["assignee_type"]; assignee_id: string | null; issues: Issue[] }>();
+  for (const issue of issues) {
+    const id =
+      issue.assignee_type && issue.assignee_id
+        ? `assignee:${issue.assignee_type}:${issue.assignee_id}`
+        : "assignee:unassigned";
+    if (!groups.has(id)) {
+      groups.set(id, {
+        assignee_type: issue.assignee_type,
+        assignee_id: issue.assignee_id,
+        issues: [],
+      });
+    }
+    groups.get(id)!.issues.push(issue);
+  }
+  return {
+    groups: [...groups.entries()].map(([id, group]) => ({
+      id,
+      assignee_type: group.assignee_type,
+      assignee_id: group.assignee_id,
+      issues: group.issues,
+      total: group.issues.length,
+    })),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Import component under test (after mocks)
@@ -358,10 +643,36 @@ function renderWithQuery(ui: React.ReactElement) {
 describe("IssuesPage (shared)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        private callback: IntersectionObserverCallback;
+        constructor(callback: IntersectionObserverCallback) {
+          this.callback = callback;
+        }
+        observe(target: Element) {
+          this.callback(
+            [{ isIntersecting: true, target } as IntersectionObserverEntry],
+            this as unknown as IntersectionObserver,
+          );
+        }
+        unobserve() {}
+        disconnect() {}
+        takeRecords() {
+          return [];
+        }
+        root = null;
+        rootMargin = "0px";
+        thresholds = [0];
+      },
+    );
     mockListIssues.mockResolvedValue({ issues: [], total: 0 });
+    mockListGroupedIssues.mockResolvedValue({ groups: [] });
     mockViewState.viewMode = "board";
+    mockViewState.grouping = "status";
     mockViewState.statusFilters = [];
     mockViewState.priorityFilters = [];
+    mockScope = "all";
   });
 
   it("shows loading skeletons initially", () => {
@@ -401,7 +712,44 @@ describe("IssuesPage (shared)", () => {
     expect(screen.getAllByText("In Progress").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("shows workspace breadcrumb with 'Issues' label", async () => {
+  it("groups board columns by assignee", async () => {
+    mockViewState.grouping = "assignee";
+    mockListGroupedIssues.mockResolvedValue(mockAssigneeGroups(mockIssues));
+
+    renderWithQuery(<IssuesPage />);
+
+    // "Test User" renders both as the assignee group header and on the
+    // assignee chip of each card grouped under that header, so a unique
+    // match is not guaranteed.
+    await screen.findAllByText("Test User");
+    expect(screen.getAllByText("Agent One").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Squad One").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("No assignee")).toBeInTheDocument();
+  });
+
+  it("uses table group/row branches instead of the legacy status sweep", async () => {
+    mockViewState.grouping = "assignee";
+    mockListGroupedIssues.mockResolvedValue(mockAssigneeGroups(mockIssues));
+
+    renderWithQuery(<IssuesPage />);
+
+    await screen.findByText("Implement auth");
+    expect(mockListIssueTableGroups).toHaveBeenCalledWith(
+      expect.objectContaining({
+        group: { kind: "assignee" },
+        page: { limit: 100, cursor: null },
+      }),
+    );
+    expect(mockListIssueTableRows).toHaveBeenCalledWith(
+      expect.objectContaining({
+        group: { kind: "assignee" },
+        page: { limit: 50, cursor: null },
+      }),
+    );
+    expect(mockListIssues).not.toHaveBeenCalled();
+  });
+
+  it("shows the 'Issues' section header without a workspace prefix", async () => {
     mockListIssues.mockImplementation((params: any) =>
       Promise.resolve({
         issues: mockIssues.filter((i) => i.status === params?.status),
@@ -412,7 +760,9 @@ describe("IssuesPage (shared)", () => {
     renderWithQuery(<IssuesPage />);
 
     await screen.findByText("Issues");
-    expect(screen.getByText("Test WS")).toBeInTheDocument();
+    // The list header is now `icon + title`, matching the other list pages.
+    // The workspace/org name is no longer rendered as a breadcrumb prefix.
+    expect(screen.queryByText("Test WS")).not.toBeInTheDocument();
   });
 
   it("shows empty state when there are no issues", async () => {
@@ -427,8 +777,54 @@ describe("IssuesPage (shared)", () => {
   it("shows scope tab buttons", async () => {
     renderWithQuery(<IssuesPage />);
 
-    await screen.findByText("All");
+    expect(await screen.findAllByText("All")).not.toHaveLength(0);
     expect(screen.getByText("Members")).toBeInTheDocument();
     expect(screen.getByText("Agents")).toBeInTheDocument();
+  });
+
+  // The Members/Agents tabs filter server-side via assignee_types (the same
+  // param the grouped endpoint takes), so the mock mirrors the server's
+  // WHERE clause instead of a client-side post-filter.
+  function mockListIssuesHonoringAssigneeTypes() {
+    mockListIssues.mockImplementation((params: any) => {
+      const matches = mockIssues.filter(
+        (i) =>
+          i.status === params?.status &&
+          (!params?.assignee_types ||
+            (i.assignee_type !== null &&
+              params.assignee_types.includes(i.assignee_type))),
+      );
+      return Promise.resolve({ issues: matches, total: matches.length });
+    });
+  }
+
+  it("agents scope includes squad-assigned issues", async () => {
+    mockScope = "agents";
+    mockViewState.viewMode = "list";
+    mockListIssuesHonoringAssigneeTypes();
+    renderWithQuery(<IssuesPage />);
+
+    // Squad task and agent task should be visible
+    await screen.findByText("Design landing page");
+    expect(screen.getByText("Squad task")).toBeInTheDocument();
+    // Member task should NOT be visible
+    expect(screen.queryByText("Implement auth")).not.toBeInTheDocument();
+    expect(mockListIssues).toHaveBeenCalledWith(
+      expect.objectContaining({ assignee_types: ["agent", "squad"] }),
+    );
+  });
+
+  it("members scope excludes squad-assigned issues", async () => {
+    mockScope = "members";
+    mockViewState.viewMode = "list";
+    mockListIssuesHonoringAssigneeTypes();
+    renderWithQuery(<IssuesPage />);
+
+    await screen.findByText("Implement auth");
+    expect(screen.queryByText("Squad task")).not.toBeInTheDocument();
+    expect(screen.queryByText("Design landing page")).not.toBeInTheDocument();
+    expect(mockListIssues).toHaveBeenCalledWith(
+      expect.objectContaining({ assignee_types: ["member"] }),
+    );
   });
 });

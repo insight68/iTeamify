@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY password_login_attempt_email_unique;

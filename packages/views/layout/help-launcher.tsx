@@ -1,21 +1,28 @@
 "use client";
 
-import { ArrowUpRight, BookOpen, CircleHelp, History, MessageCircle } from "lucide-react";
+import { useState } from "react";
+import { CircleHelp, MessageCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@teamify/ui/components/ui/dropdown-menu";
-import { useModalStore } from "@teamify/core/modals";
+} from "@iteamify/ui/components/ui/dropdown-menu";
+import { useModalStore } from "@iteamify/core/modals";
+import { useConfigStore } from "@iteamify/core/config";
+import { WeChatIcon } from "./wechat";
+import { WechatQrDialog } from "./wechat-qr-dialog";
 import { useT } from "../i18n";
-
-const DOCS_URL = "https://docs.niuwoai.com/";
-const CHANGELOG_URL = "https://teamify.world/changelog";
 
 export function HelpLauncher() {
   const { t } = useT("layout");
+  const serverVersion = useConfigStore((state) => state.serverVersion);
+  const [wechatOpen, setWechatOpen] = useState(false);
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={t(($) => $.help.trigger)}
@@ -28,29 +35,11 @@ export function HelpLauncher() {
         align="end"
         side="top"
         sideOffset={8}
-        className="min-w-40"
+        className="min-w-40 max-w-56"
       >
-        <DropdownMenuItem
-          render={
-            <a href={DOCS_URL} target="_blank" rel="noopener noreferrer" />
-          }
-        >
-          <BookOpen className="h-3.5 w-3.5" />
-          {t(($) => $.help.docs)}
-          <ArrowUpRight className="size-3 translate-y-px text-muted-foreground/50" />
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          render={
-            <a
-              href={CHANGELOG_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            />
-          }
-        >
-          <History className="h-3.5 w-3.5" />
-          {t(($) => $.help.changelog)}
-          <ArrowUpRight className="size-3 translate-y-px text-muted-foreground/50" />
+        <DropdownMenuItem onClick={() => setWechatOpen(true)}>
+          <WeChatIcon className="h-3.5 w-3.5 text-[#07C160]" />
+          {t(($) => $.help.wechat)}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => useModalStore.getState().open("feedback")}
@@ -58,7 +47,29 @@ export function HelpLauncher() {
           <MessageCircle className="h-3.5 w-3.5" />
           {t(($) => $.help.feedback)}
         </DropdownMenuItem>
+        {serverVersion && (
+          <>
+            <DropdownMenuSeparator />
+            {/* DropdownMenuLabel renders Base UI's Menu.GroupLabel, which reads
+                a Menu.Group context and throws if it has no Group ancestor. It
+                must always be wrapped in a DropdownMenuGroup — without it the
+                Help menu crashes the whole app on open (no error boundary sits
+                above the sidebar). */}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="font-normal break-words">
+                {t(($) => $.help.server_version, { version: serverVersion })}
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
+    <WechatQrDialog
+      open={wechatOpen}
+      onOpenChange={setWechatOpen}
+      title={t(($) => $.help.wechat)}
+      description={t(($) => $.sidebar.wechat_card.description)}
+    />
+    </>
   );
 }

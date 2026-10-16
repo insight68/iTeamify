@@ -1,8 +1,8 @@
-import nextConfig from "@teamify/eslint-config/next";
+import nextConfig from "@iteamify/eslint-config/next";
 
 export default [
   ...nextConfig,
-  { ignores: [".next/"] },
+  { ignores: [".next/", ".next-*/", ".iteamify/", ".source/"] },
   {
     files: ["**/*.test.{ts,tsx}", "**/test/**/*.{ts,tsx}"],
     rules: {

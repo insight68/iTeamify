@@ -1,8 +1,8 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { AutopilotDetailPage as AutopilotDetail } from "@teamify/views/autopilots/components";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { autopilotDetailOptions } from "@teamify/core/autopilots/queries";
+import { AutopilotDetailPage as AutopilotDetail } from "@iteamify/views/autopilots/components";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { autopilotDetailOptions } from "@iteamify/core/autopilots/queries";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 
 export function AutopilotDetailPage() {
@@ -10,7 +10,8 @@ export function AutopilotDetailPage() {
   const wsId = useWorkspaceId();
   const { data } = useQuery(autopilotDetailOptions(wsId, id!));
 
-  useDocumentTitle(data ? `⚡ ${data.autopilot.title}` : "Autopilot");
+  // Plain text only — no leading ⚡ glyph in the title (MUL-4370).
+  useDocumentTitle(data ? data.autopilot.title : "Autopilot");
 
   if (!id) return null;
   return <AutopilotDetail autopilotId={id} />;

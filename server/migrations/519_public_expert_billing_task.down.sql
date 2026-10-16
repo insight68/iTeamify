@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY public_expert_billing_task_idx;

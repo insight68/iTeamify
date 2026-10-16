@@ -1,55 +1,41 @@
 import { api } from "../api";
 import { useAuthStore } from "../auth";
-import { setPersonProperties } from "../analytics";
 import type { OnboardingCompletionPath, QuestionnaireAnswers } from "./types";
+import { acceptCurrentUser, updateCurrentUser } from "../profile/queries";
 
-/**
- * Persist Q1/Q2/Q3 answers and sync the refreshed user into the auth
- * store. Source of truth is `user.onboarding_questionnaire` (JSONB on
- * the server). No client-side cache here.
- *
- * Resume-by-step is intentionally not persisted: every onboarding
- * entry starts at Welcome. The questionnaire is the only piece of
- * progress that survives a re-entry — it pre-fills Step 1 so the
- * user doesn't re-answer.
- */
+/** Save a field patch through the same current-user mutation as profile forms. */
 export async function saveQuestionnaire(
   answers: Partial<QuestionnaireAnswers>,
 ): Promise<void> {
-  const user = await api.patchOnboarding({ questionnaire: answers });
-  useAuthStore.getState().setUser(user);
-  // Mirror the three cohort signals into person properties so every
-  // PostHog event on this user can be broken down by role / use_case /
-  // team_size without re-joining the DB. Matches the $set block the
-  // server writes alongside `onboarding_questionnaire_submitted`.
-  if (answers.team_size || answers.role || answers.use_case) {
-    setPersonProperties({
-      ...(answers.team_size ? { team_size: answers.team_size } : {}),
-      ...(answers.role ? { role: answers.role } : {}),
-      ...(answers.use_case ? { use_case: answers.use_case } : {}),
-    });
-  }
+  await updateCurrentUser({ questionnaire: answers });
+
 }
 
 /**
  * Finalize onboarding. POST /complete marks `onboarded_at` atomically
- * (COALESCE-guarded for idempotency). We then refresh the auth store
- * so every gate sees the updated user.
+ * (COALESCE-guarded for idempotency) and emits the `onboarding_completed`
+ * analytics event exactly once. Its receipt updates the shared cache so every
+ * gate sees the updated user — most importantly the workspace layout
+ * hard gate that redirects un-onboarded users back to /onboarding.
  *
- * `completionPath` is the client's view of which Step-3 exit the user
- * took; the server funnel-splits `onboarding_completed` on this value.
- * Legacy callers that don't pass a path get recorded as `unknown`.
+ * The four-step flow calls this after submitting its first task, or when
+ * the user explicitly chooses to explore the workspace first. Assistant
+ * preparation and task creation use the existing generic API endpoints.
  */
 export async function completeOnboarding(
   completionPath?: OnboardingCompletionPath,
   workspaceId?: string,
 ): Promise<void> {
-  await api.markOnboardingComplete(
+  const state = useAuthStore.getState();
+  if (!state.user) throw new DOMException("Session changed", "AbortError");
+  const userId = state.user.id;
+  const generation = state.sessionGeneration;
+  const user = await api.markOnboardingComplete(
     completionPath || workspaceId
       ? { completion_path: completionPath, workspace_id: workspaceId }
       : undefined,
   );
-  await useAuthStore.getState().refreshMe();
+  acceptCurrentUser(user, userId, generation);
 }
 
 /**

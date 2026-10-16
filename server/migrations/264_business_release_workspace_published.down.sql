@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS idx_business_release_workspace_published;

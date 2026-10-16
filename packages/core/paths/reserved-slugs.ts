@@ -33,20 +33,28 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   "onboarding",
 
   // Platform / marketing routes (current + likely-future)
-  // `teamify` is reserved as the brand name to block impersonation workspaces.
-  // `www`, `new`, `home`, `homepage`, `dashboard` are confusables or
-  // likely-future global landing/entry routes; `homepage` matches the existing
-  // `/homepage` landing variant in apps/web.
+  // Brand names and locale prefixes are reserved to block impersonation
+  // workspaces. `www`, `new`, `home`, `homepage`, and `dashboard` are
+  // confusables or global landing/entry routes.
   "api",
   "admin",
-  "teamify",
+  "iteamify",
+  "auro",
+  "aurocreator",
+  "en",
+  "zh-cn",
   "www",
   "new",
   "home",
   "homepage",
   "dashboard",
+  "features",
+  "solutions",
   "help",
   "about",
+  "creators",
+  "arena",
+  "oracle",
   "pricing",
   "changelog",
   "docs",
@@ -57,13 +65,12 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   "terms",
   "security",
   "contact",
+  "contact-sales",
   "blog",
   "careers",
   "press",
   "download",
-  "source-ai",
-  "reconciliation",
-  "recon-ai",
+  "usecases",
 
   // Account / billing (likely-future global routes in the avatar menu)
   "profile",
@@ -73,7 +80,7 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   "search",
   "members",
 
-  // Dashboard / workspace route segments
+  // Workspace route segments
   // Reserving each segment name prevents `/{slug}/{view}` from being visually
   // ambiguous (e.g. a workspace named `issues` would make `/issues/abc` mean two
   // things). `workspaces` covers the global `/workspaces/new` workspace-creation
@@ -82,15 +89,15 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   "projects",
   "autopilots",
   "agents",
+  "squads",
   "inbox",
   "my-issues",
+  "usage",
   "runtimes",
   "skills",
   "settings",
   "workspaces",
   "teams",
-  "org",
-  "datasources",
 
   // API / integration prefixes
   // `api` above already covers `/api/*`; these guard against future top-level

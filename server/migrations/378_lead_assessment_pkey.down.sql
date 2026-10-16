@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS lead_assessment_pkey;

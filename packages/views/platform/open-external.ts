@@ -13,7 +13,7 @@
  *
  * SSR-safe: no-op if `window` is not defined.
  */
-export function openExternal(url: string): void {
+export function openExternal(url: string, options?: { sameTabOnWeb?: boolean }): void {
   if (typeof window === "undefined") return;
   const desktopAPI = (
     window as unknown as {
@@ -24,5 +24,9 @@ export function openExternal(url: string): void {
     void desktopAPI.openExternal(url);
     return;
   }
-  window.open(url, "_blank", "noopener,noreferrer");
+  if (options?.sameTabOnWeb) {
+    window.location.assign(url);
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 }

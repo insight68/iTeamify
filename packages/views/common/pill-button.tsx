@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@teamify/ui/lib/utils";
+import { cn } from "@iteamify/ui/lib/utils";
 
 export function PillButton({
   children,

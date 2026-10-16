@@ -2,21 +2,26 @@
 
 import { useState } from "react";
 import { Check, Copy, Terminal } from "lucide-react";
-import { Card, CardContent } from "@teamify/ui/components/ui/card";
+import { Card, CardContent } from "@iteamify/ui/components/ui/card";
+import { CODE_LIGATURE_CLASS } from "@iteamify/ui/lib/code-style";
+import { cn } from "@iteamify/ui/lib/utils";
+import { copyText } from "@iteamify/ui/lib/clipboard";
 import { useT } from "../../i18n";
 
 const INSTALL_CMD =
-  "curl -fsSL https://raw.githubusercontent.com/Insight86/Teamify/main/scripts/install.sh | bash";
-const SETUP_CMD = "teamify setup";
+  "curl -fsSL https://raw.githubusercontent.com/iteamify-ai/iteamify/main/scripts/install.sh | bash";
+const SETUP_CMD = "iteamify setup";
 
 function CopyButton({ text }: { text: string }) {
   const { t } = useT("onboarding");
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    void copyText(text).then((ok) => {
+      if (!ok) return;
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   return (
@@ -43,7 +48,12 @@ function Step({ n, label, cmd }: { n: number; label: string; cmd: string }) {
       </p>
       <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 font-mono text-sm">
         <Terminal className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-        <code className="min-w-0 flex-1 whitespace-pre-wrap break-all">
+        <code
+          className={cn(
+            "min-w-0 flex-1 whitespace-pre-wrap break-all",
+            CODE_LIGATURE_CLASS,
+          )}
+        >
           {cmd}
         </code>
         <CopyButton text={cmd} />
@@ -55,7 +65,7 @@ function Step({ n, label, cmd }: { n: number; label: string; cmd: string }) {
 /**
  * CLI install instructions — two copy-and-run commands. Hardcoded because
  * there's nothing environmental to infer: step 1 is the public install
- * script, step 2 is the cloud `teamify setup` which the CLI itself knows
+ * script, step 2 is the cloud `iteamify setup` which the CLI itself knows
  * the endpoints for. Local development tests a self-host variant by
  * typing the extended command directly in the terminal; no need to
  * thread env vars through React.

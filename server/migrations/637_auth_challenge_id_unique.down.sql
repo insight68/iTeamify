@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY auth_challenge_id_unique;

@@ -1,3 +1,4 @@
+import type { OnboardingStep } from "@iteamify/core/onboarding";
 import { create } from "zustand";
 
 /**
@@ -16,7 +17,7 @@ export type WindowOverlay =
   | { type: "new-workspace" }
   | { type: "invite"; invitationId: string }
   | { type: "invitations" }
-  | { type: "onboarding" };
+  | { type: "onboarding"; step?: OnboardingStep; workspaceId?: string };
 
 interface WindowOverlayStore {
   overlay: WindowOverlay | null;

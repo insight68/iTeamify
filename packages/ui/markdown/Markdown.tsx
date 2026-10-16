@@ -1,18 +1,20 @@
 import * as React from 'react'
-import ReactMarkdown, { type Components, defaultUrlTransform } from 'react-markdown'
+import ReactMarkdown, { type Components } from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
 import rehypeRaw from 'rehype-raw'
-import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
+import rehypeSanitize from 'rehype-sanitize'
 import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import { FileText, Download } from 'lucide-react'
-import { cn } from '@teamify/ui/lib/utils'
+import { cn } from '@iteamify/ui/lib/utils'
+import { CODE_LIGATURE_CLASS } from '@iteamify/ui/lib/code-style'
 import { CodeBlock, InlineCode } from './CodeBlock'
-import { ChartCard, EmbedCard, preprocessChartCards } from './chart-cards'
-import { preprocessFileCards } from './file-cards'
+import { isAllowedFileCardHref, preprocessFileCards } from './file-cards'
 import { preprocessLinks } from './linkify'
+import { preprocessIssueIdentifiers } from './issue-identifiers'
 import { preprocessMentionShortcodes } from './mentions'
+import { markdownSanitizeSchema, markdownUrlTransform } from './sanitize'
 import 'katex/dist/katex.min.css'
 import './markdown.css'
 
@@ -57,57 +59,34 @@ export interface MarkdownProps {
    */
   renderMention?: (props: { type: string; id: string }) => React.ReactNode
   /**
-   * CDN hostname for file card detection (e.g. "teamify-static.copilothub.ai").
+   * CDN hostname for file card detection (e.g. "iteamify-static.copilothub.ai").
    * When provided, enables file card preprocessing and rendering.
    */
   cdnDomain?: string
   /**
-   * Hostnames allowed for iframe embeds such as Grafana dashboards.
-   * Empty means embeds render as outbound links instead of iframes.
+   * Optional override for the image renderer. When provided, replaces the
+   * default `<img>` with constrained sizing. The views-package wrapper uses
+   * this to inject the unified `<Attachment>` component so chat messages get
+   * the same hover toolbar / lightbox / preview-modal treatment as comments.
    */
-  allowedEmbedDomains?: string[]
+  renderImage?: (props: { src: string; alt: string }) => React.ReactNode
+  /**
+   * Optional override for the file-card renderer. When provided, replaces
+   * the simplified card chrome (filename + download button) with whatever
+   * the caller supplies. Used the same way as `renderImage` to bridge into
+   * the views-package `<Attachment>` component.
+   */
+  renderFileCard?: (props: { href: string; filename: string }) => React.ReactNode
+  /**
+   * When true, bare issue identifiers (e.g. `MUL-123`, `TES-1`) are rewritten
+   * to `mention://issue/<identifier>` links so `renderMention` can resolve them
+   * to a navigable issue chip. Off by default — enable only on surfaces whose
+   * `renderMention` knows how to resolve an identifier (see the app wrapper in
+   * packages/views/common/markdown.tsx). Detection is markdown-aware: code,
+   * existing links, URLs, and file/path tokens are skipped.
+   */
+  autolinkIssueIdentifiers?: boolean
 }
-
-// Sanitization schema — extends GitHub defaults to allow code highlighting classes
-// and the mention:// protocol used for @mentions.
-const sanitizeSchema = {
-  ...defaultSchema,
-  protocols: {
-    ...defaultSchema.protocols,
-    href: [...(defaultSchema.protocols?.href ?? []), 'mention'],
-  },
-  attributes: {
-    ...defaultSchema.attributes,
-    div: [
-      ...(defaultSchema.attributes?.div ?? []),
-      'dataType',
-      'dataHref',
-      'dataFilename',
-      'dataTitle',
-      'dataSpec',
-    ],
-    code: [
-      ...(defaultSchema.attributes?.code ?? []),
-      ['className', /^language-/],
-      ['className', /^math-/],
-      ['className', /^hljs/],
-    ],
-    img: [
-      ...(defaultSchema.attributes?.img ?? []),
-      'alt',
-    ],
-  },
-}
-
-/**
- * Custom URL transform that allows mention:// protocol (used for @mentions)
- * while keeping the default security for all other URLs.
- */
-function urlTransform(url: string): string {
-  if (url.startsWith('mention://')) return url
-  return defaultUrlTransform(url)
-}
-
 
 // File path detection regex - matches paths starting with /, ~/, or ./
 const FILE_PATH_REGEX =
@@ -121,7 +100,8 @@ function createComponents(
   onUrlClick?: (url: string) => void,
   onFileClick?: (path: string) => void,
   renderMention?: (props: { type: string; id: string }) => React.ReactNode,
-  allowedEmbedDomains: string[] = [],
+  renderImage?: (props: { src: string; alt: string }) => React.ReactNode,
+  renderFileCard?: (props: { href: string; filename: string }) => React.ReactNode,
 ): Partial<Components> {
   const baseComponents: Partial<Components> = {
     // FileCard: intercept <div data-type="fileCard"> from preprocessFileCards
@@ -129,9 +109,11 @@ function createComponents(
       const dataType = node?.properties?.dataType as string | undefined
       if (dataType === 'fileCard') {
         const rawHref = (node?.properties?.dataHref as string) || ''
-        // Only allow http(s) URLs to prevent javascript: and other dangerous schemes.
-        const href = /^https?:\/\//i.test(rawHref) ? rawHref : ''
+        const href = isAllowedFileCardHref(rawHref) ? rawHref : ''
         const filename = (node?.properties?.dataFilename as string) || ''
+        if (renderFileCard) {
+          return <>{renderFileCard({ href, filename })}</>
+        }
         return (
           <div className="my-1 flex items-center gap-2 rounded-md border border-border bg-muted/50 px-2.5 py-1 transition-colors hover:bg-muted">
             <FileText className="size-4 shrink-0 text-muted-foreground" />
@@ -150,32 +132,27 @@ function createComponents(
           </div>
         )
       }
-      if (dataType === 'chartCard') {
-        const title = (node?.properties?.dataTitle as string) || ''
-        const spec = (node?.properties?.dataSpec as string) || ''
-        return <ChartCard title={title} spec={spec} />
-      }
-      if (dataType === 'embedCard') {
-        const title = (node?.properties?.dataTitle as string) || ''
-        const spec = (node?.properties?.dataSpec as string) || ''
-        return <EmbedCard title={title} spec={spec} allowedDomains={allowedEmbedDomains} />
-      }
       return <div {...props}>{children}</div>
     },
     // Images: render uploaded images with constrained sizing
-    img: ({ src, alt }) => (
-      <img
-        src={src}
-        alt={alt ?? ""}
-        className="max-w-full h-auto rounded-md my-2"
-        loading="lazy"
-      />
-    ),
+    img: ({ src, alt }) => {
+      if (renderImage) {
+        return <>{renderImage({ src: typeof src === 'string' ? src : '', alt: alt ?? '' })}</>
+      }
+      return (
+        <img
+          src={src}
+          alt={alt ?? ""}
+          className="max-w-full h-auto rounded-md my-2"
+          loading="lazy"
+        />
+      )
+    },
     // Links: Make clickable with callbacks, or render as mention
     a: ({ href, children }) => {
-      // Mention links: mention://member/id, mention://agent/id, mention://issue/id, mention://all/all
+      // Mention links: mention://member/id, mention://agent/id, mention://issue/id, mention://project/id, mention://all/all
       if (href?.startsWith('mention://')) {
-        const mentionMatch = href.match(/^mention:\/\/(member|agent|issue|all)\/(.+)$/)
+        const mentionMatch = href.match(/^mention:\/\/(member|agent|issue|project|all)\/(.+)$/)
         if (mentionMatch?.[1] && mentionMatch[2]) {
           const type = mentionMatch[1]
           const id = mentionMatch[2]
@@ -197,6 +174,14 @@ function createComponents(
         }
         return (
           <span className="text-primary font-semibold mx-0.5">
+            {children}
+          </span>
+        )
+      }
+
+      if (href?.startsWith('slash://skill/')) {
+        return (
+          <span className="slash-command text-primary font-semibold mx-0.5">
             {children}
           </span>
         )
@@ -234,8 +219,12 @@ function createComponents(
     return {
       ...baseComponents,
       // No special code handling - just monospace
-      code: ({ children }) => <code className="font-mono">{children}</code>,
-      pre: ({ children }) => <pre className="font-mono whitespace-pre-wrap my-2">{children}</pre>,
+      code: ({ children }) => <code className={cn('font-mono', CODE_LIGATURE_CLASS)}>{children}</code>,
+      pre: ({ children }) => (
+        <pre className={cn('font-mono whitespace-pre-wrap my-2', CODE_LIGATURE_CLASS)}>
+          {children}
+        </pre>
+      ),
       // Minimal paragraph spacing
       p: ({ children }) => <p className="my-1">{children}</p>,
       // Simple lists
@@ -404,32 +393,41 @@ export function Markdown({
   onUrlClick,
   onFileClick,
   renderMention,
+  renderImage,
+  renderFileCard,
   cdnDomain,
-  allowedEmbedDomains = [],
+  autolinkIssueIdentifiers
 }: MarkdownProps): React.JSX.Element {
   const components = React.useMemo(
-    () => createComponents(mode, onUrlClick, onFileClick, renderMention, allowedEmbedDomains),
-    [mode, onUrlClick, onFileClick, renderMention, allowedEmbedDomains]
+    () => createComponents(mode, onUrlClick, onFileClick, renderMention, renderImage, renderFileCard),
+    [mode, onUrlClick, onFileClick, renderMention, renderImage, renderFileCard]
   )
 
-  // Preprocess: convert mention shortcodes, raw URLs, and file cards to renderable content
+  // Preprocess: convert mention shortcodes, bare issue identifiers, raw URLs,
+  // and file cards to renderable content. Issue-identifier autolinking runs
+  // BEFORE linkify/file-card so those passes treat the rewritten spans as
+  // existing markdown links and skip them.
   const processedContent = React.useMemo(
     () => {
       let result = preprocessMentionShortcodes(children)
+      if (autolinkIssueIdentifiers) result = preprocessIssueIdentifiers(result)
       result = preprocessLinks(result)
       result = preprocessFileCards(result, cdnDomain ?? '')
-      result = preprocessChartCards(result)
       return result
     },
-    [children, cdnDomain]
+    [children, cdnDomain, autolinkIssueIdentifiers]
   )
 
   return (
     <div className={cn('markdown-content break-words', className)}>
       <ReactMarkdown
-        remarkPlugins={[remarkMath, remarkBreaks, [remarkGfm, { singleTilde: false }]]}
-        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeKatex]}
-        urlTransform={urlTransform}
+        remarkPlugins={[
+          [remarkMath, { singleDollarTextMath: false }],
+          remarkBreaks,
+          [remarkGfm, { singleTilde: false }],
+        ]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, markdownSanitizeSchema], rehypeKatex]}
+        urlTransform={markdownUrlTransform}
         components={components}
       >
         {processedContent}
@@ -445,25 +443,15 @@ export function Markdown({
  * so only new/changed blocks re-render during streaming.
  */
 export const MemoizedMarkdown = React.memo(Markdown, (prevProps, nextProps) => {
-  const sameEmbedDomains =
-    (prevProps.allowedEmbedDomains ?? []).join('\0') ===
-    (nextProps.allowedEmbedDomains ?? []).join('\0')
   // If id is provided, use it for memoization
   if (prevProps.id && nextProps.id) {
     return (
       prevProps.id === nextProps.id &&
       prevProps.children === nextProps.children &&
-      prevProps.mode === nextProps.mode &&
-      prevProps.cdnDomain === nextProps.cdnDomain &&
-      sameEmbedDomains
+      prevProps.mode === nextProps.mode
     )
   }
   // Otherwise compare content and mode
-  return (
-    prevProps.children === nextProps.children &&
-    prevProps.mode === nextProps.mode &&
-    prevProps.cdnDomain === nextProps.cdnDomain &&
-    sameEmbedDomains
-  )
+  return prevProps.children === nextProps.children && prevProps.mode === nextProps.mode
 })
 MemoizedMarkdown.displayName = 'MemoizedMarkdown'

@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS skill_blueprint_origin_skill_uidx;

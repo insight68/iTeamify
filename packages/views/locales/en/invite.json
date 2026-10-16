@@ -34,23 +34,6 @@
     "accept_failed": "Failed to accept invitation",
     "decline_failed": "Failed to decline invitation"
   },
-  "signup": {
-    "title": "Create your account",
-    "subtitle": "Set a password to join {{workspace_name}}",
-    "email_label": "Email",
-    "password_label": "Password",
-    "password_placeholder": "At least 8 characters",
-    "confirm_password_label": "Confirm password",
-    "submit": "Create account & Join",
-    "submitting": "Creating account...",
-    "error_password_too_short": "Password must be at least 8 characters",
-    "error_password_mismatch": "Passwords do not match",
-    "error_signup_failed": "Failed to create account. Please try again.",
-    "error_user_exists": "You already have an account. Please log in to accept this invitation.",
-    "login_instead": "Already have an account? Log in",
-    "success_title": "Account created!",
-    "success_subtitle": "You've joined {{workspace_name}}. Redirecting..."
-  },
   "batch": {
     "log_out": "Log out",
     "empty_title": "No pending invitations",

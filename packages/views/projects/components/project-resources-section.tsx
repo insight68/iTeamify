@@ -1,14 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChevronRight,
-  FileText,
   FolderGit,
-  Globe,
-  Paperclip,
+  FolderOpen,
+  Pencil,
   Plus,
+  Search,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -16,59 +16,102 @@ import {
   projectResourcesOptions,
   useCreateProjectResource,
   useDeleteProjectResource,
-} from "@teamify/core/projects";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { useCurrentWorkspace } from "@teamify/core/paths";
-import { getApi } from "@teamify/core/api";
+  useUpdateProjectResource,
+} from "@iteamify/core/projects";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { useCurrentWorkspace } from "@iteamify/core/paths";
 import type {
-  FileResourceRef,
   GithubRepoResourceRef,
+  LocalDirectoryResourceRef,
   ProjectResource,
-  TextResourceRef,
-  UrlResourceRef,
-} from "@teamify/core/types";
-import { Button } from "@teamify/ui/components/ui/button";
+} from "@iteamify/core/types";
+import { Button } from "@iteamify/ui/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@teamify/ui/components/ui/popover";
+} from "@iteamify/ui/components/ui/popover";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-} from "@teamify/ui/components/ui/tooltip";
+} from "@iteamify/ui/components/ui/tooltip";
+import {
+  isDesktopShell,
+  pickDirectory,
+  useLocalDaemonStatus,
+  validateLocalDirectory,
+  type ValidateLocalDirectoryResult,
+} from "../../platform";
 import { useT } from "../../i18n";
-
-type AddTab = "repo" | "link" | "file" | "text";
+import { githubShortLabel } from "../../common/github-url";
 
 // Project Resources sidebar section.
 //
-// Renders github_repo, url, file, and text resource types. The rendering
-// layer is type-dispatched so adding a new type means: (1) extend the API
-// validator, (2) add a render case here. No changes to the schema or query
-// layer.
+// Type-dispatched at the row + add-flow level. Add a new resource_type by:
+//   (1) extending the server validator
+//   (2) extending ProjectResourceType in @iteamify/core/types
+//   (3) adding a render case in ResourceRow and an add-control here
+function isGithubRef(r: ProjectResource): r is ProjectResource & {
+  resource_ref: GithubRepoResourceRef;
+} {
+  return r.resource_type === "github_repo";
+}
+
+function isLocalDirectoryRef(r: ProjectResource): r is ProjectResource & {
+  resource_ref: LocalDirectoryResourceRef;
+} {
+  return r.resource_type === "local_directory";
+}
+
 export function ProjectResourcesSection({ projectId }: { projectId: string }) {
   const { t } = useT("projects");
   const wsId = useWorkspaceId();
   const workspace = useCurrentWorkspace();
+  const daemonStatus = useLocalDaemonStatus();
   const [open, setOpen] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
-  const [addTab, setAddTab] = useState<AddTab>("repo");
+  const [repoSearch, setRepoSearch] = useState("");
+  const [picking, setPicking] = useState(false);
 
   const { data: resources = [] } = useQuery(
     projectResourcesOptions(wsId, projectId),
   );
   const createResource = useCreateProjectResource(wsId, projectId);
+  const updateResource = useUpdateProjectResource(wsId, projectId);
   const deleteResource = useDeleteProjectResource(wsId, projectId);
 
-  const attachedUrls = new Set(
-    resources
-      .filter((r) => r.resource_type === "github_repo")
-      .map((r) => (r.resource_ref as GithubRepoResourceRef).url),
-  );
+  // Desktop-only entry points. We hide (not just disable) on web so users
+  // there don't see an action they can never complete — the spec calls for
+  // read-only on web because the daemon-id check can't be performed in the
+  // browser.
+  const desktopMode = isDesktopShell();
+  const localDaemonId = daemonStatus.daemonId;
 
-  const handleAttachRepo = async (url: string) => {
+  const attachedUrls = new Set(
+    resources.filter(isGithubRef).map((r) => r.resource_ref.url),
+  );
+  const attachedLocalPaths = new Set(
+    resources
+      .filter(isLocalDirectoryRef)
+      .filter((r) => r.resource_ref.daemon_id === localDaemonId)
+      .map((r) => r.resource_ref.local_path),
+  );
+  // Per (project, daemon) we allow at most one local_directory — the
+  // daemon-side resolver picks the first match by daemon_id, so two rows
+  // on the same daemon would silently route the agent into one of them.
+  // The server enforces this at the API boundary; the UI mirrors the
+  // restriction by hiding the "Add" affordance once a row exists for the
+  // current daemon, otherwise users would only discover the limit on a
+  // 409 toast.
+  const hasLocalDirectoryForCurrentDaemon =
+    localDaemonId !== null && attachedLocalPaths.size > 0;
+
+  const repoQuery = repoSearch.trim().toLowerCase();
+  const filteredRepos =
+    workspace?.repos?.filter((repo) => repo.url.toLowerCase().includes(repoQuery)) ?? [];
+
+  const handleAttach = async (url: string) => {
     try {
       await createResource.mutateAsync({
         resource_type: "github_repo",
@@ -76,78 +119,74 @@ export function ProjectResourcesSection({ projectId }: { projectId: string }) {
       });
       toast.success(t(($) => $.resources.toast_attached));
     } catch (err) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : t(($) => $.resources.toast_attach_failed);
+      const msg = err instanceof Error ? err.message : t(($) => $.resources.toast_attach_failed);
       toast.error(msg);
     }
   };
 
-  const handleAttachLink = async (url: string, title?: string) => {
+  const handleAttachLocalDirectory = async () => {
+    if (picking) return;
+    setPicking(true);
     try {
+      if (!localDaemonId || !daemonStatus.running) {
+        toast.error(t(($) => $.resources.toast_local_daemon_not_running));
+        return;
+      }
+      // Race guard: the button gates on this already, but if the picker
+      // is opened while a concurrent resource-create lands the user
+      // would otherwise see a 409. Surface a clearer message instead.
+      if (attachedLocalPaths.size > 0) {
+        toast.error(t(($) => $.resources.toast_local_daemon_already_attached));
+        return;
+      }
+      const picked = await pickDirectory();
+      if (!picked.ok) {
+        if (picked.reason && picked.reason !== "cancelled") {
+          toast.error(
+            picked.error ?? t(($) => $.resources.toast_local_pick_failed),
+          );
+        }
+        return;
+      }
+      const path = picked.path ?? "";
+      const fallbackLabel = picked.basename ?? path;
+      if (attachedLocalPaths.has(path)) {
+        toast.error(t(($) => $.resources.toast_local_already_attached));
+        return;
+      }
+      const validation = await validateLocalDirectory(path);
+      if (!validation.ok) {
+        toast.error(
+          localValidationMessage(validation, {
+            not_absolute: t(($) => $.resources.local_validate_not_absolute),
+            not_found: t(($) => $.resources.local_validate_not_found),
+            not_a_directory: t(($) => $.resources.local_validate_not_a_directory),
+            not_readable: t(($) => $.resources.local_validate_not_readable),
+            not_writable: t(($) => $.resources.local_validate_not_writable),
+            unsupported: t(($) => $.resources.local_validate_unsupported),
+            fallback: t(($) => $.resources.toast_local_pick_failed),
+          }),
+        );
+        return;
+      }
       await createResource.mutateAsync({
-        resource_type: "url",
-        resource_ref: { url, title: title || undefined },
-      });
-      toast.success(t(($) => $.resources.toast_attached));
-    } catch (err) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : t(($) => $.resources.toast_attach_failed);
-      toast.error(msg);
-    }
-  };
-
-  const handleAttachFile = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error(t(($) => $.resources.toast_file_too_large));
-      return;
-    }
-    try {
-      const api = getApi();
-      const att = await api.uploadFile(file);
-      // Extract storage_key from the upload URL (path portion).
-      const storageKey = att.url.replace(/^\/uploads\//, "").replace(/^https?:\/\/[^/]+\/uploads\//, "");
-      await createResource.mutateAsync({
-        resource_type: "file",
+        resource_type: "local_directory",
         resource_ref: {
-          storage_key: storageKey || att.url,
-          filename: att.filename,
-          content_type: att.content_type,
-          size_bytes: att.size_bytes,
+          local_path: path,
+          daemon_id: localDaemonId,
+          label: fallbackLabel,
         },
       });
-      toast.success(t(($) => $.resources.toast_attached));
+      toast.success(t(($) => $.resources.toast_local_attached));
+      setAddOpen(false);
     } catch (err) {
       const msg =
         err instanceof Error
           ? err.message
-          : t(($) => $.resources.toast_attach_failed);
+          : t(($) => $.resources.toast_local_pick_failed);
       toast.error(msg);
-    }
-  };
-
-  const handleAttachText = async (
-    content: string,
-    filename?: string,
-  ) => {
-    try {
-      await createResource.mutateAsync({
-        resource_type: "text",
-        resource_ref: {
-          content,
-          filename: filename || undefined,
-        },
-      });
-      toast.success(t(($) => $.resources.toast_attached));
-    } catch (err) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : t(($) => $.resources.toast_attach_failed);
-      toast.error(msg);
+    } finally {
+      setPicking(false);
     }
   };
 
@@ -155,21 +194,46 @@ export function ProjectResourcesSection({ projectId }: { projectId: string }) {
     try {
       await deleteResource.mutateAsync(resource.id);
       toast.success(t(($) => $.resources.toast_removed));
-    } catch {
-      toast.error(t(($) => $.resources.toast_remove_failed));
+    } catch (err) {
+      toast.error(
+        err instanceof Error && err.message
+          ? err.message
+          : t(($) => $.resources.toast_remove_failed),
+      );
     }
   };
 
-  const tabs: { key: AddTab; label: string }[] = [
-    { key: "repo", label: t(($) => $.resources.tab_repo) },
-    { key: "link", label: t(($) => $.resources.tab_link) },
-    { key: "file", label: t(($) => $.resources.tab_file) },
-    { key: "text", label: t(($) => $.resources.tab_text) },
-  ];
+  const handleRenameLocalDirectory = async (
+    resource: ProjectResource & { resource_ref: LocalDirectoryResourceRef },
+    nextLabel: string,
+  ) => {
+    const trimmed = nextLabel.trim();
+    const previous = resource.resource_ref.label ?? resource.label ?? "";
+    if (trimmed === previous.trim()) return;
+    try {
+      await updateResource.mutateAsync({
+        resourceId: resource.id,
+        data: {
+          resource_ref: {
+            ...resource.resource_ref,
+            label: trimmed,
+          },
+        },
+      });
+      toast.success(t(($) => $.resources.toast_local_renamed));
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : t(($) => $.resources.toast_local_rename_failed);
+      toast.error(msg);
+    }
+  };
 
   return (
     <div>
       <button
+        type="button"
         className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors mb-2 hover:bg-accent/70 ${open ? "" : "text-muted-foreground hover:text-foreground"}`}
         onClick={() => setOpen(!open)}
       >
@@ -185,14 +249,27 @@ export function ProjectResourcesSection({ projectId }: { projectId: string }) {
               {t(($) => $.resources.empty)}
             </p>
           )}
-          {resources.map((resource) => (
-            <ResourceRow
-              key={resource.id}
-              resource={resource}
-              onRemove={() => handleRemove(resource)}
-            />
-          ))}
-          <Popover open={addOpen} onOpenChange={setAddOpen}>
+          {resources.length > 0 && (
+            <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
+              {resources.map((resource) => (
+                <ResourceRow
+                  key={resource.id}
+                  resource={resource}
+                  localDaemonId={localDaemonId}
+                  canEdit={desktopMode}
+                  onRemove={() => handleRemove(resource)}
+                  onRenameLocalDirectory={handleRenameLocalDirectory}
+                />
+              ))}
+            </div>
+          )}
+          <Popover
+            open={addOpen}
+            onOpenChange={(v) => {
+              setAddOpen(v);
+              if (!v) setRepoSearch("");
+            }}
+          >
             <PopoverTrigger
               render={
                 <Button
@@ -209,451 +286,374 @@ export function ProjectResourcesSection({ projectId }: { projectId: string }) {
               <div className="text-xs font-medium text-muted-foreground">
                 {t(($) => $.resources.popover_title)}
               </div>
-              {/* Tab bar */}
-              <div className="flex gap-0.5 border-b pb-1">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => setAddTab(tab.key)}
-                    className={`px-2 py-1 text-xs rounded-sm transition-colors ${
-                      addTab === tab.key
-                        ? "bg-accent font-medium text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-              {/* Tab content */}
-              {addTab === "repo" && (
-                <RepoTab
-                  workspace={workspace}
-                  attachedUrls={attachedUrls}
-                  isDisabled={createResource.isPending}
-                  onAttach={async (url) => {
-                    await handleAttachRepo(url);
-                    setAddOpen(false);
-                  }}
-                />
+              {workspace?.repos && workspace.repos.length > 0 && (
+                <>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={repoSearch}
+                      onChange={(e) => setRepoSearch(e.target.value)}
+                      aria-label={t(($) => $.resources.repos_search_placeholder)}
+                      placeholder={t(($) => $.resources.repos_search_placeholder)}
+                      className="h-8 w-full rounded-md border bg-transparent pl-7 pr-2 text-xs outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                  </div>
+                  <div className="max-h-48 space-y-1 overflow-y-auto">
+                    {filteredRepos.length === 0 && repoQuery && (
+                      <p className="py-2 text-center text-xs text-muted-foreground">
+                        {t(($) => $.resources.repos_search_empty)}
+                      </p>
+                    )}
+                    {filteredRepos.map((repo) => {
+                      const isAttached = attachedUrls.has(repo.url);
+                      const isDisabled = isAttached || createResource.isPending;
+                      return (
+                        // Use aria-disabled instead of the native `disabled` attribute so
+                        // hover events still reach the tooltip trigger on attached rows
+                        // (browsers suppress pointer events on disabled form controls).
+                        <button
+                          key={repo.url}
+                          type="button"
+                          aria-disabled={isDisabled}
+                          onClick={async () => {
+                            if (isDisabled) return;
+                            await handleAttach(repo.url);
+                            setAddOpen(false);
+                          }}
+                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-left hover:bg-accent transition-colors aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:hover:bg-transparent"
+                        >
+                          <FolderGit className="size-3.5" />
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <span className="truncate flex-1">{githubShortLabel(repo.url)}</span>
+                              }
+                            />
+                            <TooltipContent side="top">{repo.url}</TooltipContent>
+                          </Tooltip>
+                          {isAttached && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {t(($) => $.resources.attached_badge)}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
               )}
-              {addTab === "link" && (
-                <LinkForm
-                  onSubmit={async (url, title) => {
-                    await handleAttachLink(url, title);
-                    setAddOpen(false);
-                  }}
-                />
-              )}
-              {addTab === "file" && (
-                <FileForm
-                  onSubmit={async (file) => {
-                    await handleAttachFile(file);
-                    setAddOpen(false);
-                  }}
-                />
-              )}
-              {addTab === "text" && (
-                <TextForm
-                  onSubmit={async (content, filename) => {
-                    await handleAttachText(content, filename);
-                    setAddOpen(false);
-                  }}
-                />
-              )}
+              <CustomRepoForm
+                onSubmit={async (url) => {
+                  await handleAttach(url);
+                  setAddOpen(false);
+                }}
+              />
             </PopoverContent>
           </Popover>
+          {desktopMode && (
+            <div className="flex flex-col">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 justify-start px-2 text-xs text-muted-foreground hover:text-foreground"
+                disabled={
+                  picking ||
+                  createResource.isPending ||
+                  !daemonStatus.running ||
+                  hasLocalDirectoryForCurrentDaemon
+                }
+                onClick={() => {
+                  void handleAttachLocalDirectory();
+                }}
+              >
+                <FolderOpen className="size-3" />
+                {t(($) => $.resources.add_local_directory_button)}
+              </Button>
+              {!daemonStatus.running && (
+                <p className="px-2 pt-0.5 text-[10px] text-muted-foreground">
+                  {t(($) => $.resources.local_daemon_offline_hint)}
+                </p>
+              )}
+              {daemonStatus.running && hasLocalDirectoryForCurrentDaemon && (
+                <p className="px-2 pt-0.5 text-[10px] text-muted-foreground">
+                  {t(($) => $.resources.local_daemon_already_attached_hint)}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
+interface ResourceRowProps {
+  resource: ProjectResource;
+  localDaemonId: string | null;
+  canEdit: boolean;
+  onRemove: () => void;
+  onRenameLocalDirectory: (
+    resource: ProjectResource & { resource_ref: LocalDirectoryResourceRef },
+    nextLabel: string,
+  ) => Promise<void>;
+}
+
 function ResourceRow({
   resource,
+  localDaemonId,
+  canEdit,
   onRemove,
-}: {
-  resource: ProjectResource;
-  onRemove: () => void;
-}) {
+  onRenameLocalDirectory,
+}: ResourceRowProps) {
   const { t } = useT("projects");
-  switch (resource.resource_type) {
-    case "github_repo": {
-      const ref = resource.resource_ref as GithubRepoResourceRef;
-      return (
-        <div className="flex items-center gap-2 text-xs group">
-          <FolderGit className="size-3.5 text-muted-foreground shrink-0" />
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <a
-                  href={ref.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="truncate flex-1 hover:underline"
-                >
-                  {resource.label || ref.url}
-                </a>
-              }
-            />
-            <TooltipContent side="top">{ref.url}</TooltipContent>
-          </Tooltip>
-          <button
-            type="button"
-            onClick={onRemove}
-            className="opacity-0 group-hover:opacity-100 transition-opacity rounded-sm p-0.5 hover:bg-accent"
-            title={t(($) => $.resources.remove_tooltip)}
-          >
-            <Trash2 className="size-3 text-muted-foreground" />
-          </button>
-        </div>
-      );
-    }
-    case "url": {
-      const ref = resource.resource_ref as UrlResourceRef;
-      return (
-        <div className="flex items-center gap-2 text-xs group">
-          <Globe className="size-3.5 text-muted-foreground shrink-0" />
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <a
-                  href={ref.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="truncate flex-1 hover:underline"
-                >
-                  {resource.label || ref.title || ref.url}
-                </a>
-              }
-            />
-            <TooltipContent side="top">{ref.url}</TooltipContent>
-          </Tooltip>
-          <button
-            type="button"
-            onClick={onRemove}
-            className="opacity-0 group-hover:opacity-100 transition-opacity rounded-sm p-0.5 hover:bg-accent"
-            title={t(($) => $.resources.remove_tooltip)}
-          >
-            <Trash2 className="size-3 text-muted-foreground" />
-          </button>
-        </div>
-      );
-    }
-    case "file": {
-      const ref = resource.resource_ref as FileResourceRef;
-      return (
-        <div className="flex items-center gap-2 text-xs group">
-          <Paperclip className="size-3.5 text-muted-foreground shrink-0" />
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <span className="truncate flex-1">
-                  {resource.label || ref.filename}
-                  <span className="text-muted-foreground ml-1">
-                    ({formatBytes(ref.size_bytes)})
-                  </span>
-                </span>
-              }
-            />
-            <TooltipContent side="top">
-              {ref.filename} ({formatBytes(ref.size_bytes)})
-            </TooltipContent>
-          </Tooltip>
-          <button
-            type="button"
-            onClick={onRemove}
-            className="opacity-0 group-hover:opacity-100 transition-opacity rounded-sm p-0.5 hover:bg-accent"
-            title={t(($) => $.resources.remove_tooltip)}
-          >
-            <Trash2 className="size-3 text-muted-foreground" />
-          </button>
-        </div>
-      );
-    }
-    case "text": {
-      const ref = resource.resource_ref as TextResourceRef;
-      const preview =
-        ref.filename ||
-        (ref.content.length > 50
-          ? ref.content.slice(0, 50) + "..."
-          : ref.content);
-      return (
-        <div className="flex items-center gap-2 text-xs group">
-          <FileText className="size-3.5 text-muted-foreground shrink-0" />
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <span className="truncate flex-1">
-                  {resource.label || preview}
-                </span>
-              }
-            />
-            <TooltipContent side="top">{preview}</TooltipContent>
-          </Tooltip>
-          <button
-            type="button"
-            onClick={onRemove}
-            className="opacity-0 group-hover:opacity-100 transition-opacity rounded-sm p-0.5 hover:bg-accent"
-            title={t(($) => $.resources.remove_tooltip)}
-          >
-            <Trash2 className="size-3 text-muted-foreground" />
-          </button>
-        </div>
-      );
-    }
-    default:
-      return (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="truncate flex-1">
-            {resource.label || resource.resource_type}
-          </span>
-          <button
-            type="button"
-            onClick={onRemove}
-            className="rounded-sm p-0.5 hover:bg-accent"
-            title={t(($) => $.resources.remove_tooltip)}
-          >
-            <Trash2 className="size-3" />
-          </button>
-        </div>
-      );
+  if (isGithubRef(resource)) {
+    const ref = resource.resource_ref;
+    const display = resource.label || (ref.ref ? `${githubShortLabel(ref.url)} @ ${ref.ref}` : githubShortLabel(ref.url));
+    const tooltip = ref.ref ? `${ref.url}\nref: ${ref.ref}` : ref.url;
+    return (
+      <div className="flex items-center gap-2 text-xs group">
+        <FolderGit className="size-3.5 text-muted-foreground shrink-0" />
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <a
+                href={ref.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="truncate flex-1 hover:underline"
+              >
+                {display}
+              </a>
+            }
+          />
+          <TooltipContent side="top" className="whitespace-pre-line">{tooltip}</TooltipContent>
+        </Tooltip>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="opacity-0 group-hover:opacity-100 transition-opacity rounded-sm p-0.5 hover:bg-accent"
+          title={t(($) => $.resources.remove_tooltip)}
+        >
+          <Trash2 className="size-3 text-muted-foreground" />
+        </button>
+      </div>
+    );
   }
-}
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function RepoTab({
-  workspace,
-  attachedUrls,
-  isDisabled,
-  onAttach,
-}: {
-  workspace: ReturnType<typeof useCurrentWorkspace>;
-  attachedUrls: Set<string>;
-  isDisabled: boolean;
-  onAttach: (url: string) => Promise<void> | void;
-}) {
-  const { t } = useT("projects");
-  const [url, setUrl] = useState("");
+  if (isLocalDirectoryRef(resource)) {
+    return (
+      <LocalDirectoryRow
+        resource={resource}
+        localDaemonId={localDaemonId}
+        canEdit={canEdit}
+        onRemove={onRemove}
+        onRename={onRenameLocalDirectory}
+      />
+    );
+  }
 
   return (
-    <>
-      {workspace?.repos && workspace.repos.length > 0 && (
-        <div className="space-y-1">
-          {workspace.repos.map((repo) => {
-            const isAttached = attachedUrls.has(repo.url);
-            const disabled = isAttached || isDisabled;
-            return (
-              <button
-                key={repo.url}
-                type="button"
-                aria-disabled={disabled}
-                onClick={async () => {
-                  if (disabled) return;
-                  await onAttach(repo.url);
-                }}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-left hover:bg-accent transition-colors aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:hover:bg-transparent"
-              >
-                <FolderGit className="size-3.5" />
-                <Tooltip>
-                  <TooltipTrigger
-                    render={<span className="truncate flex-1">{repo.url}</span>}
-                  />
-                  <TooltipContent side="top">{repo.url}</TooltipContent>
-                </Tooltip>
-                {isAttached && (
-                  <span className="text-[10px] text-muted-foreground">
-                    {t(($) => $.resources.attached_badge)}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const trimmed = url.trim();
-          if (!trimmed) return;
-          await onAttach(trimmed);
-        }}
-        className="flex items-center gap-1.5 pt-1 border-t"
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <span className="truncate flex-1">
+        {resource.label || resource.resource_type}
+      </span>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="rounded-sm p-0.5 hover:bg-accent"
+        title={t(($) => $.resources.remove_tooltip)}
       >
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder={t(($) => $.resources.url_placeholder)}
-          className="flex-1 bg-transparent text-xs px-2 py-1 outline-none placeholder:text-muted-foreground"
-        />
-        <Button
-          type="submit"
-          size="sm"
-          variant="ghost"
-          className="h-6 px-2 text-xs"
-          disabled={!url.trim()}
-        >
-          {t(($) => $.resources.url_submit)}
-        </Button>
-      </form>
-    </>
+        <Trash2 className="size-3" />
+      </button>
+    </div>
   );
 }
 
-function LinkForm({
+interface LocalDirectoryRowProps {
+  resource: ProjectResource & { resource_ref: LocalDirectoryResourceRef };
+  localDaemonId: string | null;
+  canEdit: boolean;
+  onRemove: () => void;
+  onRename: (
+    resource: ProjectResource & { resource_ref: LocalDirectoryResourceRef },
+    nextLabel: string,
+  ) => Promise<void>;
+}
+
+function LocalDirectoryRow({
+  resource,
+  localDaemonId,
+  canEdit,
+  onRemove,
+  onRename,
+}: LocalDirectoryRowProps) {
+  const { t } = useT("projects");
+  const ref = resource.resource_ref;
+  const display = (ref.label || resource.label || ref.local_path).trim() ||
+    ref.local_path;
+  const isForeignDaemon =
+    localDaemonId !== null && ref.daemon_id !== localDaemonId;
+  const isLocalUnknown = localDaemonId === null;
+  // "disabled" in the spec sense — visual de-emphasis + no chat hint, and
+  // rename is hidden on foreign / unknown-daemon rows because the label
+  // belongs to the owning device. Delete stays available so the user can
+  // drop a stale registration from any device.
+  const mismatch = isForeignDaemon || isLocalUnknown;
+
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(display);
+
+  const startEdit = () => {
+    setDraft(display);
+    setEditing(true);
+  };
+  const commit = async () => {
+    setEditing(false);
+    await onRename(resource, draft);
+  };
+  const cancel = () => {
+    setEditing(false);
+    setDraft(display);
+  };
+
+  return (
+    <div
+      className={`flex items-center gap-2 text-xs group ${
+        mismatch ? "opacity-60" : ""
+      }`}
+    >
+      <FolderOpen className="size-3.5 text-muted-foreground shrink-0" />
+      {editing ? (
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={() => void commit()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void commit();
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              cancel();
+            }
+          }}
+          className="flex-1 min-w-0 rounded-sm border bg-transparent px-1 py-0.5 text-xs outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          aria-label={t(($) => $.resources.local_rename_label)}
+        />
+      ) : (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <span className="truncate flex-1">{display}</span>
+            }
+          />
+          <TooltipContent side="top">
+            <div className="space-y-0.5 text-[11px]">
+              <div className="font-mono">{ref.local_path}</div>
+              {mismatch && (
+                <div className="text-muted-foreground">
+                  {isLocalUnknown
+                    ? t(($) => $.resources.local_no_daemon_tooltip)
+                    : t(($) => $.resources.local_other_machine_tooltip)}
+                </div>
+              )}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      )}
+      {canEdit && !mismatch && !editing && (
+        <button
+          type="button"
+          onClick={startEdit}
+          className="opacity-0 group-hover:opacity-100 transition-opacity rounded-sm p-0.5 hover:bg-accent"
+          title={t(($) => $.resources.local_rename_tooltip)}
+        >
+          <Pencil className="size-3 text-muted-foreground" />
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="opacity-0 group-hover:opacity-100 transition-opacity rounded-sm p-0.5 hover:bg-accent"
+        title={t(($) => $.resources.remove_tooltip)}
+      >
+        <Trash2 className="size-3 text-muted-foreground" />
+      </button>
+    </div>
+  );
+}
+
+function CustomRepoForm({
   onSubmit,
 }: {
-  onSubmit: (url: string, title?: string) => Promise<void> | void;
+  onSubmit: (url: string) => Promise<void> | void;
 }) {
   const { t } = useT("projects");
   const [url, setUrl] = useState("");
-  const [title, setTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handle = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = url.trim();
     if (!trimmed) return;
     setSubmitting(true);
     try {
-      await onSubmit(trimmed, title.trim() || undefined);
+      await onSubmit(trimmed);
       setUrl("");
-      setTitle("");
     } finally {
       setSubmitting(false);
     }
   };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-1.5">
+    <form onSubmit={handle} className="flex items-center gap-1.5 pt-1 border-t">
       <input
-        type="url"
+        type="text"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
-        placeholder={t(($) => $.resources.link_url_placeholder)}
-        className="w-full bg-transparent text-xs px-2 py-1.5 rounded-md border outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
-      />
-      <input
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder={t(($) => $.resources.link_title_placeholder)}
-        className="w-full bg-transparent text-xs px-2 py-1.5 rounded-md border outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
+        placeholder={t(($) => $.resources.url_placeholder)}
+        className="flex-1 bg-transparent text-xs px-2 py-1 outline-none placeholder:text-muted-foreground"
       />
       <Button
         type="submit"
         size="sm"
         variant="ghost"
-        className="h-6 px-2 text-xs w-full"
+        className="h-6 px-2 text-xs"
         disabled={!url.trim() || submitting}
       >
-        {t(($) => $.resources.link_submit)}
+        {t(($) => $.resources.url_submit)}
       </Button>
     </form>
   );
 }
 
-function FileForm({
-  onSubmit,
-}: {
-  onSubmit: (file: File) => Promise<void> | void;
-}) {
-  const { t } = useT("projects");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-
-  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      await onSubmit(file);
-    } finally {
-      setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
-    }
-  };
-
-  return (
-    <div className="space-y-1.5">
-      <input
-        ref={inputRef}
-        type="file"
-        onChange={handleChange}
-        className="hidden"
-      />
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        className="h-7 px-2 text-xs w-full"
-        disabled={uploading}
-        onClick={() => inputRef.current?.click()}
-      >
-        {uploading
-          ? t(($) => $.resources.file_uploading)
-          : t(($) => $.resources.file_upload_label)}
-      </Button>
-    </div>
-  );
-}
-
-function TextForm({
-  onSubmit,
-}: {
-  onSubmit: (content: string, filename?: string) => Promise<void> | void;
-}) {
-  const { t } = useT("projects");
-  const [content, setContent] = useState("");
-  const [filename, setFilename] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = content.trim();
-    if (!trimmed) return;
-    setSubmitting(true);
-    try {
-      await onSubmit(trimmed, filename.trim() || undefined);
-      setContent("");
-      setFilename("");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-1.5">
-      <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder={t(($) => $.resources.text_placeholder)}
-        rows={4}
-        className="w-full bg-transparent text-xs px-2 py-1.5 rounded-md border outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring resize-none"
-      />
-      <input
-        type="text"
-        value={filename}
-        onChange={(e) => setFilename(e.target.value)}
-        placeholder={t(($) => $.resources.text_filename_placeholder)}
-        className="w-full bg-transparent text-xs px-2 py-1.5 rounded-md border outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
-      />
-      <Button
-        type="submit"
-        size="sm"
-        variant="ghost"
-        className="h-6 px-2 text-xs w-full"
-        disabled={!content.trim() || submitting}
-      >
-        {t(($) => $.resources.text_submit)}
-      </Button>
-    </form>
-  );
+function localValidationMessage(
+  result: ValidateLocalDirectoryResult,
+  strings: {
+    not_absolute: string;
+    not_found: string;
+    not_a_directory: string;
+    not_readable: string;
+    not_writable: string;
+    unsupported: string;
+    fallback: string;
+  },
+): string {
+  switch (result.reason) {
+    case "not_absolute":
+      return strings.not_absolute;
+    case "not_found":
+      return strings.not_found;
+    case "not_a_directory":
+      return strings.not_a_directory;
+    case "not_readable":
+      return strings.not_readable;
+    case "not_writable":
+      return strings.not_writable;
+    case "unsupported":
+      return strings.unsupported;
+    case "error":
+    default:
+      return result.error ?? strings.fallback;
+  }
 }

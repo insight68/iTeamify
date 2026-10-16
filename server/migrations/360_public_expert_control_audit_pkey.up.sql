@@ -1,0 +1,1 @@
+ALTER TABLE public_expert_control_audit ADD CONSTRAINT public_expert_control_audit_pkey PRIMARY KEY USING INDEX public_expert_control_audit_id_uidx;

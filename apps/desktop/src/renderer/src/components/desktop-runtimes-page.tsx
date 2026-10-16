@@ -1,14 +1,12 @@
-import { useEffect, useState } from "react";
-import { RuntimesPage } from "@teamify/views/runtimes";
-import { DaemonRuntimeCard } from "./daemon-runtime-card";
-import type { DaemonStatus } from "../../../shared/daemon-types";
+import { RuntimesPage } from "@iteamify/views/runtimes";
+import { useDesktopRuntimeContext } from "./use-desktop-runtime-context";
 
 /**
  * Desktop wrapper around the shared `RuntimesPage`. Bridges the Electron
  * `daemonAPI` (main-process daemon state) into the page so its empty
  * state can distinguish "no runtime registered" from "runtime is on its
  * way" — without the bundled daemon's status, the page shows a
- * misleading "Run teamify daemon start" hint during the few seconds
+ * misleading "Run iteamify daemon start" hint during the few seconds
  * between page load and the daemon's first registration.
  *
  * `bootstrapping` is true while the daemon is installing, starting, or
@@ -18,22 +16,18 @@ import type { DaemonStatus } from "../../../shared/daemon-types";
  * has no visible effect.
  */
 export function DesktopRuntimesPage() {
-  const [status, setStatus] = useState<DaemonStatus>({ state: "stopped" });
-
-  useEffect(() => {
-    window.daemonAPI.getStatus().then(setStatus);
-    return window.daemonAPI.onStatusChange(setStatus);
-  }, []);
-
-  const bootstrapping =
-    status.state === "installing_cli" ||
-    status.state === "starting" ||
-    status.state === "running";
+  const context = useDesktopRuntimeContext();
 
   return (
     <RuntimesPage
-      topSlot={<DaemonRuntimeCard />}
-      bootstrapping={bootstrapping}
+      localDaemonId={context.localDaemonId}
+      localMachineName={context.localMachineName}
+      // Desktop owns a local machine for the lifetime of the app, even
+      // while the daemon is stopped or hasn't registered yet. Lifecycle
+      // controls live on the machine detail page so this collection stays
+      // consistent with every other machine row.
+      hasLocalMachine
+      bootstrapping={context.bootstrapping}
     />
   );
 }

@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@teamify/ui/components/ui/button";
-import { Input } from "@teamify/ui/components/ui/input";
-import { Label } from "@teamify/ui/components/ui/label";
-import { Textarea } from "@teamify/ui/components/ui/textarea";
-import { joinCloudWaitlist } from "@teamify/core/onboarding";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { Input } from "@iteamify/ui/components/ui/input";
+import { Label } from "@iteamify/ui/components/ui/label";
+import { Textarea } from "@iteamify/ui/components/ui/textarea";
+import { joinCloudWaitlist } from "@iteamify/core/onboarding";
 import { useT } from "../../i18n";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

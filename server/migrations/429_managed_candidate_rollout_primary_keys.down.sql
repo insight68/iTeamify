@@ -1,0 +1,4 @@
+ALTER TABLE managed_provisioning_audit_event DROP CONSTRAINT IF EXISTS managed_provisioning_audit_event_pkey;
+ALTER TABLE managed_assembly_rollout_target DROP CONSTRAINT IF EXISTS managed_assembly_rollout_target_pkey;
+ALTER TABLE managed_assembly_rollout DROP CONSTRAINT IF EXISTS managed_assembly_rollout_pkey;
+ALTER TABLE managed_asset_candidate DROP CONSTRAINT IF EXISTS managed_asset_candidate_pkey;

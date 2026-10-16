@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS public_quote_contact_verification_pkey;

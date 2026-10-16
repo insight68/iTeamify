@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<defs>
+    <linearGradient id="gPill" gradientUnits="userSpaceOnUse" x1="67" y1="-67.9" x2="-4.5" y2="4.6">
+      <stop offset="0" stop-color="#23F3BF"/>
+      <stop offset="0.593" stop-color="#13C69E"/>
+      <stop offset="1" stop-color="#0BA288"/>
+    </linearGradient>
+    <linearGradient id="gA" gradientUnits="userSpaceOnUse" x1="-57.9" y1="35.2" x2="9.4" y2="-5.7">
+      <stop offset="0" stop-color="#459AFF"/>
+      <stop offset="0.431" stop-color="#3078EA"/>
+      <stop offset="1" stop-color="#144CA7"/>
+    </linearGradient>
+    <linearGradient id="gB" gradientUnits="userSpaceOnUse" x1="49.9" y1="5.2" x2="107.7" y2="11.3">
+      <stop offset="0" stop-color="#2274FF"/>
+      <stop offset="1" stop-color="#0A3D77"/>
+    </linearGradient>
+    <linearGradient id="gH" gradientUnits="userSpaceOnUse" x1="46.7" y1="50.9" x2="77.7" y2="84.7">
+      <stop offset="0" stop-color="#B8F9F4"/>
+      <stop offset="1" stop-color="#2EB3DA"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(7.04,3.008) scale(0.354036)">
+  <circle cx="22.45" cy="22.45" r="22.45" fill="#10D6A3"/>
+    <rect x="49.1" y="5" width="91.9" height="52.5" rx="26.25" fill="url(#gPill)"/>
+    <path d="M0,74.95 A22.45,22.45 0 0 1 22.45,52.5 H44.9 V107.85 A22.45,22.45 0 0 1 22.45,130.3 A22.45,22.45 0 0 1 0,107.85 Z" fill="url(#gA)"/>
+    <path d="M44.9,52.5 H62.2 A29.5,29.5 0 0 1 91.7,82 V140.38 A23.4,23.4 0 0 1 44.9,140.38 Z" fill="url(#gB)"/>
+    <path d="M44.9,52.5 H62.2 A29.5,29.5 0 0 1 89.28,70.3 L44.9,114.7 Z" fill="url(#gH)"/>
+  </g>
+</svg>

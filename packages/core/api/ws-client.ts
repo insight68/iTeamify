@@ -1,8 +1,26 @@
-import type { WSMessage, WSEventPayloadMap, WSEventType } from "../types/events";
+import type { WSMessage, WSEventType } from "../types/events";
 import { type Logger, noopLogger } from "../logger";
-import { parseWSFrame, type InvalidWSFrame } from "./ws-schema";
 
-type EventHandler = (payload: unknown, actorId?: string) => void;
+type EventHandler = (payload: unknown, actorId?: string, actorType?: string) => void;
+
+// Cap how much of an unparseable frame we put into the log. A malformed or
+// rogue server can stream arbitrarily large garbage, and the warn handler may
+// be a console / IPC bridge whose buffers we don't want to blow.
+const UNPARSEABLE_LOG_MAX_CHARS = 200;
+
+// Reconnect backoff parameters. A flat delay causes a thundering herd when many
+// clients reconnect after a server restart; exponential backoff with jitter
+// spreads the reconnection attempts over time. The client retries indefinitely
+// (capped at RECONNECT_MAX_DELAY_MS) because the web/desktop UI does not yet
+// expose a visible disconnected state or manual retry action.
+const RECONNECT_BASE_DELAY_MS = 1_000;
+const RECONNECT_MAX_DELAY_MS = 30_000;
+
+function summarizeUnparseable(data: unknown): string {
+  const text = typeof data === "string" ? data : String(data);
+  if (text.length <= UNPARSEABLE_LOG_MAX_CHARS) return text;
+  return `${text.slice(0, UNPARSEABLE_LOG_MAX_CHARS)}… (truncated, ${text.length} chars total)`;
+}
 
 /** Identifies the WS client to the server. Sent as `client_platform`,
  *  `client_version`, and `client_os` query parameters on the upgrade URL —
@@ -23,14 +41,15 @@ export class WSClient {
   private identity: WSClientIdentity | undefined;
   private handlers = new Map<WSEventType, Set<EventHandler>>();
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private reconnectAttempt = 0;
   private hasConnectedBefore = false;
+  // One-shot per connection. A non-conforming frame can repeat hundreds of
+  // times per session, so we log the first drop and suppress the rest. Reset
+  // on each connect() so a fresh connection logs once again.
+  private badFrameLogged = false;
   private onReconnectCallbacks = new Set<() => void>();
   private anyHandlers = new Set<(msg: WSMessage) => void>();
   private logger: Logger;
-  private retryCount = 0;
-  private static readonly MAX_RETRIES = 50;
-  private static readonly BASE_DELAY_MS = 1000;
-  private static readonly MAX_DELAY_MS = 30000;
 
   constructor(
     url: string,
@@ -52,6 +71,7 @@ export class WSClient {
   }
 
   connect() {
+    this.badFrameLogged = false;
     const url = new URL(this.baseUrl);
     // Token is never sent as a URL query parameter — it would be logged by
     // proxies, CDNs, and browser history.  In cookie mode the HttpOnly cookie
@@ -80,73 +100,88 @@ export class WSClient {
     };
 
     this.ws.onmessage = (event) => {
-      let invalidDetails: InvalidWSFrame | undefined;
-      const parsed = parseWSFrame(event.data, (details) => {
-        invalidDetails = details;
-      });
-      if (!parsed) {
+      let msg: WSMessage;
+      try {
+        msg = JSON.parse(event.data as string) as WSMessage;
+      } catch {
         this.logger.warn(
-          "ws ignored malformed or unknown message",
-          invalidDetails ?? { reason: "invalid_frame" },
+          "ws: received unparseable message",
+          summarizeUnparseable(event.data),
         );
         return;
       }
-      if (parsed.kind === "auth_ack") {
+      // Trust boundary: a frame must be an object carrying a string `type`.
+      // The server protocol guarantees this for every frame, but a
+      // non-conforming frame — an out-of-protocol frame injected by a proxy /
+      // browser extension, or a bare JSON primitive — must degrade to a no-op
+      // here. Without this guard every downstream consumer (the onAny
+      // dispatcher and every ws.on subscriber) runs against a bad shape;
+      // `msg.type.split(...)` in the realtime sync threw an uncaught TypeError
+      // out of onmessage and surfaced as a flood of global `$exception` events
+      // (MUL-3418). Validate once at the boundary, trust the shape downstream.
+      if (!msg || typeof (msg as { type?: unknown }).type !== "string") {
+        if (!this.badFrameLogged) {
+          this.badFrameLogged = true;
+          this.logger.warn(
+            "ws: dropping frame without a string type",
+            summarizeUnparseable(event.data),
+          );
+        }
+        return;
+      }
+      if ((msg as any).type === "auth_ack") {
         this.onAuthenticated();
         return;
       }
-      const msg = parsed.message;
       this.logger.debug("received", msg.type);
       const eventHandlers = this.handlers.get(msg.type);
       if (eventHandlers) {
         for (const handler of eventHandlers) {
-          try {
-            handler(msg.payload, msg.actor_id);
-          } catch (error) {
-            this.logger.warn("ws event handler failed", msg.type, error);
-          }
+          handler(msg.payload, msg.actor_id, msg.actor_type);
         }
       }
       for (const handler of this.anyHandlers) {
-        try {
-          handler(msg);
-        } catch (error) {
-          this.logger.warn("ws wildcard handler failed", msg.type, error);
-        }
+        handler(msg);
       }
     };
 
-    this.ws.onclose = (ev: CloseEvent) => {
-      this.retryCount++;
-      if (this.retryCount > WSClient.MAX_RETRIES) {
-        this.logger.warn(
-          `ws disconnected (code=${ev.code} reason=${ev.reason || "<empty>"}), max retries (${WSClient.MAX_RETRIES}) exceeded — giving up`,
-        );
-        return;
-      }
-      const delay = this.nextBackoffDelay();
-      this.logger.warn(
-        `ws disconnected (code=${ev.code} reason=${ev.reason || "<empty>"}), reconnecting in ${Math.round(delay)}ms (attempt ${this.retryCount}/${WSClient.MAX_RETRIES})`,
-      );
-      this.reconnectTimer = setTimeout(() => this.connect(), delay);
+    this.ws.onclose = () => {
+      this.scheduleReconnect();
     };
 
-    this.ws.onerror = (ev: Event) => {
-      this.logger.warn("ws error", ev.type);
+    this.ws.onerror = () => {
+      // Suppress — onclose handles reconnect; errors during StrictMode
+      // double-fire are expected in dev and harmless.
     };
   }
 
-  /** Exponential backoff with jitter: base 1s → max 30s. */
-  private nextBackoffDelay(): number {
-    const exp = WSClient.BASE_DELAY_MS * Math.pow(2, this.retryCount - 1);
-    const capped = Math.min(exp, WSClient.MAX_DELAY_MS);
-    // Full jitter — randomise within [0, capped] to spread thundering herds.
-    return Math.random() * capped;
+  /**
+   * Schedule a reconnection attempt with exponential backoff and jitter.
+   * Retries indefinitely with a capped delay because the web/desktop UI
+   * does not yet expose a visible disconnected state or manual retry action.
+   */
+  private scheduleReconnect() {
+    const base = Math.min(
+      RECONNECT_BASE_DELAY_MS * 2 ** this.reconnectAttempt,
+      RECONNECT_MAX_DELAY_MS,
+    );
+    // ±20 % jitter so clients that disconnected at the same time don't
+    // reconnect in lockstep.
+    const jitter = base * 0.2 * (Math.random() * 2 - 1);
+    const delay = Math.round(
+      Math.min(base + jitter, RECONNECT_MAX_DELAY_MS),
+    );
+
+    this.reconnectAttempt++;
+    this.logger.warn(
+      `ws: disconnected, reconnecting in ${delay}ms (attempt ${this.reconnectAttempt})`,
+    );
+    this.reconnectTimer = setTimeout(() => this.connect(), delay);
   }
 
   private onAuthenticated() {
-    this.retryCount = 0;
     this.logger.info("connected");
+    this.reconnectAttempt = 0;
     if (this.hasConnectedBefore) {
       for (const cb of this.onReconnectCallbacks) {
         try {
@@ -172,28 +207,13 @@ export class WSClient {
       this.ws = null;
     }
     this.hasConnectedBefore = false;
-    this.retryCount = 0;
+    this.reconnectAttempt = 0;
     this.handlers.clear();
     this.anyHandlers.clear();
     this.onReconnectCallbacks.clear();
   }
 
-  on<K extends keyof WSEventPayloadMap>(
-    event: K,
-    handler: (payload: WSEventPayloadMap[K], actorId?: string) => void,
-  ) {
-    if (!this.handlers.has(event)) {
-      this.handlers.set(event, new Set());
-    }
-    const untypedHandler: EventHandler = (payload, actorId) =>
-      handler(payload as WSEventPayloadMap[K], actorId);
-    this.handlers.get(event)!.add(untypedHandler);
-    return () => {
-      this.handlers.get(event)?.delete(untypedHandler);
-    };
-  }
-
-  onUntyped(event: WSEventType, handler: EventHandler) {
+  on(event: WSEventType, handler: EventHandler) {
     if (!this.handlers.has(event)) {
       this.handlers.set(event, new Set());
     }

@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS idx_business_context_workspace_unique;

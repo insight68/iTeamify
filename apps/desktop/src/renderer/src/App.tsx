@@ -1,29 +1,126 @@
+import { DesktopAuthRecoveryPage } from "./pages/auth-recovery";
+import { useWorkspaceList } from "@iteamify/core/workspace";
+import { syncDaemonOnLogin } from "./platform/daemon-login-sync";
+import { tearDownOnSessionExpiry } from "./platform/session-teardown";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CoreProvider } from "@teamify/core/platform";
-import { pickLocale } from "@teamify/core/i18n";
-import { useAuthStore } from "@teamify/core/auth";
-import { workspaceKeys, workspaceListOptions } from "@teamify/core/workspace/queries";
-import { api } from "@teamify/core/api";
-import { useHasOnboarded } from "@teamify/core/paths";
-import { ThemeProvider } from "@teamify/ui/components/common/theme-provider";
-import { TeamifyIcon } from "@teamify/ui/components/common/teamify-icon";
-import { Toaster } from "@teamify/ui/components/ui/sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { CoreProvider } from "@iteamify/core/platform";
+import { pickLocale, type SupportedLocale } from "@iteamify/core/i18n";
+import { useAuthStore } from "@iteamify/core/auth";
+import { useOnboardingDraftStore } from "@iteamify/core/onboarding";
+import { workspaceKeys } from "@iteamify/core/workspace/queries";
+import { api } from "@iteamify/core/api";
+import { useHasOnboarded } from "@iteamify/core/paths";
+import { setCurrentWorkspace } from "@iteamify/core/platform";
+import { ThemeProvider } from "@iteamify/ui/components/common/theme-provider";
+import { ITeamifyIcon } from "@iteamify/ui/components/common/iteamify-icon";
+import { Toaster } from "@iteamify/ui/components/ui/sonner";
 import { DesktopLoginPage } from "./pages/login";
 import { DesktopShell } from "./components/desktop-layout";
-import { PageviewTracker } from "./components/pageview-tracker";
 import { UpdateNotification } from "./components/update-notification";
+import { IssueWindow } from "./components/issue-window";
 import { useTabStore } from "./stores/tab-store";
 import { useWindowOverlayStore } from "./stores/window-overlay-store";
 import { useDaemonIPCBridge } from "./platform/daemon-ipc-bridge";
 import { createDesktopLocaleAdapter } from "./platform/i18n-adapter";
-import { RESOURCES } from "@teamify/views/locales";
+import { captureEvent } from "@iteamify/core/analytics";
+import { RESOURCES } from "@iteamify/views/locales";
+import { DesktopClientUsageReporter } from "./platform/client-usage-reporter";
+import { DiagnosticRouteReporter } from "./platform/diagnostic-route-reporter";
+import { flushFreezeBreadcrumb } from "./freeze-flush";
+import { DiagnosticsControlReporter } from "./platform/diagnostics-control-reporter";
 
+// BCP-47 region tags for the <html lang> attribute, mirroring
+// apps/web/app/layout.tsx HTML_LANG. index.html ships a static lang="en";
+// we sync it to the resolved locale at boot so screen readers announce the
+// right language AND the Japanese-scoped CJK font override in globals.css
+// (`html[lang|="ja"]`) can take effect.
+const HTML_LANG: Record<SupportedLocale, string> = {
+  en: "en",
+  "zh-Hans": "zh-CN",
+  ko: "ko-KR",
+  ja: "ja-JP",
+};
+
+
+/**
+ * Cmd/Ctrl+W: close the active tab. When the last real tab is closed
+ * (or no tabs/workspace exist — e.g. login page), close the window.
+ *
+ * Mounted at the App root so every renderer state — including login,
+ * loading, onboarding, and runtime-config errors — has a working Cmd+W
+ * handler. Without this, states outside the tab shell would swallow the
+ * shortcut and do nothing.
+ */
+function useCmdWCloseTab() {
+  useEffect(() => {
+    return window.desktopAPI.onCloseActiveTab(() => {
+      if (window.desktopAPI.windowContext?.kind === "issue") {
+        window.desktopAPI.closeWindow();
+        return;
+      }
+      const store = useTabStore.getState();
+      const { activeWorkspaceSlug, byWorkspace } = store;
+      if (!activeWorkspaceSlug) {
+        // No workspace — nothing to close, dismiss the window.
+        window.desktopAPI.closeWindow();
+        return;
+      }
+      const group = byWorkspace[activeWorkspaceSlug];
+      if (!group || group.tabs.length <= 1) {
+        // Last tab (or no tabs) — close the window.
+        window.desktopAPI.closeWindow();
+        return;
+      }
+      // Multiple tabs — close the active one.
+      store.closeActiveTab();
+    });
+  }, []);
+}
+
+function IssueWindowContent() {
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const authStatus = useAuthStore((state) => state.status);
+  const context = window.desktopAPI.windowContext ?? { kind: "main" as const };
+
+  if (context.kind !== "issue") return null;
+  if (authStatus === "recovering") return <DesktopAuthRecoveryPage />;
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <ITeamifyIcon className="size-6 animate-pulse" />
+      </div>
+    );
+  }
+
+  return user ? <IssueWindow context={context} /> : <DesktopLoginPage />;
+}
+
+/**
+ * Keep the main process informed of the resolved account identity without
+ * sharing credentials between renderer processes. Main uses this signal to
+ * close dedicated windows on logout/account switch.
+ */
+function DesktopAuthSessionBridge() {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const isLoading = useAuthStore((state) => state.isLoading);
+
+  useEffect(() => {
+    if (isLoading) return;
+    // Optional chaining keeps renderer HMR safe during the brief interval in
+    // which an old preload is still attached to the refreshed React tree.
+    window.desktopAPI.reportAuthSession?.(userId);
+  }, [isLoading, userId]);
+
+  return null;
+}
 
 function AppContent() {
   const user = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
   const qc = useQueryClient();
+
   // Deep-link login runs loginWithToken → syncToken → listWorkspaces →
   // setQueryData sequentially. loginWithToken sets user+isLoading=false
   // as soon as getMe resolves, which would cause DesktopShell to mount
@@ -38,13 +135,13 @@ function AppContent() {
     : null;
 
   // Tell the main process which backend URL we talk to, so daemon-manager
-  // can pick the matching CLI profile (server_url from ~/.teamify config).
+  // can pick the matching CLI profile (server_url from ~/.iteamify config).
   useEffect(() => {
     if (!runtimeConfig) return;
     window.daemonAPI.setTargetApiUrl(runtimeConfig.apiUrl);
   }, [runtimeConfig]);
 
-  // Listen for invite IDs delivered via deep link (teamify://invite/<id>).
+  // Listen for invite IDs delivered via deep link (iteamify://invite/<id>).
   // We open the overlay regardless of login state — if the user isn't logged
   // in, InvitePage's queries will fail and render the "not found" state,
   // which is acceptable; the expected pre-flight happens in the web app
@@ -55,7 +152,7 @@ function AppContent() {
     });
   }, []);
 
-  // Listen for auth token delivered via deep link (teamify://auth/callback?token=...).
+  // Listen for auth token delivered via deep link (iteamify://auth/callback?token=...).
   // daemonAPI.syncToken is handled separately by the [user] effect below, which
   // fires whenever a user logs in (deep link, session restore, account switch).
   useEffect(() => {
@@ -81,18 +178,18 @@ function AppContent() {
   // Sync token and start the daemon whenever the user logs in.
   useEffect(() => {
     if (!user) return;
-    const token = localStorage.getItem("teamify_token");
+    const token = localStorage.getItem("iteamify_token");
     if (!token) return;
     const userId = user.id;
     (async () => {
       try {
-        await window.daemonAPI.syncToken(token, userId);
-        await window.daemonAPI.autoStart();
+        if (!runtimeConfig) return;
+        await syncDaemonOnLogin(window.daemonAPI, runtimeConfig.apiUrl, token, userId);
       } catch (err) {
         console.error("Failed to sync daemon on login", err);
       }
     })();
-  }, [user]);
+  }, [user, runtimeConfig]);
 
   // When a user who started the session with zero workspaces creates their
   // first one, restart the daemon so it picks up the new workspace
@@ -101,10 +198,8 @@ function AppContent() {
   // account switches (user A logout → user B login) should not trigger a
   // daemon restart here — daemon-manager already restarts on user change
   // via syncToken.
-  const { data: workspaces = [], isFetched: workspaceListFetched } = useQuery({
-    ...workspaceListOptions(),
-    enabled: !!user,
-  });
+  const { workspaces, ready: workspaceListFetched, unavailable: workspaceUnavailable,
+    isFetching: workspaceFetching, refetch: refetchWorkspaces } = useWorkspaceList({ enabled: !!user });
   const wsCount = workspaces.length;
   const hasOnboarded = useHasOnboarded();
 
@@ -118,25 +213,31 @@ function AppContent() {
     : undefined;
   useDaemonIPCBridge(activeWsId);
 
-  // Pre-workspace overlay routing for desktop. Mirrors the web entry-point
-  // judgment in callback / login:
-  //   un-onboarded:
-  //     pending invites on email → /invitations overlay
-  //     no invites               → /onboarding overlay
-  //   already onboarded:
-  //     zero workspaces          → /workspaces/new overlay
-  //     ≥1 workspaces            → no overlay, fall through to dashboard
+  // Pre-workspace overlay routing for desktop. Mirrors the web layout
+  // hard gate via overlays (desktop has no URL bar, so we open the
+  // onboarding overlay instead of router.replace):
+  //   onboarded + has workspace      → no overlay, dashboard
+  //   un-onboarded (any wsCount):
+  //     pending invites on email     → /invitations overlay
+  //     no invites                   → /onboarding overlay
+  //   onboarded + no workspace       → /workspaces/new overlay
   //
-  // The "un-onboarded but in workspace" state is now physically impossible
-  // because backend transactions atomically set onboarded_at when a user
-  // joins the `member` table. Anyone with workspaces is by definition
-  // onboarded.
+  // V3 invariant: `onboarded_at != null` is the only path into the
+  // dashboard. CreateWorkspace does not mark onboarded; only Step 3's
+  // CompleteOnboarding (and AcceptInvitation) flip the flag. A user who
+  // somehow has a workspace but no onboarded mark must be sent back to
+  // /onboarding — we also clear the active workspace so the dashboard
+  // doesn't render under the overlay with stale workspace context.
   useEffect(() => {
     if (!user || !workspaceListFetched) return undefined;
     const { overlay, open } = useWindowOverlayStore.getState();
     if (overlay) return undefined;
-    if (wsCount > 0) return undefined;
+    if (hasOnboarded && wsCount > 0) return undefined;
     if (!hasOnboarded) {
+      // Stale workspace context (if any) would leak X-Workspace-Slug
+      // headers into onboarding-time API calls. Clear it before opening
+      // the overlay.
+      setCurrentWorkspace(null, null);
       // Look up pending invitations by email. Network blip is non-fatal —
       // fall through to onboarding so the user isn't stuck on a blank
       // window. The sidebar's pending-invitations dropdown will surface
@@ -170,6 +271,7 @@ function AppContent() {
     open({ type: "new-workspace" });
     return undefined;
   }, [user, workspaceListFetched, wsCount, workspaces, hasOnboarded, qc]);
+
 
   // Validate persisted tab state against the current user's workspace list,
   // and pick an active workspace if none is set. Runs in useLayoutEffect
@@ -215,23 +317,20 @@ function AppContent() {
     }
   }, [user, workspaceListFetched, wsCount]);
 
-  if (isLoading || bootstrapping) {
+  const authStatus = useAuthStore((state) => state.status);
+  if (authStatus === "recovering") return <DesktopAuthRecoveryPage />;
+  if (user && workspaceUnavailable) return <DesktopAuthRecoveryPage
+    onRetry={() => void refetchWorkspaces()} isRetrying={workspaceFetching} />;
+
+  if (isLoading || bootstrapping || (user && !workspaceListFetched)) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <TeamifyIcon className="size-6 animate-pulse" />
+        <ITeamifyIcon className="size-6 animate-pulse" />
       </div>
     );
   }
 
-  // Pageview tracker sits at the app root so it covers every visible
-  // surface (login, overlays, tab paths) — mounting it inside DesktopShell
-  // would miss the logged-out and overlay states.
-  return (
-    <>
-      <PageviewTracker />
-      {user ? <DesktopShell /> : <DesktopLoginPage />}
-    </>
-  );
+  return user ? <DesktopShell /> : <DesktopLoginPage />;
 }
 
 function BlockingRuntimeConfigError({ message }: { message: string }) {
@@ -240,7 +339,7 @@ function BlockingRuntimeConfigError({ message }: { message: string }) {
       <div className="max-w-xl rounded-lg border bg-card p-6 shadow-sm">
         <h1 className="text-lg font-semibold">Desktop configuration error</h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          TeamifyDesktop could not load <code>~/.teamify/desktop.json</code>. Fix or remove the file and restart the app.
+          iteamify Desktop could not load <code>~/.iteamify/desktop.json</code>. Fix or remove the file and restart the app.
         </p>
         <pre className="mt-4 whitespace-pre-wrap rounded-md bg-muted p-3 text-xs text-muted-foreground">
           {message}
@@ -256,8 +355,13 @@ function BlockingRuntimeConfigError({ message }: { message: string }) {
 // useLogout clears the storage key, but the live stores stay populated until
 // we explicitly reset them here.
 async function handleDaemonLogout() {
+  // Report synchronously before async daemon cleanup so a rapidly closed main
+  // window cannot leave authenticated issue renderers behind.
+  window.desktopAPI.reportAuthSession?.(null);
   useTabStore.getState().reset();
   useWindowOverlayStore.getState().close();
+  // Clear the unfinished onboarding draft before another user signs in.
+  useOnboardingDraftStore.getState().clearDraft();
   try {
     await window.daemonAPI.clearToken();
   } catch {
@@ -270,10 +374,42 @@ async function handleDaemonLogout() {
   }
 }
 
+function handleSessionExpiry() {
+  tearDownOnSessionExpiry({
+    reportAuthSession: (userId) => window.desktopAPI.reportAuthSession?.(userId),
+    resetTabs: () => useTabStore.getState().reset(),
+    closeOverlay: () => useWindowOverlayStore.getState().close(),
+    resetOnboarding: () => useOnboardingDraftStore.getState().clearDraft(),
+    clearDaemonToken: () => window.daemonAPI.clearToken(),
+    stopDaemon: () => window.daemonAPI.stop(),
+  });
+}
+
 export default function App() {
   const { version, os } = window.desktopAPI.appInfo;
   const systemLocale = window.desktopAPI.systemLocale;
   const runtimeConfigResult = window.desktopAPI.runtimeConfig;
+  // The fallback keeps renderer HMR safe while a main/preload rebuild is
+  // restarting Electron; packaged builds always expose windowContext.
+  const windowContext =
+    window.desktopAPI.windowContext ?? { kind: "main" as const };
+  useCmdWCloseTab();
+
+  // Flush a freeze/crash breadcrumb the main process parked from a previous
+  // session. A true hang or process death can't report itself when it happens
+  // (the renderer is blocked or gone), so the main process persists it and we
+  // emit it here on the next boot. The in-thread, recoverable freeze tier is
+  // handled separately by the shared watchdog in CoreProvider.
+  useEffect(
+    () =>
+      flushFreezeBreadcrumb({
+        getLastFreeze: () => window.desktopAPI.getLastFreeze(),
+        ackFreeze: (ts) => window.desktopAPI.ackFreeze(ts),
+        capture: captureEvent,
+      }),
+    [],
+  );
+
   // Stable identity reference so downstream effects (WS reconnect) don't
   // tear down on every parent render.
   const identity = useMemo(
@@ -291,6 +427,15 @@ export default function App() {
     () => ({ [locale]: RESOURCES[locale] }),
     [locale],
   );
+
+  // Keep <html lang> in sync with the resolved locale (index.html hardcodes
+  // "en"). Drives the lang-scoped Japanese CJK font override and a11y.
+  // useLayoutEffect (not useEffect) so lang is committed before the first
+  // paint — otherwise Japanese users would see one frame of Kanji rendered
+  // with the Chinese-first fallback stack before the override kicks in.
+  useLayoutEffect(() => {
+    document.documentElement.lang = HTML_LANG[locale];
+  }, [locale]);
 
   // React to OS-level language changes detected by main on focus regain.
   // Only act when the user is following the system signal (no explicit
@@ -314,21 +459,37 @@ export default function App() {
     <ThemeProvider>
       {runtimeConfigResult.ok ? (
         <CoreProvider
+          logLevel={import.meta.env.DEV ? "debug" : "warn"}
           apiBaseUrl={runtimeConfigResult.config.apiUrl}
           wsUrl={runtimeConfigResult.config.wsUrl}
-          onLogout={handleDaemonLogout}
+          onLogout={
+            windowContext.kind === "main" ? handleDaemonLogout : undefined
+          }
+          onSessionExpired={windowContext.kind === "main" ? handleSessionExpiry : undefined}
           identity={identity}
           locale={locale}
           resources={resources}
           localeAdapter={localeAdapter}
         >
-          <AppContent />
+          <DesktopAuthSessionBridge />
+          {windowContext.kind === "main" && <DiagnosticRouteReporter />}
+          <DiagnosticsControlReporter />
+          {windowContext.kind === "main" && (
+            <DesktopClientUsageReporter
+              apiUrl={runtimeConfigResult.config.apiUrl}
+            />
+          )}
+          {windowContext.kind === "issue" ? (
+            <IssueWindowContent />
+          ) : (
+            <AppContent />
+          )}
         </CoreProvider>
       ) : (
         <BlockingRuntimeConfigError message={runtimeConfigResult.error.message} />
       )}
       <Toaster />
-      <UpdateNotification />
+      {windowContext.kind === "main" && <UpdateNotification />}
     </ThemeProvider>
   );
 }

@@ -8,17 +8,17 @@ import { pipeline } from "stream/promises";
 import { tmpdir } from "os";
 import { Readable } from "stream";
 
+import { DESKTOP_DOWNLOAD_URL } from "./distribution";
 import { selectPlatformReleaseAssetName } from "./cli-release-asset";
 
-// Desktop prefers the bundled `teamify` CLI shipped inside the app for
+// Desktop prefers the bundled `iteamify` CLI shipped inside the app for
 // same-repo builds, but it can also repair or bootstrap a managed copy in
 // userData on first launch when the bundled binary is missing or unusable.
 
-const GITHUB_LATEST_BASE =
-  "https://github.com/Insight86/Teamify/releases/latest/download";
+const GITHUB_LATEST_BASE = DESKTOP_DOWNLOAD_URL;
 
 function binaryName(): string {
-  return process.platform === "win32" ? "teamify.exe" : "teamify";
+  return process.platform === "win32" ? "iteamify.exe" : "iteamify";
 }
 
 export function managedCliPath(): string {
@@ -91,6 +91,9 @@ async function extractArchive(archive: string, dest: string): Promise<void> {
 }
 
 async function installFresh(): Promise<string> {
+  if (!GITHUB_LATEST_BASE) {
+    throw new Error("CLI download is disabled: this build has no configured distribution URL");
+  }
   const target = managedCliPath();
   const checksums = await fetchChecksums();
   const assetName = selectPlatformReleaseAssetName(checksums.keys());
@@ -102,7 +105,7 @@ async function installFresh(): Promise<string> {
   }
   const url = `${GITHUB_LATEST_BASE}/${assetName}`;
 
-  const workDir = join(tmpdir(), `teamify-cli-${Date.now()}`);
+  const workDir = join(tmpdir(), `iteamify-cli-${Date.now()}`);
   await mkdir(workDir, { recursive: true });
 
   try {
@@ -144,7 +147,7 @@ async function installFresh(): Promise<string> {
 }
 
 /**
- * Returns the path to a usable `teamify` binary. If one is already present at
+ * Returns the path to a usable `iteamify` binary. If one is already present at
  * the managed userData location, returns it immediately. Otherwise downloads
  * the latest release asset for the current platform and installs it.
  */

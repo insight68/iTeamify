@@ -31,7 +31,7 @@ if (!localStorageIsUsable) {
     configurable: true,
     value: storage,
   });
-  Object.defineProperty(window, "localStorage", {
+  if (typeof window !== "undefined") Object.defineProperty(window, "localStorage", {
     configurable: true,
     value: storage,
   });

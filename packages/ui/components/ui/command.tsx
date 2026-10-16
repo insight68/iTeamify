@@ -3,18 +3,18 @@
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 
-import { cn } from "@teamify/ui/lib/utils"
+import { cn } from "@iteamify/ui/lib/utils"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@teamify/ui/components/ui/dialog"
+} from "@iteamify/ui/components/ui/dialog"
 import {
   InputGroup,
   InputGroupAddon,
-} from "@teamify/ui/components/ui/input-group"
+} from "@iteamify/ui/components/ui/input-group"
 import { SearchIcon, CheckIcon } from "lucide-react"
 
 function Command({
@@ -68,6 +68,7 @@ function CommandDialog({
 
 function CommandInput({
   className,
+  onKeyDown,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
@@ -79,6 +80,14 @@ function CommandInput({
             "w-full text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
             className
           )}
+          onKeyDown={(e) => {
+            // cmdk's root handler intercepts Home/End for list navigation;
+            // stop propagation so the browser moves the text caret instead.
+            if (e.key === "Home" || e.key === "End") {
+              e.stopPropagation();
+            }
+            onKeyDown?.(e);
+          }}
           {...props}
         />
         <InputGroupAddon>

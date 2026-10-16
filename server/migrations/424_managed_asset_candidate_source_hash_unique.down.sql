@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS managed_asset_candidate_source_hash_uidx;

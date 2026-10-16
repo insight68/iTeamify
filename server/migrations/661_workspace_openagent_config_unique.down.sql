@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS workspace_openagent_config_workspace_unique;

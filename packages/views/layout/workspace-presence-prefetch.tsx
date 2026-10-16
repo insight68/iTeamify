@@ -1,7 +1,7 @@
 "use client";
 
-import { useWorkspaceId } from "@teamify/core";
-import { useWorkspacePresencePrefetch } from "@teamify/core/agents";
+import { useWorkspaceId } from "@iteamify/core";
+import { useWorkspacePresencePrefetch } from "@iteamify/core/agents";
 
 // Mount once inside any subtree that's already gated on "workspace resolved"
 // (DashboardLayout on web, WorkspaceRouteLayout on desktop). useWorkspaceId

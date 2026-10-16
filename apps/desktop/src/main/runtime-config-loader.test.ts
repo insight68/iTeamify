@@ -6,7 +6,7 @@ import { loadRuntimeConfig } from "./runtime-config-loader";
 
 describe("loadRuntimeConfig", () => {
   it("uses dev env and ignores desktop.json during electron-vite dev", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "teamify-desktop-config-"));
+    const dir = await mkdtemp(join(tmpdir(), "iteamify-desktop-config-"));
     const configPath = join(dir, "desktop.json");
     await writeFile(
       configPath,
@@ -35,7 +35,7 @@ describe("loadRuntimeConfig", () => {
   });
 
   it("uses cloud defaults when packaged config is absent", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "teamify-desktop-config-"));
+    const dir = await mkdtemp(join(tmpdir(), "iteamify-desktop-config-"));
     await expect(
       loadRuntimeConfig({
         isDev: false,
@@ -46,15 +46,15 @@ describe("loadRuntimeConfig", () => {
       ok: true,
       config: {
         schemaVersion: 1,
-        apiUrl: "https://pub.niuwoai.com",
-        wsUrl: "wss://pub.niuwoai.com/ws",
-        appUrl: "https://pub.niuwoai.com",
+        apiUrl: "https://api.aurocreator.com",
+        wsUrl: "wss://api.aurocreator.com/ws",
+        appUrl: "https://aurocreator.com",
       },
     });
   });
 
   it("parses a valid packaged desktop.json", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "teamify-desktop-config-"));
+    const dir = await mkdtemp(join(tmpdir(), "iteamify-desktop-config-"));
     const configPath = join(dir, "desktop.json");
     await writeFile(
       configPath,
@@ -75,7 +75,7 @@ describe("loadRuntimeConfig", () => {
   });
 
   it("fails closed when packaged desktop.json is invalid", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "teamify-desktop-config-"));
+    const dir = await mkdtemp(join(tmpdir(), "iteamify-desktop-config-"));
     const configPath = join(dir, "desktop.json");
     await writeFile(configPath, "{");
 

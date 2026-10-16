@@ -1,0 +1,1 @@
+This is the current Gmail connection in Aurocreator. The existing account shows email synchronization and automatic analysis.

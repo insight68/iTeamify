@@ -1,0 +1,119 @@
+{
+  "title": "ワークスペースのクレジット",
+  "subtitle": "このワークスペースが所有するクレジットをチャージして確認します。",
+  "access": {
+    "title": "ワークスペース請求",
+    "member_hint": "クレジットのチャージはワークスペースのオーナーまたは管理者に依頼してください。",
+    "read_only": "クレジットを購入できるのは所有者と管理者だけです。"
+  },
+  "balance": {
+    "title": "残高",
+    "credits_suffix": "クレジット",
+    "meta": "更新日時：{{updated}}",
+    "negative_hint": "利用可能なクレジットを使い切りました。チャージするまで新しいタスクを開始できない場合があります。",
+    "shared_hint": "このワークスペースの全メンバーで共有されます。"
+  },
+  "buy": {
+    "title": "クレジットを購入",
+    "no_tiers": "チャージはまだ利用できません。管理者にお問い合わせください。",
+    "tier_money_to_credits": "{{money}} → {{credits}} credits",
+    "tier_bonus": " + ボーナス {{credits}}",
+    "tier_bonus_with_expiry": " + ボーナス {{credits}}（{{expiry}}）",
+    "tier_id": "id: {{id}}",
+    "open_portal": "Stripe Billing Portal を開く",
+    "portal_hint": "まだ支払いをしていないユーザーには 400 が想定されます（Stripe customer record がまだ存在しません）。",
+    "toast_no_url": "決済ページを取得できません",
+    "toast_checkout_failed": "Checkout に失敗しました",
+    "toast_no_portal_url": "Portal URL が返されませんでした",
+    "toast_portal_failed": "Portal を開けませんでした",
+    "subtitle": "金額を選択してください。すべて同じ交換レートです。",
+    "options_label": "チャージ金額",
+    "one_time": "一回払い",
+    "same_rate": "共通の交換レート",
+    "redirecting": "安全な決済を開いています…",
+    "pay_button": "支払いへ進む",
+    "stripe_note": "支払いは Stripe が安全に処理します。"
+  },
+  "checkout": {
+    "session_label": "Checkout session {{prefix}}…",
+    "loading": "注文ステータスを読み込み中…",
+    "fetch_failed": "ステータスの取得に失敗しました: {{error}}",
+    "fetch_failed_unknown": "不明なエラー",
+    "final_status": "最終ステータス: {{status}}",
+    "polling_status": "ステータスを確認中… 現在: {{status}}",
+    "status_unknown": "unknown",
+    "label_order": "注文",
+    "label_tier": "Tier",
+    "label_charged": "請求済み",
+    "charged_value": "{{money}} · {{credits}} credits",
+    "charged_with_bonus": "{{money}} · {{credits}} credits + ボーナス {{bonus}}",
+    "clear_url": "URL から消去",
+    "timeout_title": "支払い確認に時間がかかっています",
+    "timeout_hint": "処理中の可能性があります。再度支払わず、確認してください。",
+    "processing": "支払いを確認中",
+    "status_hint": "Stripe の確認後、自動的に更新されます。",
+    "fetch_failed_short": "現在この支払いを確認できません。",
+    "retry": "再確認",
+    "dismiss": "閉じる"
+  },
+  "transactions": {
+    "title": "取引履歴",
+    "empty": "取引履歴はまだありません。",
+    "credits_value": "{{value}} credits",
+    "row_meta": "{{date}} · balance after: {{balance}} credits · ref: {{ref}}",
+    "ref_empty": "—",
+    "reference": "タスク {{ref}}",
+    "balance_after": "残高 {{balance}}"
+  },
+  "batches": {
+    "title": "クレジット batch",
+    "empty": "batch はまだありません。",
+    "remaining_over_total": "{{remaining}} / {{total}} credits",
+    "id_suffix": "{{id}}…",
+    "consumed": "使用済み: {{value}} credits",
+    "expires_suffix": " · 有効期限 {{value}}",
+    "never_expires_suffix": " · 有効期限なし"
+  },
+  "topups": {
+    "title": "Topup 注文",
+    "empty": "topup 注文はまだありません。",
+    "amount_to_credits": "{{money}} → {{credits}} credits",
+    "amount_to_credits_with_bonus": "{{money}} → {{credits}} credits + ボーナス {{bonus}}",
+    "row_meta": "{{date}} · stripe: {{checkout}}",
+    "stripe_empty": "—",
+    "details": "支払い詳細",
+    "order_reference": "注文 {{ref}}"
+  },
+  "shared": {
+    "request_failed": "リクエストに失敗しました",
+    "refresh": "更新",
+    "paging": "{{page}} / {{totalPages}} ページ · 合計 {{total}}件",
+    "date_dash": "—",
+    "next": "次へ",
+    "previous": "前へ"
+  },
+  "labels": {
+    "pending": "支払い待ち",
+    "credited": "反映済み",
+    "canceled": "キャンセル済み",
+    "failed": "失敗",
+    "loading": "読み込み中",
+    "trial": "試用クレジット",
+    "topup": "チャージ",
+    "usage": "使用量",
+    "adjustment": "手動調整",
+    "unknown": "不明"
+  },
+  "eyebrow": "請求とチャージ",
+  "trust": {
+    "never_expires": "有効期限なし",
+    "one_time": "一回払い",
+    "workspace_owned": "ワークスペースで共有"
+  },
+  "history": {
+    "title": "請求履歴",
+    "subtitle": "クレジットの増減とチャージ注文を確認します。",
+    "all": "すべて",
+    "topups": "チャージ"
+  }
+}

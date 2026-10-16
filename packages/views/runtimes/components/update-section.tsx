@@ -5,13 +5,15 @@ import {
   XCircle,
   ArrowUpCircle,
   Check,
+  Lock,
 } from "lucide-react";
-import { Button } from "@teamify/ui/components/ui/button";
-import { api } from "@teamify/core/api";
-import { fetchLatestCliVersion } from "@teamify/core/runtimes";
-import type { RuntimeUpdateStatus } from "@teamify/core/types";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { api } from "@iteamify/core/api";
+import type { RuntimeUpdateStatus } from "@iteamify/core/types";
 import { useT } from "../../i18n";
 
+const GITHUB_RELEASES_URL =
+  "https://api.github.com/repos/iteamify-ai/iteamify/releases/latest";
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 let cachedLatestVersion: string | null = null;
@@ -21,9 +23,18 @@ async function fetchLatestVersion(): Promise<string | null> {
   if (cachedLatestVersion && Date.now() - cachedAt < CACHE_TTL_MS) {
     return cachedLatestVersion;
   }
-  cachedLatestVersion = await fetchLatestCliVersion();
-  cachedAt = Date.now();
-  return cachedLatestVersion;
+  try {
+    const resp = await fetch(GITHUB_RELEASES_URL, {
+      headers: { Accept: "application/vnd.github+json" },
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    cachedLatestVersion = data.tag_name ?? null;
+    cachedAt = Date.now();
+    return cachedLatestVersion;
+  } catch {
+    return null;
+  }
 }
 
 function stripV(v: string): string {
@@ -54,7 +65,8 @@ const statusConfig: Record<
 };
 
 interface UpdateSectionProps {
-  runtimeId: string;
+  /** Null for a read-only viewer who cannot use a runtime as the command channel. */
+  runtimeId: string | null;
   currentVersion: string | null;
   isOnline: boolean;
   /**
@@ -118,7 +130,7 @@ export function UpdateSection({
   }, [currentVersion, markCompleted, targetVersion, updating]);
 
   const handleUpdate = async () => {
-    if (!latestVersion) return;
+    if (!latestVersion || !runtimeId) return;
     cleanup();
     setUpdating(true);
     setTargetVersion(latestVersion);
@@ -202,7 +214,17 @@ export function UpdateSection({
               </>
             )}
 
-            {hasUpdate && isOnline && !status && (
+            {hasUpdate && !runtimeId && (
+              <span
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                title={t(($) => $.update.read_only_title)}
+              >
+                <Lock className="h-3 w-3" />
+                {t(($) => $.update.read_only)}
+              </span>
+            )}
+
+            {hasUpdate && runtimeId && isOnline && !status && (
               <Button
                 variant="outline"
                 size="xs"

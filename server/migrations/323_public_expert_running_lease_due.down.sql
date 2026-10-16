@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS public_expert_task_running_lease_due_idx;

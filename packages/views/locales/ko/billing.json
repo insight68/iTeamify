@@ -1,0 +1,119 @@
+{
+  "title": "워크스페이스 크레딧",
+  "subtitle": "이 워크스페이스가 소유한 크레딧을 충전하고 확인합니다.",
+  "access": {
+    "title": "워크스페이스 결제",
+    "member_hint": "크레딧 충전은 워크스페이스 소유자 또는 관리자에게 요청하세요.",
+    "read_only": "워크스페이스 소유자와 관리자만 크레딧을 충전할 수 있습니다."
+  },
+  "balance": {
+    "title": "잔액",
+    "credits_suffix": "크레딧",
+    "meta": "업데이트: {{updated}}",
+    "negative_hint": "사용 가능한 크레딧을 모두 사용했습니다. 충전 전에는 새 작업이 중지될 수 있습니다.",
+    "shared_hint": "이 워크스페이스의 모든 구성원이 공유합니다."
+  },
+  "buy": {
+    "title": "크레딧 구매",
+    "no_tiers": "아직 충전할 수 없습니다. 관리자에게 문의하세요.",
+    "tier_money_to_credits": "{{money}} → {{credits}} credits",
+    "tier_bonus": " + 보너스 {{credits}}",
+    "tier_bonus_with_expiry": " + 보너스 {{credits}}({{expiry}})",
+    "tier_id": "id: {{id}}",
+    "open_portal": "Stripe Billing Portal 열기",
+    "portal_hint": "아직 결제하지 않은 사용자에게는 400이 예상됩니다(Stripe customer record가 아직 없음).",
+    "toast_no_url": "결제 주소를 가져올 수 없습니다",
+    "toast_checkout_failed": "Checkout 실패",
+    "toast_no_portal_url": "Portal URL이 반환되지 않았습니다",
+    "toast_portal_failed": "Portal 열기 실패",
+    "subtitle": "충전 금액을 선택하세요. 모든 옵션에 동일한 환율이 적용됩니다.",
+    "options_label": "충전 금액",
+    "one_time": "일회성 결제",
+    "same_rate": "동일한 환율",
+    "redirecting": "안전한 결제 페이지를 여는 중…",
+    "pay_button": "결제 계속하기",
+    "stripe_note": "Stripe가 결제를 안전하게 처리합니다."
+  },
+  "checkout": {
+    "session_label": "Checkout session {{prefix}}…",
+    "loading": "주문 상태를 불러오는 중…",
+    "fetch_failed": "상태 조회 실패: {{error}}",
+    "fetch_failed_unknown": "알 수 없는 오류",
+    "final_status": "최종 상태: {{status}}",
+    "polling_status": "상태 확인 중… 현재: {{status}}",
+    "status_unknown": "unknown",
+    "label_order": "주문",
+    "label_tier": "Tier",
+    "label_charged": "결제됨",
+    "charged_value": "{{money}} · {{credits}} credits",
+    "charged_with_bonus": "{{money}} · {{credits}} credits + 보너스 {{bonus}}",
+    "clear_url": "URL에서 지우기",
+    "timeout_title": "결제 확인이 지연되고 있습니다",
+    "timeout_hint": "아직 처리 중일 수 있습니다. 중복 결제하지 말고 다시 확인하세요.",
+    "processing": "결제 확인 중",
+    "status_hint": "Stripe 확인 후 자동으로 업데이트됩니다.",
+    "fetch_failed_short": "현재 결제를 확인할 수 없습니다.",
+    "retry": "다시 확인",
+    "dismiss": "닫기"
+  },
+  "transactions": {
+    "title": "거래 내역",
+    "empty": "아직 거래 내역이 없습니다.",
+    "credits_value": "{{value}} credits",
+    "row_meta": "{{date}} · balance after: {{balance}} credits · ref: {{ref}}",
+    "ref_empty": "—",
+    "reference": "작업 {{ref}}",
+    "balance_after": "잔액 {{balance}}"
+  },
+  "batches": {
+    "title": "크레딧 batch",
+    "empty": "아직 batch가 없습니다.",
+    "remaining_over_total": "{{remaining}} / {{total}} credits",
+    "id_suffix": "{{id}}…",
+    "consumed": "사용됨: {{value}} credits",
+    "expires_suffix": " · 만료 {{value}}",
+    "never_expires_suffix": " · 만료 없음"
+  },
+  "topups": {
+    "title": "Topup 주문",
+    "empty": "아직 topup 주문이 없습니다.",
+    "amount_to_credits": "{{money}} → {{credits}} credits",
+    "amount_to_credits_with_bonus": "{{money}} → {{credits}} credits + 보너스 {{bonus}}",
+    "row_meta": "{{date}} · stripe: {{checkout}}",
+    "stripe_empty": "—",
+    "details": "결제 상세",
+    "order_reference": "주문 {{ref}}"
+  },
+  "shared": {
+    "request_failed": "요청 실패",
+    "refresh": "새로고침",
+    "paging": "{{page}} / {{totalPages}} 페이지 · 총 {{total}}개",
+    "date_dash": "—",
+    "next": "다음",
+    "previous": "이전"
+  },
+  "labels": {
+    "pending": "결제 대기",
+    "credited": "충전 완료",
+    "canceled": "취소됨",
+    "failed": "실패",
+    "loading": "불러오는 중",
+    "trial": "체험 크레딧",
+    "topup": "충전",
+    "usage": "사용량",
+    "adjustment": "수동 조정",
+    "unknown": "알 수 없음"
+  },
+  "eyebrow": "결제 및 충전",
+  "trust": {
+    "never_expires": "만료되지 않음",
+    "one_time": "일회성 결제",
+    "workspace_owned": "워크스페이스 공유"
+  },
+  "history": {
+    "title": "결제 내역",
+    "subtitle": "워크스페이스의 크레딧 변경 및 충전 주문을 확인합니다.",
+    "all": "전체 내역",
+    "topups": "충전 내역"
+  }
+}

@@ -1,18 +1,19 @@
 "use client";
 
-import { DashboardLayout } from "@teamify/views/layout";
-import { TeamifyIcon } from "@teamify/ui/components/common/teamify-icon";
-import { SearchCommand, SearchTrigger } from "@teamify/views/search";
-import { StarterContentPrompt } from "@teamify/views/onboarding";
+import { DashboardLayout } from "@iteamify/views/layout/dashboard-layout";
+import { ITeamifyIcon } from "@iteamify/ui/components/common/iteamify-icon";
+import { SearchCommand, SearchTrigger } from "@iteamify/views/search";
+import { WebNotificationBridge } from "@/components/web-notification-bridge";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <DashboardLayout
-      loadingIndicator={<TeamifyIcon className="size-6" />}
+      loadingIndicator={<ITeamifyIcon className="size-6" />}
+      searchSlot={<SearchTrigger />}
       extra={
         <>
           <SearchCommand />
-          <StarterContentPrompt />
+          <WebNotificationBridge />
         </>
       }
     >

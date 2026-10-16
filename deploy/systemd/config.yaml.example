@@ -1,0 +1,5 @@
+# Model endpoints and provider keys belong to workspace Settings.
+version: 5
+openagent:
+  enabled: false
+  # daemon_id: "00000000-0000-4000-8000-000000000001"

@@ -1,4 +1,5 @@
-import type { Issue, IssueReaction } from "./issue";
+import type { Issue, IssueMetadata, IssueReaction } from "./issue";
+import type { IssueProperty, IssuePropertyValues } from "./property";
 import type { Agent } from "./agent";
 import type { InboxItem } from "./inbox";
 import type { Comment, Reaction } from "./comment";
@@ -23,6 +24,8 @@ export type WSEventType =
   | "agent:restored"
   | "task:queued"
   | "task:dispatch"
+  | "task:running"
+  | "task:waiting_local_directory"
   | "task:progress"
   | "task:completed"
   | "task:failed"
@@ -31,6 +34,7 @@ export type WSEventType =
   | "inbox:new"
   | "inbox:read"
   | "inbox:archived"
+  | "inbox:unarchived"
   | "inbox:batch-read"
   | "inbox:batch-archived"
   | "workspace:updated"
@@ -51,31 +55,49 @@ export type WSEventType =
   | "issue_reaction:added"
   | "issue_reaction:removed"
   | "chat:message"
+  | "direct:message"
+  | "direct:read"
   | "chat:done"
+  | "chat:cancel_finalized"
   | "chat:session_read"
   | "chat:session_deleted"
-  | "chat:table_filter"
-  | "reconciliation:filter"
-  | "inventory:updated"
+  | "chat:session_updated"
+  | "quote:published"
+  | "quote:updated"
+  | "order:confirmed"
+  | "resource:changed"
   | "project:created"
   | "project:updated"
   | "project:deleted"
+  | "squad:created"
+  | "squad:updated"
+  | "squad:deleted"
   | "label:created"
   | "label:updated"
   | "label:deleted"
   | "issue_labels:changed"
+  | "issue_metadata:changed"
+  | "issue_properties:changed"
+  | "property:created"
+  | "property:updated"
   | "pin:created"
   | "pin:deleted"
   | "pin:reordered"
   | "invitation:created"
   | "invitation:accepted"
   | "invitation:declined"
-  | "invitation:revoked";
+  | "invitation:revoked"
+  | "github_installation:created"
+  | "github_installation:deleted"
+  | "pull_request:linked"
+  | "pull_request:updated"
+  | "pull_request:unlinked";
 
 export interface WSMessage<T = unknown> {
   type: WSEventType;
   payload: T;
   actor_id?: string;
+  actor_type?: string;
 }
 
 export interface IssueCreatedPayload {
@@ -84,6 +106,18 @@ export interface IssueCreatedPayload {
 
 export interface IssueUpdatedPayload {
   issue: Issue;
+  // The server stamps issue:updated with which fields actually changed
+  // (server/internal/handler/issue.go publish). assignee_changed lets the
+  // realtime layer keep filtered myList caches in place on a non-membership
+  // change instead of refetching; status_changed lets it reconcile board column
+  // counts when a status change lands on an off-screen (unloaded) issue;
+  // project_changed lets it drop a moved issue from the old project's filtered
+  // list (the client-side cache diff is unreliable after an optimistic local
+  // move — MUL-3669 / #4548). Other change flags are present on the wire too and
+  // can be surfaced here when needed.
+  assignee_changed?: boolean;
+  status_changed?: boolean;
+  project_changed?: boolean;
 }
 
 export interface IssueDeletedPayload {
@@ -93,6 +127,20 @@ export interface IssueDeletedPayload {
 export interface IssueLabelsChangedPayload {
   issue_id: string;
   labels: Label[];
+}
+
+export interface IssueMetadataChangedPayload {
+  issue_id: string;
+  metadata: IssueMetadata;
+}
+
+export interface IssuePropertiesChangedPayload {
+  issue_id: string;
+  properties: IssuePropertyValues;
+}
+
+export interface PropertyChangedPayload {
+  property: IssueProperty;
 }
 
 export interface AgentStatusPayload {
@@ -122,6 +170,12 @@ export interface InboxReadPayload {
 
 export interface InboxArchivedPayload {
   item_id: string;
+  recipient_id: string;
+}
+
+export interface InboxUnarchivedPayload {
+  item_id: string;
+  issue_id: string | null;
   recipient_id: string;
 }
 
@@ -200,7 +254,7 @@ export interface ActivityCreatedPayload {
 
 export interface TaskMessagePayload {
   task_id: string;
-  issue_id?: string;
+  issue_id: string;
   chat_session_id?: string;
   seq: number;
   type: "text" | "thinking" | "tool_use" | "tool_result" | "error";
@@ -208,6 +262,7 @@ export interface TaskMessagePayload {
   content?: string;
   input?: Record<string, unknown>;
   output?: string;
+  created_at?: string;
 }
 
 export interface TaskQueuedPayload {
@@ -224,6 +279,28 @@ export interface TaskDispatchPayload {
   issue_id: string;
   runtime_id: string;
   chat_session_id?: string;
+}
+
+export interface TaskRunningPayload {
+  task_id: string;
+  agent_id: string;
+  issue_id: string;
+  chat_session_id?: string;
+  status: string;
+}
+
+// task:waiting_local_directory fires when the daemon dequeues a task but
+// can't immediately acquire the on-disk path lock — another task on this
+// daemon is already executing in the same local_directory. The optional
+// `wait_reason` mirrors the server-side hint (path / holder task id), but
+// is not yet surfaced end-to-end; the UI today only reads the status.
+export interface TaskWaitingLocalDirectoryPayload {
+  task_id: string;
+  agent_id: string;
+  issue_id: string;
+  chat_session_id?: string;
+  status: string;
+  wait_reason?: string;
 }
 
 export interface TaskCompletedPayload {
@@ -287,7 +364,54 @@ export interface ChatMessageEventPayload {
 export interface ChatDonePayload {
   chat_session_id: string;
   task_id: string;
+  /**
+   * Server populates these from the freshly-persisted assistant ChatMessage
+   * row so the WS handler can write it into the messages cache inline. Older
+   * servers (pre-#2123) only sent chat_session_id + task_id; treat every field
+   * below as optional and fall back to a refetch when absent.
+   */
+  message_id?: string;
   content?: string;
+  elapsed_ms?: number;
+  created_at?: string;
+  /**
+   * "message" (default) or "no_response" — a completed direct-chat turn with
+   * no text reply (MUL-4351). Optional/additive: older servers omit it, so the
+   * consumer defaults to "message". Because direct-chat completion now always
+   * persists exactly one assistant row, message_id/content/created_at are
+   * populated alongside this even for a no_response turn.
+   */
+  message_kind?: import("./chat").ChatMessageKind;
+}
+
+/**
+ * Deferred outcome of a cancelled chat task (#5219). The cancel HTTP response
+ * cannot carry it — the empty/non-empty judgment settles only after the
+ * daemon's transcript flush — so the server broadcasts it here instead:
+ * outcome "stopped" describes a freshly-persisted "Stopped." assistant row
+ * (ChatDonePayload-shaped fields), outcome "restored" is a content-free
+ * invalidation hint — the deleted prompt itself is durable server-side and
+ * the initiator's client fetches it from the creator-authorized
+ * draft-restores endpoint. All fields beyond the discriminator are optional —
+ * treat defensively and fall back to a refetch.
+ */
+export interface ChatCancelFinalizedPayload {
+  outcome: "stopped" | "restored";
+  chat_session_id: string;
+  task_id: string;
+  /**
+   * The user who triggered the cancelled task. Only this user's client needs
+   * to refetch draft restores; treat a missing value as "not me" (fail
+   * closed — the durable restore is still picked up on the next session
+   * open).
+   */
+  initiator_user_id?: string;
+  message_id?: string;
+  /** "Stopped." assistant row fields — set only for outcome "stopped". */
+  content?: string;
+  message_kind?: import("./chat").ChatMessageKind;
+  created_at?: string;
+  elapsed_ms?: number;
 }
 
 export interface ChatSessionReadPayload {
@@ -298,16 +422,15 @@ export interface ChatSessionDeletedPayload {
   chat_session_id: string;
 }
 
-export interface ChatTableFilterPayload {
-  chat_session_id: string;
-  agent_id: string;
-  filters: Record<string, unknown>;
-}
 
-export interface ReconciliationFilterPayload {
-  chat_session_id: string;
-  agent_id: string;
-  filters: Record<string, unknown>;
+
+export interface ResourceChangedPayload {
+  workspace_id: string;
+  resource_type: string;
+  resource_id: string;
+  action: string;
+  operation_id: string;
+  version?: number;
 }
 
 export interface ProjectCreatedPayload {
@@ -342,55 +465,105 @@ export interface InvitationRevokedPayload {
   invitee_email: string;
 }
 
-export interface InventoryUpdatedPayload {
-  dataset:
-    | "product_order"
-    | "dim_product"
-    | "allocation"
-    | "supply_inventory"
-    | "supply_inventory_snapshot";
-  refreshed_at: string;
-  run_id?: string;
-}
-
-// Payloads consumed by dedicated client handlers. Events not listed here are
-// still accepted by onAny, but do not get a typed dedicated subscription.
+/**
+ * Maps every WSEventType to its payload interface. Events whose payload
+ * shape isn't formally typed (server emits an object the client doesn't
+ * meaningfully consume yet) fall back to `unknown` — callers must narrow
+ * before access.
+ *
+ * Use via `WSEventPayload<E>` rather than indexing the map directly:
+ *   const handler = (payload: WSEventPayload<"issue:created">) => { ... };
+ *
+ * Adding a new event: extend WSEventType first (above), then append a key
+ * here. TS will compile-error every WSClient.on("new:event", …) site that
+ * forgets the payload shape — that's the whole point.
+ */
 export interface WSEventPayloadMap {
   "issue:created": IssueCreatedPayload;
   "issue:updated": IssueUpdatedPayload;
   "issue:deleted": IssueDeletedPayload;
   "issue_labels:changed": IssueLabelsChangedPayload;
-  "inbox:new": InboxNewPayload;
+  "issue_properties:changed": IssuePropertiesChangedPayload;
+  "property:created": PropertyChangedPayload;
+  "property:updated": PropertyChangedPayload;
+  "issue_reaction:added": IssueReactionAddedPayload;
+  "issue_reaction:removed": IssueReactionRemovedPayload;
   "comment:created": CommentCreatedPayload;
   "comment:updated": CommentUpdatedPayload;
   "comment:deleted": CommentDeletedPayload;
   "comment:resolved": CommentResolvedPayload;
   "comment:unresolved": CommentUnresolvedPayload;
-  "activity:created": ActivityCreatedPayload;
   "reaction:added": ReactionAddedPayload;
   "reaction:removed": ReactionRemovedPayload;
-  "issue_reaction:added": IssueReactionAddedPayload;
-  "issue_reaction:removed": IssueReactionRemovedPayload;
+  "agent:status": AgentStatusPayload;
+  "agent:created": AgentCreatedPayload;
+  "agent:archived": AgentArchivedPayload;
+  "agent:restored": AgentRestoredPayload;
+  "task:queued": TaskQueuedPayload;
+  "task:dispatch": TaskDispatchPayload;
+  "task:running": TaskRunningPayload;
+  "task:waiting_local_directory": TaskWaitingLocalDirectoryPayload;
+  "task:completed": TaskCompletedPayload;
+  "task:failed": TaskFailedPayload;
+  "task:message": TaskMessagePayload;
+  "task:cancelled": TaskCancelledPayload;
+  "task:progress": unknown;
+  "inbox:new": InboxNewPayload;
+  "inbox:read": InboxReadPayload;
+  "inbox:archived": InboxArchivedPayload;
+  "inbox:unarchived": InboxUnarchivedPayload;
+  "inbox:batch-read": InboxBatchReadPayload;
+  "inbox:batch-archived": InboxBatchArchivedPayload;
+  "workspace:updated": WorkspaceUpdatedPayload;
+  "workspace:deleted": WorkspaceDeletedPayload;
+  "member:added": MemberAddedPayload;
+  "member:updated": MemberUpdatedPayload;
+  "member:removed": MemberRemovedPayload;
   "subscriber:added": SubscriberAddedPayload;
   "subscriber:removed": SubscriberRemovedPayload;
-  "workspace:deleted": WorkspaceDeletedPayload;
-  "member:removed": MemberRemovedPayload;
-  "member:added": MemberAddedPayload;
+  "activity:created": ActivityCreatedPayload;
+  "chat:message": ChatMessageEventPayload;
+  "chat:done": ChatDonePayload;
+  "chat:cancel_finalized": ChatCancelFinalizedPayload;
+  "chat:session_read": ChatSessionReadPayload;
+  "chat:session_deleted": ChatSessionDeletedPayload;
+  "chat:session_updated": unknown;
+  "resource:changed": ResourceChangedPayload;
+  "project:created": ProjectCreatedPayload;
+  "project:updated": ProjectUpdatedPayload;
+  "project:deleted": ProjectDeletedPayload;
   "invitation:created": InvitationCreatedPayload;
   "invitation:accepted": InvitationAcceptedPayload;
   "invitation:declined": InvitationDeclinedPayload;
   "invitation:revoked": InvitationRevokedPayload;
-  "task:message": TaskMessagePayload;
-  "chat:message": ChatMessageEventPayload;
-  "chat:done": ChatDonePayload;
-  "task:queued": TaskQueuedPayload;
-  "task:dispatch": TaskDispatchPayload;
-  "task:cancelled": TaskCancelledPayload;
-  "task:completed": TaskCompletedPayload;
-  "task:failed": TaskFailedPayload;
-  "chat:session_read": ChatSessionReadPayload;
-  "chat:session_deleted": ChatSessionDeletedPayload;
-  "chat:table_filter": ChatTableFilterPayload;
-  "reconciliation:filter": ReconciliationFilterPayload;
-  "inventory:updated": InventoryUpdatedPayload;
+  // No formal payload interfaces yet — server emits domain objects clients
+  // currently consume as opaque triggers (refetch on receipt).
+  "daemon:heartbeat": unknown;
+  "daemon:register": unknown;
+  "skill:created": unknown;
+  "skill:updated": unknown;
+  "skill:deleted": unknown;
+  "squad:created": unknown;
+  "squad:updated": unknown;
+  "squad:deleted": unknown;
+  "label:created": unknown;
+  "label:updated": unknown;
+  "label:deleted": unknown;
+  "pin:created": unknown;
+  "pin:deleted": unknown;
+  "pin:reordered": unknown;
+  "github_installation:created": unknown;
+  "github_installation:deleted": unknown;
+  "pull_request:linked": unknown;
+  "pull_request:updated": unknown;
+  "pull_request:unlinked": unknown;
 }
+
+/**
+ * Payload type for a given event. Lookup against WSEventPayloadMap with
+ * `unknown` as the safety net — if a future WSEventType is added without
+ * a map entry, callers see `unknown` (forced narrow) rather than `any`
+ * (silent unsafe access).
+ */
+export type WSEventPayload<E extends WSEventType> =
+  E extends keyof WSEventPayloadMap ? WSEventPayloadMap[E] : unknown;

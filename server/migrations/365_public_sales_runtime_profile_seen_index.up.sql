@@ -1,0 +1,1 @@
+CREATE INDEX CONCURRENTLY public_sales_runtime_profile_seen_idx ON public_sales_runtime_instance (profile_version, last_seen_at DESC);

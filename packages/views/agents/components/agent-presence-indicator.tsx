@@ -1,7 +1,7 @@
 "use client";
 
-import { Skeleton } from "@teamify/ui/components/ui/skeleton";
-import type { AgentPresenceDetail } from "@teamify/core/agents";
+import { Skeleton } from "@iteamify/ui/components/ui/skeleton";
+import type { AgentPresenceDetail } from "@iteamify/core/agents";
 import { availabilityConfig, workloadConfig } from "../presence";
 import { useT } from "../../i18n";
 
@@ -82,7 +82,9 @@ export function AgentPresenceIndicator({
           All three workload states render here for symmetry: idle gets
           its own "Idle" label so the difference between "no presence
           data" (no chip at all) and "agent is idle" (explicit Idle chip)
-          is visible. */}
+          is visible. Archived agents skip the workload chip entirely —
+          "Archived" already says everything; "Archived · Idle" is noise. */}
+      {detail.availability !== "archived" && (
       <span className="inline-flex items-center gap-1">
         <span className="text-xs text-muted-foreground">·</span>
         <span
@@ -111,6 +113,7 @@ export function AgentPresenceIndicator({
           </span>
         )}
       </span>
+      )}
     </span>
   );
 }

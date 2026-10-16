@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS delivery_outbox_public_expert_session_idx;

@@ -1,5 +1,5 @@
 import { Lock } from "lucide-react";
-import { cn } from "@teamify/ui/lib/utils";
+import { cn } from "@iteamify/ui/lib/utils";
 
 type Resource = "agent" | "skill" | "comment" | "runtime" | "workspace";
 
@@ -12,6 +12,7 @@ type Reason =
   | "not_resource_owner"
   | "last_owner"
   | "private_visibility"
+  | "managed_chat_only"
   | "unknown";
 
 const RESOURCE_NOUN: Record<Resource, string> = {
@@ -83,6 +84,8 @@ function getCopy(reason: Reason, noun: string, ownerName?: string): string {
         return `Personal ${noun} — only ${ownerName} and workspace admins can use this.`;
       }
       return `Personal ${noun} — only the owner and workspace admins can use this.`;
+    case "managed_chat_only":
+      return `This managed ${noun} is available in Chat only.`;
     case "allowed":
     case "unknown":
       return ""; // unreachable; component returned null above

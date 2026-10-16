@@ -1,18 +1,16 @@
-"use client";
-
 import Link from "next/link";
-import { buttonVariants } from "@teamify/ui/components/ui/button";
+import styles from "./not-found.module.css";
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-6 py-24 text-center">
-      <p className="text-sm font-medium text-muted-foreground">404</p>
-      <h1 className="text-2xl font-semibold tracking-tight">Page not found</h1>
-      <p className="max-w-md text-sm text-muted-foreground">
+    <main className={styles.main}>
+      <p className={styles.code}>404</p>
+      <h1 className={styles.title}>Page not found</h1>
+      <p className={styles.copy}>
         The page you are looking for doesn&rsquo;t exist or has been moved.
       </p>
-      <Link href="/" className={buttonVariants({ className: "mt-2" })}>
-        Back to Teamify
+      <Link href="/" className={styles.link}>
+        Back to iteamify
       </Link>
     </main>
   );

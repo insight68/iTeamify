@@ -1,6 +1,7 @@
-import { LoginPage } from "@teamify/views/auth";
-import { DragStrip } from "@teamify/views/platform";
-import { TeamifyIcon } from "@teamify/ui/components/common/teamify-icon";
+import { LoginPage } from "@iteamify/views/auth";
+import { DragStrip } from "@iteamify/views/platform";
+import { ITeamifyIcon } from "@iteamify/ui/components/common/iteamify-icon";
+import { useConfigStore } from "@iteamify/core/config";
 
 function requireRuntimeAppUrl(): string {
   const runtimeConfig = window.desktopAPI.runtimeConfig;
@@ -13,10 +14,12 @@ function requireRuntimeAppUrl(): string {
 }
 
 export function DesktopLoginPage() {
+  const passwordEnabled = useConfigStore((state) => state.passwordAuthEnabled);
+  const allowSignup = useConfigStore((state) => state.allowSignup);
   const webUrl = requireRuntimeAppUrl();
   const handleGoogleLogin = () => {
     // Open web login page in the default browser with platform=desktop flag.
-    // The web callback will redirect back via teamify:// deep link with the token.
+    // The web callback will redirect back via iteamify:// deep link with the token.
     window.desktopAPI.openExternal(
       `${webUrl}/login?platform=desktop`,
     );
@@ -26,8 +29,9 @@ export function DesktopLoginPage() {
     <div className="flex h-screen flex-col">
       <DragStrip />
       <LoginPage
-        logo={<TeamifyIcon bordered size="lg" />}
-        defaultMode="password"
+        passwordEnabled={passwordEnabled}
+        allowSignup={allowSignup}
+        logo={<ITeamifyIcon bordered size="lg" />}
         onSuccess={() => {
           // Auth store update triggers AppContent re-render → shows DesktopShell.
           // Initial workspace navigation happens in routes.tsx via IndexRedirect.

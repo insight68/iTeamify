@@ -5,103 +5,138 @@ import {
   User,
   SlidersHorizontal,
   Key,
-  Settings,
   Users,
   FolderGit2,
+  FlaskConical,
   Bell,
+  Tags,
+  Keyboard,
+  ListTodo,
   Bot,
-  Server,
-  Download,
 } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@teamify/ui/components/ui/tabs";
-import { useCurrentWorkspace } from "@teamify/core/paths";
-import { useIsOwner } from "@teamify/core/permissions";
-import { useWorkspaceId } from "@teamify/core";
+import { GitHubMark } from "./github-mark";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@iteamify/ui/components/ui/tabs";
+import { useIsMobile } from "@iteamify/ui/hooks/use-mobile";
+import { Spinner } from "@iteamify/ui/components/ui/spinner";
+import { useCurrentWorkspace, useWorkspacePaths } from "@iteamify/core/paths";
 import { useNavigation } from "../../navigation";
+import { OpenAgentTab } from "./openagent-tab";
 import { AccountTab } from "./account-tab";
 import { PreferencesTab } from "./preferences-tab";
+import { IssueTab } from "./issue-tab";
 import { TokensTab } from "./tokens-tab";
-import { WorkspaceTab } from "./workspace-tab";
 import { MembersTab } from "./members-tab";
 import { RepositoriesTab } from "./repositories-tab";
+import { GitHubTab } from "./github-tab";
+import { LabsTab } from "./labs-tab";
 import { NotificationsTab } from "./notifications-tab";
-import { AgentsTab } from "./agents-tab";
-import { ImportTab } from "./import-tab";
-import { McpTab } from "./mcp-tab";
+import { LabelsTab } from "./labels-tab";
+import { PropertiesTab } from "./properties-tab";
+import { KeyboardShortcutsTab } from "./keyboard-shortcuts-tab";
 import { useT } from "../../i18n";
 
-const ACCOUNT_TAB_KEYS = ["profile", "preferences", "notifications", "tokens"] as const;
+const AgentsPage = React.lazy(() =>
+  import("../../agents/components/agents-page").then((module) => ({ default: module.AgentsPage })),
+);
+
+const ACCOUNT_TAB_KEYS = ["profile", "preferences", "shortcuts", "issue", "notifications", "tokens"] as const;
 const ACCOUNT_TAB_ICONS = {
   profile: User,
   preferences: SlidersHorizontal,
+  shortcuts: Keyboard,
+  issue: ListTodo,
   notifications: Bell,
   tokens: Key,
 } as const;
 
-const BASE_WORKSPACE_TAB_KEYS = ["general", "repositories", "members", "agents", "mcp", "import"] as const;
+const WORKSPACE_TAB_KEYS = [
+  "repositories",
+  "github",
+  "labs",
+  "agents",
+  "openagent",
+  "members",
+  "labels",
+  "properties",
+] as const;
 const WORKSPACE_TAB_VALUES = {
-  general: "workspace",
   repositories: "repositories",
-  members: "members",
+  github: "github",
+  labs: "labs",
   agents: "agents",
-  mcp: "mcp",
-  import: "import",
+  openagent: "openagent",
+  members: "members",
+  labels: "labels",
+  properties: "properties",
 } as const;
 const WORKSPACE_TAB_ICONS = {
-  general: Settings,
   repositories: FolderGit2,
-  members: Users,
+  github: GitHubMark,
+  labs: FlaskConical,
   agents: Bot,
-  mcp: Server,
-  import: Download,
+  openagent: Bot,
+  members: Users,
+  labels: Tags,
+  properties: SlidersHorizontal,
 } as const;
 
 const DEFAULT_TAB = "profile";
 const TAB_QUERY_KEY = "tab";
+const HIDDEN_SETTINGS_NAV_TABS = new Set([
+  "tokens",
+  "repositories",
+  "github",
+  "labs",
+]);
+
+export function isSettingsTabVisibleInNavigation(tab: string) {
+  return !HIDDEN_SETTINGS_NAV_TABS.has(tab);
+}
+
+const SETTINGS_TAB_TRIGGER_CLASS =
+  "h-8 shrink-0 px-2.5 hover:bg-surface-hover data-active:!bg-surface-selected data-active:!text-surface-selected-foreground data-active:hover:!bg-surface-selected md:!w-full md:px-2 md:after:hidden";
+
+export function resolveSettingsTab(tabFromUrl: string | null, validTabs: Set<string>) {
+  return tabFromUrl && validTabs.has(tabFromUrl) ? tabFromUrl : DEFAULT_TAB;
+}
+
+export function resolveLegacyConnectionDestination(
+  tabFromUrl: string | null,
+  connectionsPath: string,
+  currentSearchParams: URLSearchParams,
+): string | null {
+  if (tabFromUrl !== "integrations" && tabFromUrl !== "lark") return null;
+
+  const params = new URLSearchParams(currentSearchParams);
+  params.delete(TAB_QUERY_KEY);
+  params.delete("view");
+  const search = params.toString();
+  const hash = tabFromUrl === "lark" ? "#feishu" : "";
+  return `${connectionsPath}${search ? `?${search}` : ""}${hash}`;
+}
 
 export interface ExtraSettingsTab {
   value: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   content: React.ReactNode;
-  /** If true, this tab is only visible to workspace owners. */
-  ownerOnly?: boolean;
 }
 
 interface SettingsPageProps {
   /** Additional tabs injected by platform (e.g. desktop daemon settings) */
   extraAccountTabs?: ExtraSettingsTab[];
+  /** Platform-specific agent page (e.g. desktop daemon wiring). */
+  agentsContent?: React.ReactNode;
 }
 
-export function SettingsPage({ extraAccountTabs }: SettingsPageProps = {}) {
+export function SettingsPage({ extraAccountTabs, agentsContent }: SettingsPageProps = {}) {
   const { t } = useT("settings");
+  const { t: tLayout } = useT("layout");
   const workspaceName = useCurrentWorkspace()?.name;
+  const workspacePaths = useWorkspacePaths();
   const navigation = useNavigation();
-  const wsId = useWorkspaceId();
-  const { isOwner } = useIsOwner(wsId);
-
-  // Tokens tab is owner-only — hide from non-owners.
-  const visibleAccountKeys = React.useMemo(
-    () => (isOwner ? ACCOUNT_TAB_KEYS : ACCOUNT_TAB_KEYS.filter((k) => k !== "tokens")),
-    [isOwner],
-  );
-
-  // Filter extra tabs by ownership.
-  const visibleExtraTabs = React.useMemo(
-    () => extraAccountTabs?.filter((tab) => !tab.ownerOnly || isOwner) ?? [],
-    [extraAccountTabs, isOwner],
-  );
-
-  // Repositories / MCP / Import tabs are owner-only — hide from non-owners.
-  const visibleWorkspaceKeys = React.useMemo(
-    () =>
-      isOwner
-        ? BASE_WORKSPACE_TAB_KEYS
-        : BASE_WORKSPACE_TAB_KEYS.filter(
-            (k) => k !== "repositories" && k !== "mcp" && k !== "import",
-          ),
-    [isOwner],
-  );
+  const replace = navigation.replace;
+  const isMobile = useIsMobile();
 
   // Whitelist of valid tab values; unknown ?tab=… values silently fall back to
   // the default. Whitelisting also blocks junk like ?tab=<script> from
@@ -109,16 +144,25 @@ export function SettingsPage({ extraAccountTabs }: SettingsPageProps = {}) {
   const validTabs = React.useMemo(
     () =>
       new Set<string>([
-        ...visibleAccountKeys,
-        ...visibleWorkspaceKeys.map((k) => WORKSPACE_TAB_VALUES[k]),
-        ...(visibleExtraTabs?.map((tab) => tab.value) ?? []),
+        ...ACCOUNT_TAB_KEYS,
+        ...Object.values(WORKSPACE_TAB_VALUES),
+        ...(extraAccountTabs?.map((tab) => tab.value) ?? []),
       ]),
-    [visibleAccountKeys, visibleWorkspaceKeys, visibleExtraTabs],
+    [extraAccountTabs],
   );
 
   const tabFromUrl = navigation.searchParams.get(TAB_QUERY_KEY);
-  const activeTab =
-    tabFromUrl && validTabs.has(tabFromUrl) ? tabFromUrl : DEFAULT_TAB;
+  const legacyDestination = resolveLegacyConnectionDestination(
+    tabFromUrl,
+    workspacePaths.connections(),
+    navigation.searchParams,
+  );
+  const activeTab = resolveSettingsTab(tabFromUrl, validTabs);
+  const isPageTab = activeTab === "agents";
+
+  React.useEffect(() => {
+    if (legacyDestination) replace(legacyDestination);
+  }, [legacyDestination, replace]);
 
   // replace (not push) so settings tab switches don't pollute browser history.
   // Preserve any other query params the page may carry.
@@ -128,47 +172,70 @@ export function SettingsPage({ extraAccountTabs }: SettingsPageProps = {}) {
     navigation.replace(`${navigation.pathname}?${params.toString()}`);
   };
 
+  // Avoid flashing Profile while a legacy integrations deep link is replaced.
+  if (legacyDestination) return null;
+
   return (
     <Tabs
       value={activeTab}
       onValueChange={handleTabChange}
-      orientation="vertical"
-      className="flex-1 min-h-0 gap-0 flex flex-col md:flex-row md:overflow-hidden overflow-y-auto"
+      orientation={isMobile ? "horizontal" : "vertical"}
+      className={`flex flex-1 min-h-0 flex-col gap-0 md:flex-row md:overflow-hidden ${isPageTab ? "overflow-hidden" : "overflow-y-auto"}`}
     >
-      {/* Left nav (stacks on top on mobile, sidebar on md+) */}
-      <div className="shrink-0 md:w-52 border-b md:border-b-0 md:border-r md:overflow-y-auto p-3 md:p-4">
-        <h1 className="text-sm font-semibold mb-4 px-2">{t(($) => $.page.title)}</h1>
-        <TabsList variant="line" className="flex-col items-stretch w-full">
+      {/* Structural navigation; bounded setting groups remain in the content surface.
+          Stays on the content surface color (no shell tint): the desktop's active
+          tab merges into the card top, and a tinted panel under the first tabs
+          breaks that seam (MUL-4439). Zoning comes from the divider instead. */}
+      <div className="shrink-0 overflow-x-auto border-b border-surface-border p-2 md:w-56 md:overflow-y-auto md:border-b-0 md:border-r md:p-4">
+        <h1 className="sr-only text-sm font-semibold md:not-sr-only md:mb-4 md:px-2">{t(($) => $.page.title)}</h1>
+        <TabsList
+          variant="line"
+          className="flex w-max min-w-full flex-row items-center gap-1 p-0 md:w-full md:flex-col md:items-stretch"
+        >
           {/* My Account group */}
-          <span className="px-2 pb-1 pt-2 text-xs font-medium text-muted-foreground">
+          <span className="hidden px-2 pb-1 pt-2 text-xs font-medium text-muted-foreground md:block">
             {t(($) => $.page.my_account)}
           </span>
-          {visibleAccountKeys.map((key) => {
+          {ACCOUNT_TAB_KEYS.filter(isSettingsTabVisibleInNavigation).map((key) => {
             const Icon = ACCOUNT_TAB_ICONS[key];
             return (
-              <TabsTrigger key={key} value={key}>
+              <TabsTrigger
+                key={key}
+                value={key}
+                className={SETTINGS_TAB_TRIGGER_CLASS}
+              >
                 <Icon className="h-4 w-4" />
                 {t(($) => $.page.tabs[key])}
               </TabsTrigger>
             );
           })}
-          {visibleExtraTabs?.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value}>
+          {extraAccountTabs?.map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className={SETTINGS_TAB_TRIGGER_CLASS}
+            >
               <tab.icon className="h-4 w-4" />
               {tab.label}
             </TabsTrigger>
           ))}
 
           {/* Workspace group */}
-          <span className="px-2 pb-1 pt-4 text-xs font-medium text-muted-foreground truncate">
+          <span className="hidden truncate px-2 pb-1 pt-4 text-xs font-medium text-muted-foreground md:block">
             {workspaceName ?? t(($) => $.page.workspace_fallback)}
           </span>
-          {visibleWorkspaceKeys.map((key) => {
+          {WORKSPACE_TAB_KEYS.filter(isSettingsTabVisibleInNavigation).map((key) => {
             const Icon = WORKSPACE_TAB_ICONS[key];
             return (
-              <TabsTrigger key={key} value={WORKSPACE_TAB_VALUES[key]}>
+              <TabsTrigger
+                key={key}
+                value={WORKSPACE_TAB_VALUES[key]}
+                className={SETTINGS_TAB_TRIGGER_CLASS}
+              >
                 <Icon className="h-4 w-4" />
-                {t(($) => $.page.tabs[key])}
+                {key === "agents"
+                  ? tLayout(($) => $.nav.agents)
+                  : t(($) => $.page.tabs[key])}
               </TabsTrigger>
             );
           })}
@@ -176,22 +243,34 @@ export function SettingsPage({ extraAccountTabs }: SettingsPageProps = {}) {
       </div>
 
       {/* Right content */}
-      <div className="flex-1 min-w-0 md:overflow-y-auto">
-        <div className="w-full max-w-3xl mx-auto p-4 md:p-6">
-          <TabsContent value="profile"><AccountTab /></TabsContent>
-          <TabsContent value="preferences"><PreferencesTab /></TabsContent>
-          <TabsContent value="notifications"><NotificationsTab /></TabsContent>
-          <TabsContent value="tokens"><TokensTab /></TabsContent>
-          <TabsContent value="workspace"><WorkspaceTab /></TabsContent>
-          <TabsContent value="repositories"><RepositoriesTab /></TabsContent>
-          <TabsContent value="members"><MembersTab /></TabsContent>
-          <TabsContent value="agents"><AgentsTab /></TabsContent>
-          <TabsContent value="mcp"><McpTab /></TabsContent>
-          <TabsContent value="import"><ImportTab /></TabsContent>
-          {visibleExtraTabs?.map((tab) => (
-            <TabsContent key={tab.value} value={tab.value}>{tab.content}</TabsContent>
-          ))}
-        </div>
+      <div className={`min-w-0 flex-1 ${isPageTab ? "flex min-h-0 flex-col overflow-hidden" : "md:overflow-y-auto"}`}>
+        <React.Suspense fallback={
+          <div className="flex flex-1 items-center justify-center p-8"><Spinner /></div>
+        }>
+          <TabsContent value="agents" className="flex min-h-0 flex-col">
+            {agentsContent ?? <AgentsPage />}
+          </TabsContent>
+        </React.Suspense>
+        {!isPageTab && (
+          <div className={`mx-auto w-full p-4 sm:p-6 md:p-8 ${activeTab === "labels" || activeTab === "properties" ? "max-w-5xl" : "max-w-3xl"}`}>
+            <TabsContent value="profile"><AccountTab /></TabsContent>
+            <TabsContent value="preferences"><PreferencesTab /></TabsContent>
+            <TabsContent value="shortcuts"><KeyboardShortcutsTab /></TabsContent>
+            <TabsContent value="issue"><IssueTab /></TabsContent>
+            <TabsContent value="notifications"><NotificationsTab /></TabsContent>
+            <TabsContent value="tokens"><TokensTab /></TabsContent>
+            <TabsContent value="repositories"><RepositoriesTab /></TabsContent>
+            <TabsContent value="github"><GitHubTab /></TabsContent>
+            <TabsContent value="labs"><LabsTab /></TabsContent>
+            <TabsContent value="openagent"><OpenAgentTab /></TabsContent>
+            <TabsContent value="members"><MembersTab /></TabsContent>
+            <TabsContent value="labels"><LabelsTab /></TabsContent>
+            <TabsContent value="properties"><PropertiesTab /></TabsContent>
+            {extraAccountTabs?.map((tab) => (
+              <TabsContent key={tab.value} value={tab.value}>{tab.content}</TabsContent>
+            ))}
+          </div>
+        )}
       </div>
     </Tabs>
   );

@@ -1,0 +1,11 @@
+ALTER INDEX idx_lead_mining_jobs_workspace_status RENAME TO idx_prospect_jobs_workspace_status;
+ALTER INDEX idx_lead_mining_jobs_claim RENAME TO idx_prospect_jobs_claim;
+ALTER INDEX idx_leads_workspace_job RENAME TO idx_prospect_leads_workspace_job;
+ALTER INDEX idx_leads_workspace_dedup RENAME TO idx_prospect_leads_workspace_dedup;
+ALTER INDEX idx_lead_mining_job_events_job RENAME TO idx_prospect_job_events_job;
+ALTER INDEX idx_lead_mining_settings_workspace RENAME TO idx_prospect_settings_workspace;
+
+ALTER TABLE lead_mining_jobs RENAME TO prospect_jobs;
+ALTER TABLE leads RENAME TO prospect_leads;
+ALTER TABLE lead_mining_job_events RENAME TO prospect_job_events;
+ALTER TABLE lead_mining_settings RENAME TO prospect_settings;

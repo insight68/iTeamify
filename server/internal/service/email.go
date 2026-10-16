@@ -1,0 +1,561 @@
+package service
+
+import (
+	"context"
+	"crypto/tls"
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"html"
+	"mime"
+	"mime/quotedprintable"
+	"net"
+	"net/smtp"
+	"os"
+	"strings"
+	"time"
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/resend/resend-go/v2"
+)
+
+// maxSubjectFieldRunes bounds how much user-controlled text (workspace name,
+// inviter name) can land in an email Subject. Prevents attackers from stuffing
+// a full phishing pitch into a workspace name that gets sent from our domain.
+const maxSubjectFieldRunes = 60
+
+type EmailService struct {
+	client          *resend.Client
+	fromEmail       string
+	smtpHost        string
+	smtpPort        string
+	smtpUsername    string
+	smtpPassword    string
+	smtpTLSInsecure bool
+	smtpTLSImplicit bool
+	smtpEHLOName    string
+}
+
+type smtpAuthClient interface {
+	Auth(smtp.Auth) error
+	Extension(string) (bool, string)
+}
+
+type smtpClientAdapter struct {
+	client *smtp.Client
+}
+
+func (a smtpClientAdapter) Auth(auth smtp.Auth) error {
+	return a.client.Auth(auth)
+}
+
+func (a smtpClientAdapter) Extension(name string) (bool, string) {
+	return a.client.Extension(name)
+}
+
+func isLocalhost(name string) bool {
+	return name == "localhost" || name == "127.0.0.1" || name == "::1"
+}
+
+type loginAuth struct {
+	username string
+	password string
+	host     string
+}
+
+func (a *loginAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
+	if !server.TLS && !isLocalhost(server.Name) {
+		return "", nil, fmt.Errorf("unencrypted connection")
+	}
+	if server.Name != a.host {
+		return "", nil, fmt.Errorf("wrong host name: %q does not match expected %q", server.Name, a.host)
+	}
+	return "LOGIN", nil, nil
+}
+
+func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
+	if !more {
+		return nil, nil
+	}
+
+	raw := strings.TrimSpace(string(fromServer))
+	challenge := strings.ToLower(raw)
+	if decoded, err := base64.StdEncoding.DecodeString(raw); err == nil {
+		challenge = strings.ToLower(strings.TrimSpace(string(decoded)))
+	}
+
+	switch {
+	case strings.Contains(challenge, "username") || strings.Contains(challenge, "user name"):
+		return []byte(a.username), nil
+	case strings.Contains(challenge, "password"):
+		return []byte(a.password), nil
+	default:
+		return nil, fmt.Errorf("unexpected LOGIN challenge %q", raw)
+	}
+}
+
+func smtpAuthWithFallback(c smtpAuthClient, host, username, password string) (bool, error) {
+	plainErr := c.Auth(smtp.PlainAuth("", username, password, host))
+	if plainErr == nil {
+		return false, nil
+	}
+
+	msg := strings.ToLower(plainErr.Error())
+	if !strings.Contains(msg, "unrecognized authentication type") && !strings.Contains(msg, "504 5.7.4") {
+		return false, plainErr
+	}
+
+	ok, authLine := c.Extension("AUTH")
+	if !ok || !strings.Contains(strings.ToUpper(authLine), "LOGIN") {
+		return false, plainErr
+	}
+	return true, plainErr
+}
+
+func resolveFromEmail(smtpHost string) string {
+	resendFrom := strings.TrimSpace(os.Getenv("RESEND_FROM_EMAIL"))
+	if smtpHost == "" {
+		if resendFrom != "" {
+			return resendFrom
+		}
+		return "noreply@aurocreator.com"
+	}
+	if smtpFrom := strings.TrimSpace(os.Getenv("SMTP_FROM_EMAIL")); smtpFrom != "" {
+		return smtpFrom
+	}
+	return resendFrom
+}
+
+func (s *EmailService) openSMTPClient() (*smtp.Client, error) {
+	addr := net.JoinHostPort(s.smtpHost, s.smtpPort)
+
+	tlsCfg := &tls.Config{
+		ServerName:         s.smtpHost,
+		InsecureSkipVerify: s.smtpTLSInsecure, //nolint:gosec // opt-in via SMTP_TLS_INSECURE=true
+	}
+
+	var conn net.Conn
+	var err error
+	if s.smtpTLSImplicit {
+		dialer := &net.Dialer{Timeout: 10 * time.Second}
+		conn, err = tls.DialWithDialer(dialer, "tcp", addr, tlsCfg)
+	} else {
+		conn, err = net.DialTimeout("tcp", addr, 10*time.Second)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("smtp dial %s: %w", addr, err)
+	}
+	if err = conn.SetDeadline(time.Now().Add(30 * time.Second)); err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("smtp set deadline: %w", err)
+	}
+
+	c, err := smtp.NewClient(conn, s.smtpHost)
+	if err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("smtp client: %w", err)
+	}
+
+	if s.smtpEHLOName != "" {
+		if err = c.Hello(s.smtpEHLOName); err != nil {
+			c.Close()
+			return nil, fmt.Errorf("smtp EHLO %s: %w", s.smtpEHLOName, err)
+		}
+	}
+
+	if !s.smtpTLSImplicit {
+		if ok, _ := c.Extension("STARTTLS"); ok {
+			if err = c.StartTLS(tlsCfg); err != nil {
+				c.Close()
+				return nil, fmt.Errorf("smtp starttls: %w", err)
+			}
+		} else if !isLocalhost(s.smtpHost) {
+			c.Close()
+			return nil, errors.New("smtp server does not offer STARTTLS")
+		}
+	}
+
+	return c, nil
+}
+
+func NewEmailService() *EmailService {
+	apiKey := os.Getenv("RESEND_API_KEY")
+	smtpHost := strings.TrimSpace(os.Getenv("SMTP_HOST"))
+	smtpPort := strings.TrimSpace(os.Getenv("SMTP_PORT"))
+	if smtpPort == "" {
+		smtpPort = "25"
+	}
+	smtpUsername := os.Getenv("SMTP_USERNAME")
+	smtpPassword := os.Getenv("SMTP_PASSWORD")
+	smtpTLSInsecure := os.Getenv("SMTP_TLS_INSECURE") == "true"
+	from := resolveFromEmail(smtpHost)
+
+	// EHLO/HELO name, only relevant on the SMTP relay send path. net/smtp defaults
+	// to "localhost", which strict relays (e.g. smtp-relay.gmail.com) reject from a
+	// public source. Fall back to the machine hostname when SMTP_EHLO_NAME is unset.
+	// Resolved only in SMTP mode so the Resend/DEV paths never touch os.Hostname()
+	// or emit its failure log.
+	var smtpEHLOName string
+	if smtpHost != "" {
+		smtpEHLOName = strings.TrimSpace(os.Getenv("SMTP_EHLO_NAME"))
+		if smtpEHLOName == "" {
+			hostname, hostErr := os.Hostname()
+			if hostErr != nil {
+				// Empty name makes sendSMTP skip Hello() and fall back to net/smtp's
+				// lazy "localhost" — which strict relays reject. Surface it so operators
+				// know to set SMTP_EHLO_NAME explicitly.
+				fmt.Printf("EmailService: os.Hostname() failed (%v); SMTP EHLO falls back to \"localhost\" — set SMTP_EHLO_NAME for strict relays\n", hostErr)
+			}
+			smtpEHLOName = hostname
+		}
+	}
+
+	// SMTP_TLS=implicit forces an immediate TLS handshake on connect (SMTPS).
+	// Required by providers like Aliyun enterprise mail that only offer port 465
+	// SSL and do not advertise STARTTLS. Default (empty / "starttls") preserves
+	// the prior STARTTLS-upgrade behavior.
+	smtpTLSMode := strings.ToLower(strings.TrimSpace(os.Getenv("SMTP_TLS")))
+	smtpTLSImplicit := smtpTLSMode == "implicit" || smtpTLSMode == "smtps" || smtpTLSMode == "ssl"
+	if smtpTLSMode == "" && smtpPort == "465" {
+		smtpTLSImplicit = true
+	}
+	if smtpTLSMode != "" && !smtpTLSImplicit && smtpTLSMode != "starttls" {
+		fmt.Printf("EmailService: SMTP_TLS=%q not recognized, falling back to starttls\n", smtpTLSMode)
+	}
+
+	var client *resend.Client
+	if apiKey != "" {
+		client = resend.NewClient(apiKey)
+	}
+
+	switch {
+	case smtpHost != "":
+		tlsLabel := "starttls"
+		if smtpTLSImplicit {
+			tlsLabel = "implicit-tls"
+		}
+		fmt.Printf("EmailService: SMTP relay %s:%s (%s) from=%s\n", smtpHost, smtpPort, tlsLabel, from)
+	case client != nil:
+		fmt.Printf("EmailService: Resend API from=%s\n", from)
+	default:
+		fmt.Println("EmailService: DEV mode — codes printed to stdout (set ITEAMIFY_DEV_VERIFICATION_CODE in .env for a fixed local code)")
+	}
+
+	return &EmailService{
+		client:          client,
+		fromEmail:       from,
+		smtpHost:        smtpHost,
+		smtpPort:        smtpPort,
+		smtpUsername:    smtpUsername,
+		smtpPassword:    smtpPassword,
+		smtpTLSInsecure: smtpTLSInsecure,
+		smtpTLSImplicit: smtpTLSImplicit,
+		smtpEHLOName:    smtpEHLOName,
+	}
+}
+
+// sendSMTP delivers an HTML email via an SMTP server.
+// Supports unauthenticated relay (SMTP_USERNAME empty) and authenticated SMTP.
+// Upgrades to STARTTLS when advertised by the server.
+// Set SMTP_TLS_INSECURE=true for self-signed or private CA certificates.
+func (s *EmailService) sendSMTP(to, subject, htmlBody string) error {
+	if strings.TrimSpace(s.fromEmail) == "" {
+		return fmt.Errorf("SMTP_FROM_EMAIL or RESEND_FROM_EMAIL is required when SMTP_HOST is set")
+	}
+
+	c, err := s.openSMTPClient()
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+
+	if s.smtpUsername != "" {
+		fallbackToLogin, authErr := smtpAuthWithFallback(smtpClientAdapter{client: c}, s.smtpHost, s.smtpUsername, s.smtpPassword)
+		if authErr != nil {
+			if !fallbackToLogin {
+				return fmt.Errorf("smtp auth: %w", authErr)
+			}
+
+			c.Close()
+			c, err = s.openSMTPClient()
+			if err != nil {
+				return fmt.Errorf("smtp auth: plain auth failed (%v); login reconnect failed: %w", authErr, err)
+			}
+			defer c.Close()
+
+			if err = c.Auth(&loginAuth{username: s.smtpUsername, password: s.smtpPassword, host: s.smtpHost}); err != nil {
+				return fmt.Errorf("smtp auth: plain auth failed (%v); login auth fallback failed: %w", authErr, err)
+			}
+		}
+	}
+
+	// Probe 8BITMIME after (possible) STARTTLS so the extension list is current.
+	// Use quoted-printable for relays that don't advertise 8BITMIME — safer for
+	// non-ASCII workspace/inviter names crossing strict or older SMTP hops.
+	has8Bit, _ := c.Extension("8BITMIME")
+	encodedSubject := mime.QEncoding.Encode("utf-8", subject)
+	msgID := fmt.Sprintf("<%d@%s>", time.Now().UnixNano(), s.smtpHost)
+
+	var bodyBytes []byte
+	var cte string
+	if has8Bit {
+		bodyBytes = []byte(htmlBody)
+		cte = "8bit"
+	} else {
+		var buf strings.Builder
+		qpw := quotedprintable.NewWriter(&buf)
+		_, _ = qpw.Write([]byte(htmlBody))
+		_ = qpw.Close()
+		bodyBytes = []byte(buf.String())
+		cte = "quoted-printable"
+	}
+
+	if err = c.Mail(s.fromEmail); err != nil {
+		return fmt.Errorf("smtp MAIL FROM: %w", err)
+	}
+	if err = c.Rcpt(to); err != nil {
+		return fmt.Errorf("smtp RCPT TO <%s>: %w", to, err)
+	}
+	w, err := c.Data()
+	if err != nil {
+		return fmt.Errorf("smtp DATA: %w", err)
+	}
+	headers := "From: " + s.fromEmail + "\r\n" +
+		"To: " + to + "\r\n" +
+		"Subject: " + encodedSubject + "\r\n" +
+		"Date: " + time.Now().UTC().Format(time.RFC1123Z) + "\r\n" +
+		"Message-ID: " + msgID + "\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: text/html; charset=UTF-8\r\n" +
+		"Content-Transfer-Encoding: " + cte + "\r\n" +
+		"\r\n"
+	if _, err = fmt.Fprintf(w, "%s%s", headers, bodyBytes); err != nil {
+		return fmt.Errorf("smtp write body: %w", err)
+	}
+	if err = w.Close(); err != nil {
+		return fmt.Errorf("smtp end data: %w", err)
+	}
+	return c.Quit()
+}
+
+func normalizeEmailLanguage(language string) string {
+	normalized := strings.ToLower(strings.TrimSpace(language))
+	if normalized == "zh" || normalized == "zh-cn" || normalized == "zh-hans" || strings.HasPrefix(normalized, "zh-hans-") {
+		return "zh-Hans"
+	}
+	return "en"
+}
+
+func verificationEmailContent(code, language string) (string, string) {
+	if normalizeEmailLanguage(language) == "zh-Hans" {
+		return "您的 iteamify 验证码", fmt.Sprintf(
+			`<div lang="zh-CN" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 400px; margin: 0 auto; color: #17231c;">
+				<p style="font-size: 13px; font-weight: 700; letter-spacing: .08em; color: #68736c;">ITEAMIFY</p>
+				<h2>您的登录验证码</h2>
+				<p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 24px 0;">%s</p>
+				<p>验证码将在 10 分钟后失效。</p>
+				<p style="color: #66736b; font-size: 14px;">如果这不是您发起的请求，请忽略此邮件，不要向任何人分享验证码。</p>
+			</div>`, code)
+	}
+
+	return "Your iteamify verification code", fmt.Sprintf(
+		`<div lang="en" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 400px; margin: 0 auto; color: #17231c;">
+			<p style="font-size: 13px; font-weight: 700; letter-spacing: .08em; color: #68736c;">ITEAMIFY</p>
+			<h2>Your sign-in code</h2>
+			<p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 24px 0;">%s</p>
+			<p>This code expires in 10 minutes.</p>
+			<p style="color: #66736b; font-size: 14px;">If you didn't request this code, ignore this email and don't share it with anyone.</p>
+		</div>`, code)
+}
+
+// SendVerificationCode sends a one-time login code. The code is server-generated
+// (6-digit numeric) so no user-controlled text reaches the email body here.
+// Delivery priority: SMTP relay → Resend API → DEV stdout.
+func (s *EmailService) SendVerificationCode(to, code string, language ...string) error {
+	requestedLanguage := ""
+	if len(language) > 0 {
+		requestedLanguage = language[0]
+	}
+	subject, body := verificationEmailContent(code, requestedLanguage)
+
+	if s.smtpHost != "" {
+		return s.sendSMTP(to, subject, body)
+	}
+	if s.client == nil {
+		fmt.Printf("[DEV] Verification code for %s: %s\n", to, code)
+		return nil
+	}
+	params := &resend.SendEmailRequest{
+		From:    s.fromEmail,
+		To:      []string{to},
+		Subject: subject,
+		Html:    body,
+	}
+	_, err := s.client.Emails.Send(params)
+	return err
+}
+
+// SendAuthCode makes the operation clear without including any user supplied
+// strings in HTML. Development stdout delivery requires an explicit environment.
+func (s *EmailService) SendAuthCode(to, code, purpose, language string) error {
+	labels := map[string][2]string{
+		"login": {"登录", "Sign in"}, "signup": {"注册", "Create your account"},
+		"reset": {"重置密码", "Reset your password"}, "set_password": {"设置密码", "Set your password"},
+	}
+	label, ok := labels[purpose]
+	if !ok {
+		return errors.New("invalid authentication email purpose")
+	}
+	subject, body := verificationEmailContent(code, language)
+	if normalizeEmailLanguage(language) == "zh-Hans" {
+		subject = "您的 iteamify " + label[0] + "验证码"
+		body = strings.Replace(body, "您的登录验证码", "您的"+label[0]+"验证码", 1)
+	} else {
+		subject = label[1] + " — iteamify"
+		body = strings.Replace(body, "Your sign-in code", label[1]+" code", 1)
+	}
+	return s.sendAuthenticationEmail(to, subject, body, code)
+}
+
+func (s *EmailService) SendPasswordChanged(to, language string) error {
+	subject := "Your iteamify password was changed"
+	body := "<p>Your iteamify password was changed. Previous sign-in sessions have ended. If you did not make this change, reset your password using your registered email.</p>"
+	if normalizeEmailLanguage(language) == "zh-Hans" {
+		subject = "您的 iteamify 密码已更改"
+		body = "<p>您的 iteamify 密码已更改，之前的登录状态已失效。如果这不是您发起的操作，请使用注册邮箱找回密码。</p>"
+	}
+	return s.sendAuthenticationEmail(to, subject, body, "")
+}
+
+func (s *EmailService) sendAuthenticationEmail(to, subject, body, developmentCode string) error {
+	if s.smtpHost != "" {
+		return s.sendSMTP(to, subject, body)
+	}
+	if s.client != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_, err := s.client.Emails.SendWithContext(ctx, &resend.SendEmailRequest{From: s.fromEmail, To: []string{to}, Subject: subject, Html: body})
+		return err
+	}
+	environment := strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV")))
+	if environment != "development" && environment != "test" {
+		return errors.New("authentication email is not configured")
+	}
+	if developmentCode != "" {
+		fmt.Printf("[DEV] Authentication code for %s: %s\n", to, developmentCode)
+	}
+	return nil
+}
+
+// PublicQuoteOTPConfigured reports whether a public quote code can actually be
+// delivered. SMTP/Resend is required by default. Stdout delivery exists only
+// behind an explicit development/test opt-in, so a missing APP_ENV can never
+// turn a production misconfiguration into a successful-looking delivery.
+
+// SendPublicQuoteVerificationCode sends the independent assurance challenge
+// required before a guest quote can become a confirmed, not-collected order.
+// It is intentionally distinct from SendVerificationCode: quote confirmation
+// must never create a user account or issue a login session.
+
+// SendInvitationEmail notifies the invitee that they have been invited to a workspace.
+// invitationID is included in the URL so the email deep-links to /invite/{id}.
+func (s *EmailService) SendInvitationEmail(to, inviterName, workspaceName, invitationID string, language ...string) error {
+	inviteURL := buildInvitationURL(invitationID)
+
+	if s.smtpHost != "" {
+		params := buildInvitationParams(s.fromEmail, to, inviterName, workspaceName, inviteURL, language...)
+		return s.sendSMTP(to, params.Subject, params.Html)
+	}
+	if s.client == nil {
+		fmt.Printf("[DEV] Invitation email to %s: %s invited you to %s — %s\n", to, inviterName, workspaceName, inviteURL)
+		return nil
+	}
+	params := buildInvitationParams(s.fromEmail, to, inviterName, workspaceName, inviteURL, language...)
+	_, err := s.client.Emails.Send(params)
+	return err
+}
+
+// buildInvitationURL resolves the public, user-facing app URL. ITEAMIFY_APP_URL
+// is the canonical value for links that leave the deployment (for example in
+// email), while FRONTEND_ORIGIN remains a compatibility fallback for existing
+// self-hosted installations.
+func buildInvitationURL(invitationID string) string {
+	appURL := strings.TrimRight(strings.TrimSpace(os.Getenv("ITEAMIFY_APP_URL")), "/")
+	if appURL == "" {
+		appURL = strings.TrimRight(strings.TrimSpace(os.Getenv("FRONTEND_ORIGIN")), "/")
+	}
+	if appURL == "" {
+		appURL = "https://aurocreator.com"
+	}
+	return fmt.Sprintf("%s/invite/%s", appURL, invitationID)
+}
+
+// buildInvitationParams assembles the email request for an invitation.
+// Separated from SendInvitationEmail so the sanitization behavior is unit-testable
+// without needing to mock the Resend SDK or an SMTP server.
+func buildInvitationParams(from, to, inviterName, workspaceName, inviteURL string, language ...string) *resend.SendEmailRequest {
+	safeWorkspace := html.EscapeString(workspaceName)
+	safeInviter := html.EscapeString(inviterName)
+	subjectInviter := sanitizeSubjectField(inviterName)
+	subjectWorkspace := sanitizeSubjectField(workspaceName)
+	requestedLanguage := ""
+	if len(language) > 0 {
+		requestedLanguage = language[0]
+	}
+
+	if normalizeEmailLanguage(requestedLanguage) == "zh-Hans" {
+		return &resend.SendEmailRequest{
+			From:    from,
+			To:      []string{to},
+			Subject: fmt.Sprintf("%s 邀请您加入 iteamify 上的 %s", subjectInviter, subjectWorkspace),
+			Html: fmt.Sprintf(
+				`<div lang="zh-CN" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; color: #17231c;">
+					<p style="font-size: 13px; font-weight: 700; letter-spacing: .08em; color: #68736c;">ITEAMIFY</p>
+					<h2>您受邀加入 %s</h2>
+					<p><strong>%s</strong> 邀请您在 iteamify 的 <strong>%s</strong> 工作区中协作。</p>
+					<p style="margin: 24px 0;"><a href="%s" style="display: inline-block; padding: 12px 24px; background: #17231c; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 500;">接受邀请</a></p>
+					<p style="color: #66736b; font-size: 14px;">登录后即可接受或拒绝邀请。</p>
+				</div>`, safeWorkspace, safeInviter, safeWorkspace, inviteURL),
+		}
+	}
+
+	return &resend.SendEmailRequest{
+		From:    from,
+		To:      []string{to},
+		Subject: fmt.Sprintf("%s invited you to %s on iteamify", subjectInviter, subjectWorkspace),
+		Html: fmt.Sprintf(
+			`<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+				<p style="font-size: 13px; font-weight: 700; letter-spacing: .08em; color: #68736c;">ITEAMIFY</p>
+				<h2>You're invited to join %s</h2>
+				<p><strong>%s</strong> invited you to collaborate in the <strong>%s</strong> workspace on iteamify.</p>
+				<p style="margin: 24px 0;">
+					<a href="%s" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 500;">Accept invitation</a>
+				</p>
+				<p style="color: #666; font-size: 14px;">You'll need to log in to accept or decline the invitation.</p>
+			</div>`, safeWorkspace, safeInviter, safeWorkspace, inviteURL),
+	}
+}
+
+// sanitizeSubjectField prepares user-controlled text for the email Subject line.
+// Subject is not HTML-rendered, so HTML-escaping would leak literal entities
+// (e.g. &lt;script&gt;) into the recipient's inbox. Instead strip control
+// characters (defense in depth against header-injection-adjacent abuse even
+// though Resend also filters CR/LF) and cap length so attackers can't stuff
+// a full phishing subject into a workspace name.
+func sanitizeSubjectField(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		if unicode.IsControl(r) {
+			continue
+		}
+		b.WriteRune(r)
+	}
+	cleaned := b.String()
+	if utf8.RuneCountInString(cleaned) <= maxSubjectFieldRunes {
+		return cleaned
+	}
+	runes := []rune(cleaned)
+	return string(runes[:maxSubjectFieldRunes-1]) + "…"
+}

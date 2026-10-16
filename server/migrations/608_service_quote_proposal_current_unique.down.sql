@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS uq_service_quote_proposal_current;

@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS managed_asset_candidate_review_queue_idx;

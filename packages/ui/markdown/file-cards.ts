@@ -6,8 +6,7 @@
  *
  * Two syntaxes are supported:
  * 1. `!file[name](url)` — new unambiguous syntax (no hostname check needed)
- * 2. `!image[name](url)` — explicit uploaded image artifact syntax
- * 3. `[name](cdnUrl)` — legacy syntax, matched by CDN hostname on own line
+ * 2. `[name](cdnUrl)` — legacy syntax, matched by CDN hostname on own line
  *
  * Output: `<div data-type="fileCard" data-href="url" data-filename="name"></div>`
  *
@@ -16,11 +15,47 @@
 
 const IMAGE_EXTS = /\.(png|jpe?g|gif|webp|svg|ico|bmp|tiff?)$/i
 
-/** New syntax: !file[name](url) — unambiguous, no hostname matching needed. */
-const NEW_FILE_CARD_RE = /^!file\[((?:\\.|[^\]])*)\]\((https?:\/\/[^)]+)\)$/
+// Keep in sync with UUID_RE in packages/core/types/attachment-url.ts.
+const ATTACHMENT_UUID_SOURCE =
+  '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+const ATTACHMENT_DOWNLOAD_URL_SOURCE = `/api/attachments/${ATTACHMENT_UUID_SOURCE}/download`
+const ATTACHMENT_DOWNLOAD_URL_RE = new RegExp(
+  `^${ATTACHMENT_DOWNLOAD_URL_SOURCE}$`,
+)
 
-/** Explicit uploaded image artifact syntax. */
-const NEW_IMAGE_CARD_RE = /^!image\[((?:\\.|[^\]])*)\]\((https?:\/\/[^)]+)\)$/
+/**
+ * URL alternation accepted inside `!file[name](url)` markdown.
+ *
+ * Restricted to:
+ * - `/uploads/...` site-relative paths (LocalStorage backend with no LOCAL_UPLOAD_BASE_URL)
+ * - `/api/attachments/<UUID>/download` site-relative attachment downloads
+ * - `http(s)://...` absolute URLs (S3 / CloudFront / hosted)
+ *
+ * Anything else — `javascript:`, `data:`, protocol-relative `//host/x`, other
+ * APIs `/api/…`, path-traversal `/../…` — is rejected so a stored file-card
+ * cannot be turned into an out-of-band navigation.
+ */
+export const FILE_CARD_URL_PATTERN = new RegExp(
+  `/uploads/[^)]*|https?:\\/\\/[^)]+|${ATTACHMENT_DOWNLOAD_URL_SOURCE}`,
+)
+
+/** Prefix test applied by renderers to validate `data-href` before opening it. */
+export function isAllowedFileCardHref(href: string): boolean {
+  return (
+    /^(https?:\/\/|\/uploads\/)/i.test(href) ||
+    ATTACHMENT_DOWNLOAD_URL_RE.test(href)
+  )
+}
+
+/**
+ * New syntax: !file[name](url) — unambiguous, no hostname matching needed.
+ * Backslash is excluded from the label char class so "\x" runs can only be
+ * consumed by \\. — overlapping alternatives backtrack in 2^n ways (ReDoS,
+ * GitHub #4881). This runs on every comment/description render.
+ */
+const NEW_FILE_CARD_RE = new RegExp(
+  `^!file\\[((?:\\\\.|[^\\]\\\\])*)\\]\\((${FILE_CARD_URL_PATTERN.source})\\)$`,
+)
 
 /** Legacy syntax: [name](cdnUrl) on its own line — matched by CDN hostname. */
 const FILE_LINK_LINE = /^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/
@@ -29,22 +64,14 @@ function escapeAttr(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
 }
 
-function unescapeCardLabel(s: string): string {
-  return s.replace(/\\]/g, ']').replace(/\\\\/g, '\\')
-}
-
 function toFileCardHtml(filename: string, url: string): string {
   return `<div data-type="fileCard" data-href="${escapeAttr(url)}" data-filename="${escapeAttr(filename)}"></div>`
-}
-
-function toImageHtml(alt: string, url: string): string {
-  return `<img src="${escapeAttr(url)}" alt="${escapeAttr(alt)}" />`
 }
 
 /**
  * Check if a URL points to our upload CDN.
  *
- * Uses exact hostname match against `cdnDomain` (e.g. "teamify-static.copilothub.ai"),
+ * Uses exact hostname match against `cdnDomain` (e.g. "iteamify-static.copilothub.ai"),
  * and also matches any `.amazonaws.com` subdomain as a fallback for direct S3 URLs.
  */
 export function isCdnUrl(url: string, cdnDomain: string): boolean {
@@ -75,7 +102,7 @@ export function isFileCardUrl(url: string, cdnDomain: string): boolean {
  * lines. Only standalone lines are matched — inline links are left untouched.
  *
  * @param markdown  Raw markdown string
- * @param cdnDomain CDN hostname for legacy link detection (e.g. "teamify-static.copilothub.ai")
+ * @param cdnDomain CDN hostname for legacy link detection (e.g. "iteamify-static.copilothub.ai")
  */
 export function preprocessFileCards(markdown: string, cdnDomain: string): string {
   return markdown
@@ -86,14 +113,8 @@ export function preprocessFileCards(markdown: string, cdnDomain: string): string
       // New syntax: !file[name](url) — always a file card, no hostname check needed.
       const newMatch = trimmed.match(NEW_FILE_CARD_RE)
       if (newMatch) {
-        return toFileCardHtml(unescapeCardLabel(newMatch[1]!), newMatch[2]!)
-      }
-
-      // Uploaded image artifact syntax. Convert to an <img> so every renderer
-      // handles it the same way instead of relying on raw Markdown image parsing.
-      const imageMatch = trimmed.match(NEW_IMAGE_CARD_RE)
-      if (imageMatch) {
-        return toImageHtml(unescapeCardLabel(imageMatch[1]!), imageMatch[2]!)
+        const filename = newMatch[1]!.replace(/\\([[\]\\()])/g, '$1')
+        return toFileCardHtml(filename, newMatch[2]!)
       }
 
       // Legacy: [name](cdnUrl) on its own line — CDN hostname matching.

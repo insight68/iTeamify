@@ -2,36 +2,43 @@
   "page": {
     "breadcrumb": "我的事项",
     "workspace_fallback": "工作区",
-    "empty_title": "没有分配给你的事项",
-    "empty_description": "你创建或被分配到的事项会显示在这里。"
+    "empty_title": "暂无分配给你的事项",
+    "empty_description": "你创建的事项和分配给你的事项都会显示在这里。"
   },
   "header": {
     "scope": {
-      "assigned_label": "已分配",
-      "assigned_description": "分配给我的事项",
-      "created_label": "我创建的",
-      "created_description": "我创建的事项",
-      "agents_label": "我的智能体",
-      "agents_description": "分配给我的智能体的事项"
+      "all_label": "全部",
+      "all_description": "分配给我、由我创建，或与我的智能体和小队有关的事项",
+      "assigned_label": "分配给我",
+      "assigned_description": "所有分配给我的事项",
+      "created_label": "由我创建",
+      "created_description": "所有由我创建的事项",
+      "agents_label": "我的智能体和小队",
+      "agents_description": "分配给我的智能体或小队的事项"
     },
     "filter_button": "筛选",
     "filter_status": "状态",
     "filter_priority": "优先级",
     "issue_count_other": "{{count}} 个事项",
-    "reset_filters": "重置所有筛选",
+    "reset_filters": "清除全部筛选",
     "display_settings": "显示设置",
+    "grouping": "分组",
+    "group_status": "状态",
+    "group_assignee": "负责人",
     "ordering": "排序",
     "ascending": "升序",
     "descending": "降序",
     "card_properties": "卡片属性",
     "view_board": "看板视图",
     "view_list": "列表视图",
+    "view_swimlane": "泳道视图",
     "view_label": "视图",
     "view_board_short": "看板",
     "view_list_short": "列表",
+    "view_swimlane_short": "泳道",
     "sort_manual": "手动"
   },
   "errors": {
-    "move_failed": "移动事项失败"
+    "move_failed": "移动事项失败，请重试"
   }
 }

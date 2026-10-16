@@ -1,41 +1,42 @@
 {
-  "name": "Teamify",
-  "version": "1.81.1",
+  "name": "iteamify",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev:web": "turbo dev --filter=@teamify/web",
-    "dev:desktop": "turbo dev --filter=@teamify/desktop",
-    "dev:desktop:staging": "turbo dev:staging --filter=@teamify/desktop",
-    "build": "turbo build",
-    "typecheck": "turbo typecheck",
-    "test": "turbo test",
-    "lint": "turbo lint",
+    "dev:web": "turbo dev --filter=@iteamify/web",
+    "dev:desktop": "turbo dev --filter=@iteamify/desktop",
+    "dev:desktop:staging": "turbo dev:staging --filter=@iteamify/desktop",
+    "dev:mobile": "pnpm -C apps/mobile dev",
+    "dev:mobile:staging": "pnpm -C apps/mobile dev:staging",
+    "dev:mobile:prod": "pnpm -C apps/mobile dev:prod",
+    "ios:mobile": "pnpm -C apps/mobile ios",
+    "ios:mobile:staging": "pnpm -C apps/mobile ios:staging",
+    "ios:mobile:prod": "pnpm -C apps/mobile ios:prod",
+    "ios:mobile:device": "pnpm -C apps/mobile ios:device",
+    "ios:mobile:device:staging": "pnpm -C apps/mobile ios:device:staging",
+    "ios:mobile:device:staging:release": "pnpm -C apps/mobile ios:device:staging:release",
+    "ios:mobile:device:prod": "pnpm -C apps/mobile ios:device:prod",
+    "ios:mobile:device:prod:release": "pnpm -C apps/mobile ios:device:prod:release",
+    "build": "turbo build --filter=!@iteamify/mobile",
+    "typecheck": "turbo typecheck --filter=!@iteamify/mobile",
+    "test": "turbo test --filter=!@iteamify/mobile",
+    "lint": "turbo lint --filter=!@iteamify/mobile",
     "clean": "turbo clean && rm -rf node_modules",
     "ui:add": "cd packages/ui && npx shadcn@latest add",
     "generate:reserved-slugs": "node scripts/generate-reserved-slugs.mjs"
   },
-  "packageManager": "pnpm@10.28.2",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "electron"
-    ],
-    "overrides": {
-      "@types/react": "catalog:",
-      "@types/react-dom": "catalog:"
-    }
+  "packageManager": "pnpm@12.10.1",
+  "engines": {
+    "node": ">=22.13.0",
+    "pnpm": ">=12.10.1 <13"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/node": "catalog:",
     "@types/pg": "^8.20.0",
     "pg": "^8.20.0",
-    "turbo": "^2.5.4",
+    "turbo": "2.9.18",
     "typescript": "catalog:"
-  },
-  "dependencies": {
-    "next": "^16.2.3",
-    "sharp": "^0.34.5"
   }
 }

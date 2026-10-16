@@ -1,9 +1,33 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
+import type {
+  WorkspaceWorkingAgentMineRelation,
+  WorkspaceWorkingAgentType,
+} from "../types";
 
 export const agentTaskSnapshotKeys = {
   all: (wsId: string) => ["workspaces", wsId, "agent-task-snapshot"] as const,
   list: (wsId: string) => [...agentTaskSnapshotKeys.all(wsId), "list"] as const,
+};
+
+export const workspaceWorkingAgentsKeys = {
+  all: (wsId: string) => ["workspaces", wsId, "working-agents"] as const,
+  list: (
+    wsId: string,
+    type?: WorkspaceWorkingAgentType,
+    mineRelation?: WorkspaceWorkingAgentMineRelation,
+    parentIssueId?: string,
+  ) =>
+    [
+      ...workspaceWorkingAgentsKeys.all(wsId),
+      "list",
+      type ?? "all",
+      mineRelation
+        ? `mine:${mineRelation}`
+        : parentIssueId
+          ? `parent:${parentIssueId}`
+          : "workspace",
+    ] as const,
 };
 
 export const agentActivityKeys = {
@@ -14,11 +38,6 @@ export const agentActivityKeys = {
 export const agentRunCountsKeys = {
   all: (wsId: string) => ["workspaces", wsId, "agent-run-counts"] as const,
   last30d: (wsId: string) => [...agentRunCountsKeys.all(wsId), "30d"] as const,
-};
-
-export const agentUsageKeys = {
-  all: (wsId: string) => ["workspaces", wsId, "agent-usage"] as const,
-  list: (wsId: string, days: number) => [...agentUsageKeys.all(wsId), String(days)] as const,
 };
 
 // Workspace-scoped agent task snapshot — every active task plus each agent's
@@ -33,7 +52,37 @@ export const agentUsageKeys = {
 export function agentTaskSnapshotOptions(wsId: string) {
   return queryOptions({
     queryKey: agentTaskSnapshotKeys.list(wsId),
-    queryFn: () => api.getAgentTaskSnapshot(),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.getAgentTaskSnapshot();
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+// Working-agent summaries, optionally narrowed to a My Issues relation or to
+// one issue's direct children. Task lifecycle WebSocket events invalidate
+// every narrowing immediately; the short stale time is the reconnect /
+// missed-event safety net.
+export function workspaceWorkingAgentsOptions(
+  wsId: string,
+  type?: WorkspaceWorkingAgentType,
+  mineRelation?: WorkspaceWorkingAgentMineRelation,
+  parentIssueId?: string,
+) {
+  return queryOptions({
+    queryKey: workspaceWorkingAgentsKeys.list(
+      wsId,
+      type,
+      mineRelation,
+      parentIssueId,
+    ),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.getWorkspaceWorkingAgents(type, mineRelation, parentIssueId);
+    },
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
@@ -49,7 +98,10 @@ export function agentTaskSnapshotOptions(wsId: string) {
 export function agentActivity30dOptions(wsId: string) {
   return queryOptions({
     queryKey: agentActivityKeys.last30d(wsId),
-    queryFn: () => api.getWorkspaceAgentActivity30d(),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.getWorkspaceAgentActivity30d();
+    },
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
@@ -61,21 +113,13 @@ export function agentActivity30dOptions(wsId: string) {
 export function agentRunCounts30dOptions(wsId: string) {
   return queryOptions({
     queryKey: agentRunCountsKeys.last30d(wsId),
-    queryFn: () => api.getWorkspaceAgentRunCounts(),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.getWorkspaceAgentRunCounts();
+    },
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
-  });
-}
-
-// Workspace-wide per-(agent, model) token usage for the Settings → Agents tab
-// cost column. Client groups by agent_id and sums cost via estimateCost().
-export function workspaceAgentUsageOptions(wsId: string, days: number = 30) {
-  return queryOptions({
-    queryKey: agentUsageKeys.list(wsId, days),
-    queryFn: () => api.getWorkspaceAgentUsage({ days }),
-    staleTime: 60 * 1000,
-    gcTime: 5 * 60 * 1000,
   });
 }
 
@@ -92,9 +136,45 @@ export const agentTasksKeys = {
 export function agentTasksOptions(wsId: string, agentId: string) {
   return queryOptions({
     queryKey: agentTasksKeys.detail(wsId, agentId),
-    queryFn: () => api.listAgentTasks(agentId),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.listAgentTasks(agentId);
+    },
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
+  });
+}
+
+// Agent templates are workspace-independent: a static catalog served from
+// the server's embedded JSON. Cache effectively forever — the only way the
+// list / detail change is a server deploy, and a hard reload picks that up.
+export const agentTemplateKeys = {
+  all: () => ["agent-templates"] as const,
+  list: () => [...agentTemplateKeys.all(), "list"] as const,
+  detail: (slug: string) => [...agentTemplateKeys.all(), "detail", slug] as const,
+};
+
+export function agentTemplateListOptions() {
+  return queryOptions({
+    queryKey: agentTemplateKeys.list(),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ signal });
+      return requestApi.listAgentTemplates();
+    },
+    staleTime: Infinity,
+    gcTime: 30 * 60 * 1000,
+  });
+}
+
+export function agentTemplateDetailOptions(slug: string) {
+  return queryOptions({
+    queryKey: agentTemplateKeys.detail(slug),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ signal });
+      return requestApi.getAgentTemplate(slug);
+    },
+    staleTime: Infinity,
+    gcTime: 30 * 60 * 1000,
   });
 }

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Users } from "lucide-react";
-import { HoverCard, HoverCardTrigger, HoverCardContent } from "@teamify/ui/components/ui/hover-card";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@iteamify/ui/components/ui/hover-card";
 import { ActorAvatar } from "./actor-avatar";
 
 interface MentionHoverCardProps {
@@ -57,7 +57,7 @@ function MentionHoverCard({
             initials={initials}
             avatarUrl={avatarUrl}
             isAgent={type === "agent"}
-            size={32}
+            size="lg"
           />
           <div className="min-w-0">
             <p className="text-sm font-medium truncate">{name}</p>

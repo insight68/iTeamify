@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY workspace_provisioning_operation_rollout_target_uidx ON workspace_provisioning_operation (rollout_target_id, trigger) WHERE rollout_target_id IS NOT NULL;

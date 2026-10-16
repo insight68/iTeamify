@@ -35,7 +35,7 @@ vi.mock("../platform", () => ({
   DragStrip: () => null,
 }));
 
-vi.mock("@teamify/core/auth", () => ({
+vi.mock("@iteamify/core/auth", () => ({
   useAuthStore: Object.assign(
     (selector?: (s: unknown) => unknown) => {
       const state = { refreshMe };
@@ -47,8 +47,9 @@ vi.mock("@teamify/core/auth", () => ({
   ),
 }));
 
-vi.mock("@teamify/core/api", () => ({
+vi.mock("@iteamify/core/api", () => ({
   api: {
+    withRequestContext() { return this; },
     acceptInvitation,
     markOnboardingComplete,
     listMyInvitations,
@@ -56,7 +57,7 @@ vi.mock("@teamify/core/api", () => ({
   },
 }));
 
-import { I18nProvider } from "@teamify/core/i18n/react";
+import { I18nProvider } from "@iteamify/core/i18n/react";
 import enCommon from "../locales/en/common.json";
 import enInvite from "../locales/en/invite.json";
 import { InvitationsPage } from "./invitations-page";
@@ -97,6 +98,7 @@ const mkWs = (id: string, slug: string) => ({
   settings: {},
   repos: [],
   issue_prefix: slug.toUpperCase(),
+  avatar_url: null,
   created_at: "",
   updated_at: "",
 });

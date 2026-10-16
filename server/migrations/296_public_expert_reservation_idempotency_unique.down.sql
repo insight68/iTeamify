@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS public_expert_reservation_idempotency_uidx;

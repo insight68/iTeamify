@@ -1,5 +1,5 @@
-import type { Project } from "@teamify/core/types";
-import { cn } from "@teamify/ui/lib/utils";
+import type { Project } from "@iteamify/core/types";
+import { cn } from "@iteamify/ui/lib/utils";
 
 export type ProjectIconSize = "sm" | "md" | "lg";
 

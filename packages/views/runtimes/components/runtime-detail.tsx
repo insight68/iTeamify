@@ -2,50 +2,51 @@
 
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft,
   Trash2,
   ChevronRight,
   Cpu,
+  Globe,
   Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import type { AgentRuntime, Agent, MemberWithUser } from "@teamify/core/types";
-import { useAuthStore } from "@teamify/core/auth";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { memberListOptions, agentListOptions } from "@teamify/core/workspace/queries";
-import { useDeleteRuntime } from "@teamify/core/runtimes/mutations";
-import { deriveRuntimeHealth } from "@teamify/core/runtimes";
+import type {
+  AgentRuntime,
+  Agent,
+  MemberWithUser,
+  RuntimeProfile,
+} from "@iteamify/core/types";
+import { useAuthStore } from "@iteamify/core/auth";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { memberListOptions, agentListOptions } from "@iteamify/core/workspace/queries";
+import { useUpdateRuntime } from "@iteamify/core/runtimes/mutations";
+import {
+  deriveRuntimeHealth,
+  runtimeDisplayName,
+  runtimeProfileListOptions,
+} from "@iteamify/core/runtimes";
 import {
   type AgentPresenceDetail,
   useWorkspacePresenceMap,
-} from "@teamify/core/agents";
-import { useWorkspacePaths } from "@teamify/core/paths";
-import { Button } from "@teamify/ui/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@teamify/ui/components/ui/alert-dialog";
+} from "@iteamify/core/agents";
+import { useWorkspacePaths } from "@iteamify/core/paths";
+import { Button } from "@iteamify/ui/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@teamify/ui/components/ui/tooltip";
+} from "@iteamify/ui/components/ui/tooltip";
 import { ActorAvatar } from "../../common/actor-avatar";
-import { AppLink } from "../../navigation";
+import { BreadcrumbHeader } from "../../layout/breadcrumb-header";
+import { AppLink, useNavigation } from "../../navigation";
 import { availabilityConfig, workloadConfig } from "../../agents/presence";
-import { formatLastSeen } from "../utils";
 import { HealthBadge } from "./shared";
 import { ProviderLogo } from "./provider-logo";
-import { UpdateSection } from "./update-section";
 import { UsageSection } from "./usage-section";
-import { useT } from "../../i18n";
+import { DeleteRuntimeDialog } from "./delete-runtime-dialog";
+import { DeleteRuntimeProfileDialog } from "./delete-runtime-profile-dialog";
+import { useT, useTimeAgo } from "../../i18n";
+import { isSystemRuntime } from "../utils";
 
 function getCliVersion(metadata: Record<string, unknown>): string | null {
   if (
@@ -54,17 +55,6 @@ function getCliVersion(metadata: Record<string, unknown>): string | null {
     metadata.cli_version
   ) {
     return metadata.cli_version;
-  }
-  return null;
-}
-
-function getLaunchedBy(metadata: Record<string, unknown>): string | null {
-  if (
-    metadata &&
-    typeof metadata.launched_by === "string" &&
-    metadata.launched_by
-  ) {
-    return metadata.launched_by;
   }
   return null;
 }
@@ -89,20 +79,29 @@ function useNowTick(intervalMs = 30_000): number {
   return now;
 }
 
-export function RuntimeDetail({ runtime }: { runtime: AgentRuntime }) {
+export function RuntimeDetail({
+  runtime,
+  machineHref,
+  machineLabel,
+  afterDeleteHref,
+}: {
+  runtime: AgentRuntime;
+  machineHref?: string;
+  machineLabel?: string;
+  afterDeleteHref?: string;
+}) {
   const { t } = useT("runtimes");
+  const timeAgo = useTimeAgo();
   const cliVersion =
     runtime.runtime_mode === "local" ? getCliVersion(runtime.metadata) : null;
-  const launchedBy =
-    runtime.runtime_mode === "local" ? getLaunchedBy(runtime.metadata) : null;
-
   const user = useAuthStore((s) => s.user);
   const wsId = useWorkspaceId();
   const paths = useWorkspacePaths();
+  const navigation = useNavigation();
   const { data: members = [] } = useQuery(memberListOptions(wsId));
   const { data: agents = [] } = useQuery(agentListOptions(wsId));
+  const { data: profiles = [] } = useQuery(runtimeProfileListOptions(wsId));
   const { byAgent: presenceMap } = useWorkspacePresenceMap(wsId);
-  const deleteMutation = useDeleteRuntime(wsId);
   const now = useNowTick();
 
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -119,72 +118,61 @@ export function RuntimeDetail({ runtime }: { runtime: AgentRuntime }) {
     ? currentMember.role === "owner" || currentMember.role === "admin"
     : false;
   const isRuntimeOwner = user && runtime.owner_id === user.id;
-  const canDelete = isAdmin || isRuntimeOwner;
+  const canEditRuntime = isAdmin || isRuntimeOwner;
+  const runtimeProfile: RuntimeProfile | null = runtime.profile_id
+    ? profiles.find((p) => p.id === runtime.profile_id) ?? null
+    : null;
+  const isCustomRuntime = !!runtime.profile_id;
+  const canDelete = !isSystemRuntime(runtime) &&
+    (isCustomRuntime
+      ? isAdmin && !!runtimeProfile
+      : canEditRuntime);
 
   const servingAgents = agents.filter(
     (a) => a.runtime_id === runtime.id && !a.archived_at,
   );
 
-  const handleDelete = () => {
-    deleteMutation.mutate(runtime.id, {
-      onSuccess: () => {
-        toast.success(t(($) => $.detail.toast_deleted));
-        setDeleteOpen(false);
-      },
-      onError: (e) => {
-        toast.error(e instanceof Error ? e.message : t(($) => $.detail.toast_delete_failed));
-      },
-    });
+  const deleteDestination = afterDeleteHref ?? paths.runtimes();
+
+  const handleRuntimeDeleted = () => {
+    setDeleteOpen(false);
+    navigation.replace(deleteDestination);
+    toast.success(t(($) => $.detail.toast_deleted));
+  };
+
+  const handleProfileDeleted = () => {
+    setDeleteOpen(false);
+    navigation.replace(deleteDestination);
   };
 
   const daemonShort = shortDaemonId(runtime.daemon_id);
-  const lastSeen = formatLastSeen(runtime.last_seen_at);
+  const lastSeen = runtime.last_seen_at
+    ? timeAgo(runtime.last_seen_at)
+    : t(($) => $.detail.never_seen);
 
   return (
     <div className="flex h-full flex-col">
-      {/* Topbar — back link + breadcrumb + right-side actions. Mirrors the
-          skill-detail-page topbar so users build one mental model for
-          "go back to the index" across the dashboard. */}
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
-        <Button
-          variant="ghost"
-          size="xs"
-          render={<AppLink href={paths.runtimes()} />}
-        >
-          <ArrowLeft className="h-3 w-3" />
-          {t(($) => $.detail.all_runtimes)}
-        </Button>
-        <ChevronRight className="h-3 w-3 text-muted-foreground" />
-        <span className="truncate font-mono text-xs text-foreground">
-          {runtime.name}
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          {!canDelete && (
+      <BreadcrumbHeader
+        segments={[
+          { href: paths.runtimes(), label: t(($) => $.page.title) },
+          ...(machineHref && machineLabel
+            ? [{ href: machineHref, label: machineLabel }]
+            : []),
+        ]}
+        leaf={
+          <span className="truncate font-mono text-xs text-foreground">
+            {runtimeDisplayName(runtime)}
+          </span>
+        }
+        actions={
+          !canEditRuntime ? (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <Lock className="h-3 w-3" />
               {t(($) => $.detail.read_only)}
             </span>
-          )}
-          {canDelete && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => setDeleteOpen(true)}
-                    className="text-muted-foreground hover:text-destructive"
-                    aria-label={t(($) => $.detail.delete_aria)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                }
-              />
-              <TooltipContent>{t(($) => $.detail.delete_tooltip)}</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      </div>
+          ) : null
+        }
+      />
 
       {/* Body — single scroll container that owns the Hero card AND the
           analytic blocks below. Putting Hero inside the scroll (instead of
@@ -202,7 +190,7 @@ export function RuntimeDetail({ runtime }: { runtime: AgentRuntime }) {
               cliVersion={cliVersion}
               daemonShort={daemonShort}
             />
-            <UsageSection runtimeId={runtime.id} />
+            <UsageSection runtime={runtime} />
           </div>
 
           {/* Right rail: serving agents + diagnostics */}
@@ -214,8 +202,7 @@ export function RuntimeDetail({ runtime }: { runtime: AgentRuntime }) {
             />
             <DiagnosticsCard
               runtime={runtime}
-              cliVersion={cliVersion}
-              launchedBy={launchedBy}
+              canEdit={!!canEditRuntime}
               canDelete={!!canDelete}
               onDelete={() => setDeleteOpen(true)}
             />
@@ -223,27 +210,23 @@ export function RuntimeDetail({ runtime }: { runtime: AgentRuntime }) {
         </div>
       </div>
 
-      {/* Delete confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={(v) => { if (!v) setDeleteOpen(false); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t(($) => $.detail.delete_dialog.title)}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(($) => $.detail.delete_dialog.description, { name: runtime.name })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t(($) => $.detail.delete_dialog.cancel)}</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? t(($) => $.detail.delete_dialog.deleting) : t(($) => $.detail.delete_dialog.confirm)}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {isCustomRuntime && runtimeProfile ? (
+        <DeleteRuntimeProfileDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          profile={runtimeProfile}
+          wsId={wsId}
+          onDeleted={handleProfileDeleted}
+        />
+      ) : (
+        <DeleteRuntimeDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          runtime={runtime}
+          wsId={wsId}
+          onDeleted={handleRuntimeDeleted}
+        />
+      )}
     </div>
   );
 }
@@ -292,7 +275,7 @@ function HeroCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <h2 className="truncate text-base font-semibold tracking-tight">
-              {runtime.name}
+              {runtimeDisplayName(runtime)}
             </h2>
             <HealthBadge health={health} />
             <span className="text-xs text-muted-foreground">
@@ -306,13 +289,13 @@ function HeroCard({
           Replaces the older dense `·`-separated meta strip that mixed
           everything (including dev-only IDs) at the same visual weight. */}
       <dl className="grid grid-cols-1 divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-        <Fact label="Owner">
+        <Fact label={t(($) => $.detail.fact_owner)}>
           {ownerMember ? (
             <span className="inline-flex min-w-0 items-center gap-1.5">
               <ActorAvatar
                 actorType="member"
                 actorId={ownerMember.user_id}
-                size={18}
+                size="sm"
                 enableHoverCard
               />
               <span className="cursor-pointer truncate text-sm">{ownerMember.name}</span>
@@ -321,7 +304,7 @@ function HeroCard({
             <span className="text-sm text-muted-foreground">—</span>
           )}
         </Fact>
-        <Fact label="Device">
+        <Fact label={t(($) => $.detail.fact_device)}>
           {device?.hostname ? (
             <Tooltip>
               <TooltipTrigger
@@ -337,7 +320,7 @@ function HeroCard({
             <span className="text-sm text-muted-foreground">—</span>
           )}
         </Fact>
-        <Fact label="Runtime">
+        <Fact label={t(($) => $.detail.fact_runtime)}>
           <span className="block truncate text-sm">
             {device?.runtime ?? (
               <span className="capitalize">{runtime.provider}</span>
@@ -346,7 +329,7 @@ function HeroCard({
         </Fact>
       </dl>
 
-      {/* Diagnostic IDs — teamify CLI git hash + truncated daemon UUID.
+      {/* Diagnostic IDs — iteamify CLI git hash + truncated daemon UUID.
           Only useful when filing an issue or reading logs; folded by
           default so they don't compete with the user-visible facts above. */}
       {hasTechDetails && (
@@ -354,7 +337,7 @@ function HeroCard({
           <button
             type="button"
             onClick={() => setShowDetails((v) => !v)}
-            className="flex w-full items-center gap-1 px-4 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            className="flex w-full items-center gap-1 px-4 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
             <ChevronRight
               className={`h-3 w-3 transition-transform ${
@@ -366,12 +349,12 @@ function HeroCard({
           {showDetails && (
             <dl className="grid grid-cols-1 gap-y-2 border-t bg-muted/30 px-4 py-3 sm:grid-cols-2">
               {cliVersion && (
-                <Fact label="Daemon CLI" mono compact>
+                <Fact label={t(($) => $.detail.fact_daemon_cli)} mono compact>
                   {cliVersion}
                 </Fact>
               )}
               {daemonShort && (
-                <Fact label="Daemon ID" mono compact>
+                <Fact label={t(($) => $.detail.fact_daemon_id)} mono compact>
                   {daemonShort}
                 </Fact>
               )}
@@ -447,7 +430,7 @@ function ServingAgentsCard({
                 href={agentHref(agent.id)}
                 className="group flex items-center gap-2 px-4 py-2 transition-colors hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:outline-none"
               >
-                <ActorAvatar actorType="agent" actorId={agent.id} size={20} enableHoverCard showStatusDot />
+                <ActorAvatar actorType="agent" actorId={agent.id} size="sm" enableHoverCard showStatusDot />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-xs font-medium">
                     {agent.name}
@@ -486,40 +469,40 @@ function ServingAgentsCard({
 
 function DiagnosticsCard({
   runtime,
-  cliVersion,
-  launchedBy,
+  canEdit,
   canDelete,
   onDelete,
 }: {
   runtime: AgentRuntime;
-  cliVersion: string | null;
-  launchedBy: string | null;
+  canEdit: boolean;
   canDelete: boolean;
   onDelete: () => void;
 }) {
   const { t } = useT("runtimes");
-  const isLocal = runtime.runtime_mode === "local";
   return (
     <div className="rounded-lg border">
       <div className="border-b px-4 py-2.5">
         <span className="text-xs font-semibold">{t(($) => $.detail.diagnostics_title)}</span>
       </div>
       <div className="space-y-3 p-4">
-        {isLocal && (
-          <div>
-            <div className="mb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
-              {t(($) => $.detail.diagnostics_cli)}
-            </div>
-            <UpdateSection
-              runtimeId={runtime.id}
-              currentVersion={cliVersion}
-              isOnline={runtime.status === "online"}
-              launchedBy={launchedBy}
-            />
+        <div>
+          <div className="mb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+            {t(($) => $.detail.diagnostics_visibility)}
           </div>
-        )}
+          {canEdit ? (
+            <VisibilityEditor runtime={runtime} />
+          ) : (
+            <VisibilityReadout runtime={runtime} />
+          )}
+        </div>
         {canDelete && (
-          <div className={isLocal ? "border-t pt-3" : ""}>
+          // The button stays clickable even when the runtime is a live
+          // local daemon (self-healing). The owner explicitly asked for
+          // it (MUL-3352) — disabling here left them looking at a button
+          // they had every permission to click but couldn't. The dialog
+          // raises a self-heal banner so the user sees the trade-off
+          // before confirming.
+          <div className="border-t pt-3">
             <Button
               variant="ghost"
               size="sm"
@@ -533,5 +516,126 @@ function DiagnosticsCard({
         )}
       </div>
     </div>
+  );
+}
+
+// VisibilityReadout renders a static "Private" / "Public" pill for users
+// who can't edit the runtime. The description used to sit under the chip;
+// it now lives in the hover tooltip so the Diagnostics column stays compact
+// and matches the surrounding sections. Older backends that omit the field
+// render as "Private" to match the strict default.
+function VisibilityReadout({ runtime }: { runtime: AgentRuntime }) {
+  const { t } = useT("runtimes");
+  const visibility = runtime.visibility === "public" ? "public" : "private";
+  const Icon = visibility === "public" ? Globe : Lock;
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span className="inline-flex items-center gap-1.5 rounded-md border bg-muted/30 px-2 py-1.5 text-xs">
+            <Icon className="h-3 w-3 text-muted-foreground" />
+            <span className="font-medium">
+              {t(($) => $.detail.visibility_label[visibility])}
+            </span>
+          </span>
+        }
+      />
+      <TooltipContent>
+        {t(($) => $.detail.visibility_hint[visibility])}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+// VisibilityEditor lets the runtime owner (or workspace admin) flip
+// public↔private. The PATCH endpoint also re-checks; this is a UI gate, not
+// a security boundary. Per-choice description text lives in the hover
+// tooltip so the two buttons stay a tight icon+label pair instead of the
+// previous two-line block that competed with the surrounding cards.
+function VisibilityEditor({ runtime }: { runtime: AgentRuntime }) {
+  const { t } = useT("runtimes");
+  const wsId = useWorkspaceId();
+  const updateRuntime = useUpdateRuntime(wsId);
+  const current = runtime.visibility === "public" ? "public" : "private";
+
+  const flip = (next: "private" | "public") => {
+    if (next === current) return;
+    updateRuntime.mutate(
+      { runtimeId: runtime.id, patch: { visibility: next } },
+      {
+        onSuccess: () =>
+          toast.success(
+            t(($) => $.detail.visibility_toast_updated, {
+              visibility: t(($) => $.detail.visibility_label[next]),
+            }),
+          ),
+        onError: (err) =>
+          toast.error(
+            err instanceof Error && err.message
+              ? err.message
+              : t(($) => $.detail.visibility_toast_failed),
+          ),
+      },
+    );
+  };
+
+  return (
+    <div className="inline-flex items-center gap-0.5 rounded-md bg-muted p-0.5">
+      <VisibilityChoice
+        active={current === "private"}
+        icon={<Lock className="h-3 w-3" />}
+        label={t(($) => $.detail.visibility_label.private)}
+        tooltip={t(($) => $.detail.visibility_hint.private)}
+        disabled={updateRuntime.isPending}
+        onClick={() => flip("private")}
+      />
+      <VisibilityChoice
+        active={current === "public"}
+        icon={<Globe className="h-3 w-3" />}
+        label={t(($) => $.detail.visibility_label.public)}
+        tooltip={t(($) => $.detail.visibility_hint.public)}
+        disabled={updateRuntime.isPending}
+        onClick={() => flip("public")}
+      />
+    </div>
+  );
+}
+
+function VisibilityChoice({
+  active,
+  icon,
+  label,
+  tooltip,
+  disabled,
+  onClick,
+}: {
+  active: boolean;
+  icon: React.ReactNode;
+  label: string;
+  tooltip: string;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            className={`inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-colors ${
+              active
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+          >
+            <span className="shrink-0">{icon}</span>
+            <span>{label}</span>
+          </button>
+        }
+      />
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
   );
 }

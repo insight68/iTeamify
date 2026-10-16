@@ -1,12 +1,8 @@
-"use client";
+import { RuntimesPage } from "@iteamify/views/runtimes";
 
-import { OwnerGuard } from "@teamify/views/layout";
-import { RuntimesPage } from "@teamify/views/runtimes";
+const cloudRuntimeEnabled =
+  process.env.NEXT_PUBLIC_ENABLE_CLOUD_RUNTIME === "true";
 
 export default function RuntimesRoute() {
-  return (
-    <OwnerGuard>
-      <RuntimesPage />
-    </OwnerGuard>
-  );
+  return <RuntimesPage cloudRuntimeEnabled={cloudRuntimeEnabled} />;
 }

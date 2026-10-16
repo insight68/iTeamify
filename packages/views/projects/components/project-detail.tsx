@@ -2,62 +2,62 @@
 
 import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { useDefaultLayout, usePanelRef } from "react-resizable-panels";
-import { Check, ChevronRight, Link2, ListTodo, MoreHorizontal, PanelRight, Pin, PinOff, Plus, Trash2, UserMinus } from "lucide-react";
+import { Check, ChevronRight, Link2, MoreHorizontal, PanelRight, Pin, PinOff, Trash2, UserMinus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "@teamify/ui/lib/utils";
+import { cn } from "@iteamify/ui/lib/utils";
+import { copyText } from "@iteamify/ui/lib/clipboard";
 import { toast } from "sonner";
-import type { Issue, IssueStatus, ProjectStatus, ProjectPriority } from "@teamify/core/types";
-import { useAuthStore } from "@teamify/core/auth";
-import { projectDetailOptions } from "@teamify/core/projects/queries";
-import { useUpdateProject, useDeleteProject } from "@teamify/core/projects/mutations";
-import { pinListOptions } from "@teamify/core/pins";
-import { useCreatePin, useDeletePin } from "@teamify/core/pins";
-import { myIssueListOptions, childIssueProgressOptions, type MyIssuesFilter } from "@teamify/core/issues/queries";
-import { useUpdateIssue } from "@teamify/core/issues/mutations";
-import { useModalStore } from "@teamify/core/modals";
-import { memberListOptions, agentListOptions } from "@teamify/core/workspace/queries";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { useCurrentWorkspace, useWorkspacePaths } from "@teamify/core/paths";
-import { useActorName } from "@teamify/core/workspace/hooks";
-import { PROJECT_STATUS_ORDER, PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_ORDER } from "@teamify/core/projects/config";
-import { BOARD_STATUSES } from "@teamify/core/issues/config";
-import { createIssueViewStore } from "@teamify/core/issues/stores/view-store";
-import { ViewStoreProvider, useViewStore } from "@teamify/core/issues/stores/view-store-context";
-import { filterIssues } from "../../issues/utils/filter";
+import type { ProjectStatus, ProjectPriority } from "@iteamify/core/types";
+import { useAuthStore } from "@iteamify/core/auth";
+import { projectDetailOptions } from "@iteamify/core/projects/queries";
+import { useUpdateProject, useDeleteProject } from "@iteamify/core/projects/mutations";
+import { pinListOptions } from "@iteamify/core/pins";
+import { useCreatePin, useDeletePin } from "@iteamify/core/pins";
+import { memberListOptions, agentListOptions } from "@iteamify/core/workspace/queries";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { useRecentContextStore } from "@iteamify/core/chat";
+import { useWorkspacePaths } from "@iteamify/core/paths";
+import { useActorName } from "@iteamify/core/workspace/hooks";
+import { PROJECT_STATUS_ORDER, PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_ORDER } from "@iteamify/core/projects/config";
 import { getProjectIssueMetrics } from "./project-issue-metrics";
 import { ActorAvatar } from "../../common/actor-avatar";
-import { AppLink, useNavigation } from "../../navigation";
+import { useNavigation } from "../../navigation";
 import { TitleEditor, ContentEditor, type ContentEditorRef } from "../../editor";
 import { PriorityIcon } from "../../issues/components/priority-icon";
 import { ProjectResourcesSection } from "./project-resources-section";
-import { IssuesHeader } from "../../issues/components/issues-header";
-import { BoardView } from "../../issues/components/board-view";
-import { ListView } from "../../issues/components/list-view";
-import { BatchActionToolbar } from "../../issues/components/batch-action-toolbar";
-import { Skeleton } from "@teamify/ui/components/ui/skeleton";
-import { Button } from "@teamify/ui/components/ui/button";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@teamify/ui/components/ui/resizable";
-import { Sheet, SheetContent } from "@teamify/ui/components/ui/sheet";
-import { useIsMobile } from "@teamify/ui/hooks/use-mobile";
+import { ProjectStartDatePicker } from "./project-start-date-picker";
+import { ProjectDueDatePicker } from "./project-due-date-picker";
+import { IssueSurface } from "../../issues/surface/issue-surface";
+import { Skeleton } from "@iteamify/ui/components/ui/skeleton";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@iteamify/ui/components/ui/resizable";
+import { Sheet, SheetContent } from "@iteamify/ui/components/ui/sheet";
+import { useIsMobile } from "@iteamify/ui/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@teamify/ui/components/ui/dropdown-menu";
+} from "@iteamify/ui/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from "@teamify/ui/components/ui/popover";
+} from "@iteamify/ui/components/ui/popover";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-} from "@teamify/ui/components/ui/tooltip";
-import { EmojiPicker } from "@teamify/ui/components/common/emoji-picker";
-import { PageHeader } from "../../layout/page-header";
+} from "@iteamify/ui/components/ui/tooltip";
+import { EmojiPicker } from "@iteamify/ui/components/common/emoji-picker";
+import { BreadcrumbHeader } from "../../layout/breadcrumb-header";
+import {
+  AnimatedCollapsiblePanel,
+  collapsiblePanelMotionProps,
+  getAnimatedCollapsiblePanelInitialOpen,
+  useAnimatedCollapsiblePanelState,
+} from "../../layout/animated-collapsible-panel";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,9 +67,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@teamify/ui/components/ui/alert-dialog";
+} from "@iteamify/ui/components/ui/alert-dialog";
 import { useT } from "../../i18n";
 import { useProjectStatusLabels, useProjectPriorityLabels } from "./labels";
+import { matchesPinyin } from "../../editor/extensions/pinyin-match";
 
 // ---------------------------------------------------------------------------
 // Property row — sidebar property display
@@ -83,118 +84,11 @@ function PropRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-8 items-center gap-2 rounded-md px-2 -mx-2 border border-transparent hover:border-accent hover:bg-accent transition-colors group">
-      <span className="absolute left-0 w-0.5 h-4 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+    <div className="flex min-h-8 items-center gap-2 rounded-md px-2 -mx-2 hover:bg-accent/50 transition-colors">
       <span className="w-16 shrink-0 text-xs text-muted-foreground">{label}</span>
       <div className="flex min-w-0 flex-1 items-center gap-1.5 text-xs truncate">
         {children}
       </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Project Issues — reuses the existing issues list/board components
-// ---------------------------------------------------------------------------
-
-const projectViewStore = createIssueViewStore("project_issues_view");
-
-function ProjectIssuesContent({
-  projectId,
-  projectIssues,
-  scope,
-  filter,
-}: {
-  projectId: string;
-  projectIssues: Issue[];
-  scope: string;
-  filter: MyIssuesFilter;
-}) {
-  const { t } = useT("projects");
-  const wsId = useWorkspaceId();
-  const viewMode = useViewStore((s) => s.viewMode);
-  const statusFilters = useViewStore((s) => s.statusFilters);
-  const priorityFilters = useViewStore((s) => s.priorityFilters);
-  const assigneeFilters = useViewStore((s) => s.assigneeFilters);
-  const includeNoAssignee = useViewStore((s) => s.includeNoAssignee);
-  const creatorFilters = useViewStore((s) => s.creatorFilters);
-  const labelFilters = useViewStore((s) => s.labelFilters);
-
-  const issues = useMemo(
-    () => filterIssues(projectIssues, { statusFilters, priorityFilters, assigneeFilters, includeNoAssignee, creatorFilters, projectFilters: [], includeNoProject: false, labelFilters }),
-    [projectIssues, statusFilters, priorityFilters, assigneeFilters, includeNoAssignee, creatorFilters, labelFilters],
-  );
-
-  const { data: childProgressMap = new Map() } = useQuery(childIssueProgressOptions(wsId));
-
-  const visibleStatuses = useMemo(() => {
-    if (statusFilters.length > 0)
-      return BOARD_STATUSES.filter((s) => statusFilters.includes(s));
-    return BOARD_STATUSES;
-  }, [statusFilters]);
-
-  const hiddenStatuses = useMemo(
-    () => BOARD_STATUSES.filter((s) => !visibleStatuses.includes(s)),
-    [visibleStatuses],
-  );
-
-  const updateIssueMutation = useUpdateIssue();
-  const handleMoveIssue = useCallback(
-    (issueId: string, newStatus: IssueStatus, newPosition?: number) => {
-      const updates: Partial<{ status: IssueStatus; position: number }> = { status: newStatus };
-      if (newPosition !== undefined) updates.position = newPosition;
-      updateIssueMutation.mutate(
-        { id: issueId, ...updates },
-        { onError: () => toast.error(t(($) => $.detail.toast_move_issue_failed)) },
-      );
-    },
-    [updateIssueMutation, t],
-  );
-
-  if (projectIssues.length === 0) {
-    return (
-      <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-3 text-muted-foreground">
-        <ListTodo className="h-10 w-10 text-muted-foreground/40" />
-        <p className="text-sm">{t(($) => $.detail.empty_issues_title)}</p>
-        <p className="text-xs">{t(($) => $.detail.empty_issues_hint)}</p>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-1"
-          onClick={() =>
-            useModalStore.getState().open("create-issue", { project_id: projectId })
-          }
-        >
-          <Plus className="size-3.5 mr-1.5" />
-          {t(($) => $.detail.empty_issues_new_button)}
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col flex-1 min-h-0">
-      {viewMode === "board" ? (
-        <BoardView
-          issues={issues}
-          visibleStatuses={visibleStatuses}
-          hiddenStatuses={hiddenStatuses}
-          onMoveIssue={handleMoveIssue}
-          childProgressMap={childProgressMap}
-          myIssuesScope={scope}
-          myIssuesFilter={filter}
-          projectId={projectId}
-        />
-      ) : (
-        <ListView
-          issues={issues}
-          visibleStatuses={visibleStatuses}
-          childProgressMap={childProgressMap}
-          myIssuesScope={scope}
-          myIssuesFilter={filter}
-          projectId={projectId}
-        />
-      )}
     </div>
   );
 }
@@ -211,16 +105,23 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
   const wsPaths = useWorkspacePaths();
   const router = useNavigation();
   const userId = useAuthStore((s) => s.user?.id);
-  const workspace = useCurrentWorkspace();
-  const workspaceName = workspace?.name;
   const { data: project, isLoading } = useQuery(projectDetailOptions(wsId, projectId));
-  const projectScope = `project:${projectId}`;
-  const projectFilter = useMemo<MyIssuesFilter>(
-    () => ({ project_id: projectId }),
+  const recordRecentContext = useRecentContextStore((s) => s.recordVisit);
+  useEffect(() => {
+    if (project) {
+      recordRecentContext(wsId, {
+        type: "project",
+        id: project.id,
+        label: project.title,
+        subtitle: project.description ?? undefined,
+        icon: project.icon,
+        projectStatus: project.status,
+      });
+    }
+  }, [project?.id, project?.title, project?.description, project?.icon, project?.status, recordRecentContext, wsId]);
+  const issueScope = useMemo(
+    () => ({ type: "project" as const, projectId }),
     [projectId],
-  );
-  const { data: projectIssues = [] } = useQuery(
-    myIssueListOptions(wsId, projectScope, projectFilter),
   );
   const { data: members = [] } = useQuery(memberListOptions(wsId));
   const { data: agents = [] } = useQuery(agentListOptions(wsId));
@@ -232,6 +133,11 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     enabled: !!userId,
   });
   const isPinned = pinnedItems.some((p) => p.item_type === "project" && p.item_id === projectId);
+  const isWorkspaceAdmin = useMemo(() => {
+    if (!userId) return false;
+    const me = members.find((m) => m.user_id === userId);
+    return me?.role === "owner" || me?.role === "admin";
+  }, [members, userId]);
   const createPin = useCreatePin();
   const deletePinMut = useDeletePin();
   const descEditorRef = useRef<ContentEditorRef>(null);
@@ -244,14 +150,24 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 
   // Sidebar panel
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-    id: "teamify_project_detail_layout",
+    id: "iteamify_project_detail_layout",
   });
   const sidebarRef = usePanelRef();
+  const desktopSidebarInitialOpen = getAnimatedCollapsiblePanelInitialOpen(
+    true,
+    defaultLayout,
+  );
   // Desktop and mobile sidebar state must be separate. A single state defaulting
   // to `true` made the mobile <Sheet> mount in the open position on first render
   // (after `useIsMobile()` flipped from false→true), briefly covering the page
   // with its modal backdrop and locking scroll — leaving the page unresponsive.
-  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+  const {
+    open: desktopSidebarOpen,
+    visualOpen: desktopSidebarVisualOpen,
+    motionEnabled: desktopSidebarMotionEnabled,
+    beginToggle: beginDesktopSidebarToggle,
+    handleResize: handleDesktopSidebarResize,
+  } = useAnimatedCollapsiblePanelState(desktopSidebarInitialOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const sidebarOpen = isMobile ? mobileSidebarOpen : desktopSidebarOpen;
 
@@ -261,12 +177,28 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     }
   }, [isMobile]);
 
+  const handleToggleSidebar = useCallback(() => {
+    if (isMobile) {
+      setMobileSidebarOpen((open) => !open);
+      return;
+    }
+
+    const panel = sidebarRef.current;
+    if (!panel) return;
+    const nextOpen = panel.isCollapsed();
+    beginDesktopSidebarToggle(nextOpen);
+    window.requestAnimationFrame(() => {
+      if (nextOpen) panel.expand();
+      else panel.collapse();
+    });
+  }, [beginDesktopSidebarToggle, isMobile, sidebarRef]);
+
   // Lead popover
   const [leadOpen, setLeadOpen] = useState(false);
   const [leadFilter, setLeadFilter] = useState("");
   const leadQuery = leadFilter.toLowerCase();
-  const filteredMembers = members.filter((m) => m.name.toLowerCase().includes(leadQuery));
-  const filteredAgents = agents.filter((a) => !a.archived_at && a.name.toLowerCase().includes(leadQuery));
+  const filteredMembers = members.filter((m) => m.name.toLowerCase().includes(leadQuery) || matchesPinyin(m.name, leadQuery));
+  const filteredAgents = agents.filter((a) => !a.archived_at && (a.name.toLowerCase().includes(leadQuery) || matchesPinyin(a.name, leadQuery)));
 
   const handleUpdateField = useCallback(
     (data: Parameters<typeof updateProject.mutate>[0] extends { id: string } & infer R ? R : never) => {
@@ -313,7 +245,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
             render={
               <button
                 type="button"
-                className="text-2xl cursor-pointer rounded-lg p-1 -ml-1 hover:bg-accent transition-colors"
+                className="text-2xl cursor-pointer rounded-lg p-1 -ml-1 hover:bg-accent/60 transition-colors"
                 title={t(($) => $.detail.icon_tooltip)}
               >
                 {project.icon || "📁"}
@@ -329,23 +261,22 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
             />
           </PopoverContent>
         </Popover>
-        <div className="relative group/title">
-          <TitleEditor
-            key={`title-${projectId}`}
-            defaultValue={project.title}
-            placeholder={t(($) => $.detail.title_placeholder)}
-            className="mt-2 w-full text-base font-semibold leading-snug tracking-tight border border-dashed border-transparent hover:border-accent focus:border-primary rounded-md px-1 py-0.5 -mx-1 transition-colors"
-            onBlur={(value) => {
-              const trimmed = value.trim();
-              if (trimmed && trimmed !== project.title) handleUpdateField({ title: trimmed });
-            }}
-          />
-        </div>
+        <TitleEditor
+          key={`title-${projectId}`}
+          defaultValue={project.title}
+          placeholder={t(($) => $.detail.title_placeholder)}
+          className="mt-2 w-full text-base font-semibold leading-snug tracking-tight"
+          onBlur={(value) => {
+            const trimmed = value.trim();
+            if (trimmed && trimmed !== project.title) handleUpdateField({ title: trimmed });
+          }}
+        />
       </div>
 
       {/* Properties */}
       <div>
         <button
+          type="button"
           className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors mb-2 hover:bg-accent/70 ${propertiesOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
           onClick={() => setPropertiesOpen(!propertiesOpen)}
         >
@@ -357,7 +288,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <button type="button" className="inline-flex items-center gap-1.5 text-xs hover:text-foreground transition-colors rounded px-1.5 -mx-1.5 hover:bg-accent/50">
+                  <button type="button" className="inline-flex items-center gap-1.5 text-xs hover:text-foreground transition-colors">
                     <span className={cn("size-2 rounded-full", statusCfg.dotColor)} />
                     <span>{statusLabels[project.status]}</span>
                   </button>
@@ -378,7 +309,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <button type="button" className="inline-flex items-center gap-1.5 text-xs hover:text-foreground transition-colors rounded px-1.5 -mx-1.5 hover:bg-accent/50">
+                  <button type="button" className="inline-flex items-center gap-1.5 text-xs hover:text-foreground transition-colors">
                     <PriorityIcon priority={project.priority} />
                     <span>{priorityLabels[project.priority]}</span>
                   </button>
@@ -399,10 +330,10 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
             <Popover open={leadOpen} onOpenChange={(v) => { setLeadOpen(v); if (!v) setLeadFilter(""); }}>
               <PopoverTrigger
                 render={
-                  <button type="button" className="inline-flex items-center gap-1.5 text-xs hover:text-foreground transition-colors rounded px-1.5 -mx-1.5 hover:bg-accent/50">
+                  <button type="button" className="inline-flex items-center gap-1.5 text-xs hover:text-foreground transition-colors">
                     {project.lead_type && project.lead_id ? (
                       <>
-                        <ActorAvatar actorType={project.lead_type} actorId={project.lead_id} size={16} enableHoverCard showStatusDot />
+                        <ActorAvatar actorType={project.lead_type} actorId={project.lead_id} size="sm" enableHoverCard showStatusDot />
                         <span className="cursor-pointer">{getActorName(project.lead_type, project.lead_id)}</span>
                       </>
                     ) : (
@@ -440,7 +371,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                           onClick={() => { handleUpdateField({ lead_type: "member", lead_id: m.user_id }); setLeadOpen(false); }}
                           className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors"
                         >
-                          <ActorAvatar actorType="member" actorId={m.user_id} size={16} />
+                          <ActorAvatar actorType="member" actorId={m.user_id} size="sm" />
                           <span>{m.name}</span>
                         </button>
                       ))}
@@ -456,7 +387,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                           onClick={() => { handleUpdateField({ lead_type: "agent", lead_id: a.id }); setLeadOpen(false); }}
                           className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors"
                         >
-                          <ActorAvatar actorType="agent" actorId={a.id} size={16} showStatusDot />
+                          <ActorAvatar actorType="agent" actorId={a.id} size="sm" showStatusDot />
                           <span>{a.name}</span>
                         </button>
                       ))}
@@ -469,6 +400,12 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
               </PopoverContent>
             </Popover>
           </PropRow>
+          <PropRow label={t(($) => $.detail.prop_start_date)}>
+            <ProjectStartDatePicker startDate={project.start_date} onUpdate={handleUpdateField} />
+          </PropRow>
+          <PropRow label={t(($) => $.detail.prop_due_date)}>
+            <ProjectDueDatePicker dueDate={project.due_date} onUpdate={handleUpdateField} />
+          </PropRow>
         </div>}
       </div>
 
@@ -478,6 +415,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
         return (
           <div>
             <button
+              type="button"
               className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors mb-2 hover:bg-accent/70 ${progressOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
               onClick={() => setProgressOpen(!progressOpen)}
             >
@@ -502,6 +440,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
       {/* Description */}
       <div>
         <button
+          type="button"
           className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors mb-2 hover:bg-accent/70 ${descriptionOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
           onClick={() => setDescriptionOpen(!descriptionOpen)}
         >
@@ -512,11 +451,14 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
           <ContentEditor
             ref={descEditorRef}
             key={projectId}
-            defaultValue={project.description || ""}
+            value={project.description || ""}
             placeholder={t(($) => $.detail.description_placeholder)}
             onUpdate={(md) => handleUpdateField({ description: md || null })}
             debounceMs={1500}
           />
+          <p className="mt-1 px-2 text-xs text-muted-foreground">
+            {t(($) => $.detail.description_hint)}
+          </p>
         </div>}
       </div>
 
@@ -530,15 +472,11 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     <ResizablePanelGroup orientation="horizontal" className="flex-1 min-h-0" defaultLayout={defaultLayout} onLayoutChanged={onLayoutChanged}>
       <ResizablePanel id="content" minSize="50%">
         <div className="flex h-full flex-col">
-          <PageHeader className="gap-2 bg-background text-sm">
-            <div className="flex flex-1 items-center gap-1.5 min-w-0">
-              <AppLink href={wsPaths.projects()} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
-                {workspaceName ?? t(($) => $.detail.breadcrumb_fallback)}
-              </AppLink>
-              <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />
-              <span className="truncate">{project.title}</span>
-            </div>
-            <div className="flex items-center gap-1 shrink-0">
+          <BreadcrumbHeader
+            segments={[{ href: wsPaths.projects(), label: t(($) => $.detail.breadcrumb_fallback) }]}
+            leaf={<span className="truncate font-medium text-foreground">{project.title}</span>}
+            actions={
+              <>
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -564,20 +502,25 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                 />
                 <DropdownMenuContent align="end" className="w-auto">
                   <DropdownMenuItem onClick={() => {
-                    navigator.clipboard.writeText(window.location.href);
-                    toast.success(t(($) => $.detail.toast_link_copied));
+                    void copyText(window.location.href).then((ok) => {
+                      if (ok) toast.success(t(($) => $.detail.toast_link_copied));
+                    });
                   }}>
                     <Link2 className="h-3.5 w-3.5" />
                     {t(($) => $.detail.copy_link)}
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setDeleteDialogOpen(true)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    {t(($) => $.detail.delete_action)}
-                  </DropdownMenuItem>
+                  {isWorkspaceAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => setDeleteDialogOpen(true)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        {t(($) => $.detail.delete_action)}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
               <Tooltip>
@@ -587,16 +530,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                       variant={sidebarOpen ? "secondary" : "ghost"}
                       size="icon-sm"
                       className={sidebarOpen ? "" : "text-muted-foreground"}
-                      onClick={() => {
-                        if (isMobile) {
-                          setMobileSidebarOpen((open) => !open);
-                        } else {
-                          const panel = sidebarRef.current;
-                          if (!panel) return;
-                          if (panel.isCollapsed()) panel.expand();
-                          else panel.collapse();
-                        }
-                      }}
+                      onClick={handleToggleSidebar}
                     >
                       <PanelRight />
                     </Button>
@@ -604,38 +538,39 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                 />
                 <TooltipContent side="bottom">{t(($) => $.detail.sidebar_tooltip)}</TooltipContent>
               </Tooltip>
-            </div>
-          </PageHeader>
+              </>
+            }
+          />
 
-          <ViewStoreProvider store={projectViewStore}>
-              <IssuesHeader scopedIssues={projectIssues} />
-              <ProjectIssuesContent
-                projectId={projectId}
-                projectIssues={projectIssues}
-                scope={projectScope}
-                filter={projectFilter}
-              />
-              <BatchActionToolbar />
-            </ViewStoreProvider>
+          <IssueSurface
+            scope={issueScope}
+            modes={["board", "list", "table", "swimlane", "gantt"]}
+          />
           </div>
         </ResizablePanel>
         {!isMobile && <ResizableHandle />}
         {!isMobile && (
         <ResizablePanel
           id="sidebar"
+          {...collapsiblePanelMotionProps}
+          data-collapsible-panel-motion={desktopSidebarMotionEnabled ? "enabled" : undefined}
           defaultSize={desktopSidebarOpen ? 320 : 0}
           minSize={260}
           maxSize={420}
           collapsible
           groupResizeBehavior="preserve-pixel-size"
           panelRef={sidebarRef}
-          onResize={(size) => setDesktopSidebarOpen(size.inPixels > 0)}
+          onResize={handleDesktopSidebarResize}
         >
-          <div className="overflow-y-auto border-l h-full">
-            <div className="p-4">
-              {sidebarContent}
-            </div>
-          </div>
+          <AnimatedCollapsiblePanel
+            side="right"
+            open={desktopSidebarVisualOpen}
+            motionEnabled={desktopSidebarMotionEnabled}
+            className="overflow-y-auto"
+            contentClassName="p-4"
+          >
+            {sidebarContent}
+          </AnimatedCollapsiblePanel>
         </ResizablePanel>
         )}
         {isMobile && (
@@ -648,22 +583,24 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
       </ResizablePanelGroup>
 
       {/* Delete confirmation */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t(($) => $.delete_dialog.title)}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(($) => $.delete_dialog.description)}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t(($) => $.delete_dialog.cancel)}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white hover:bg-destructive/90">
-              {t(($) => $.delete_dialog.confirm)}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {isWorkspaceAdmin && (
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t(($) => $.delete_dialog.title)}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t(($) => $.delete_dialog.description)}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t(($) => $.delete_dialog.cancel)}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white hover:bg-destructive/90">
+                {t(($) => $.delete_dialog.confirm)}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   );
 }

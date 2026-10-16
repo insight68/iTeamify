@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { I18nProvider } from "@teamify/core/i18n/react";
-import enCommon from "@teamify/views/locales/en/common.json";
-import enAuth from "@teamify/views/locales/en/auth.json";
-import enSettings from "@teamify/views/locales/en/settings.json";
+import { I18nProvider } from "@iteamify/core/i18n/react";
+import enCommon from "@iteamify/views/locales/en/common.json";
+import enAuth from "@iteamify/views/locales/en/auth.json";
+import enSettings from "@iteamify/views/locales/en/settings.json";
 import type { ReactNode } from "react";
 
 const TEST_RESOURCES = {
@@ -24,48 +24,51 @@ function createWrapper() {
 const {
   mockSendCode,
   mockVerifyCode,
-  mockVerifyPassword,
   mockIssueCliToken,
+  mockListWorkspaces,
+  mockListMyInvitations,
+  mockPush,
+  mockReplace,
   searchParamsState,
   authStateRef,
-} = vi.hoisted(() => {
-  const sendCode = vi.fn();
-  const verifyCode = vi.fn();
-  const verifyPassword = vi.fn();
-  return {
-    mockSendCode: sendCode,
-    mockVerifyCode: verifyCode,
-    mockVerifyPassword: verifyPassword,
-    mockIssueCliToken: vi.fn(),
-    searchParamsState: { params: new URLSearchParams() },
-    authStateRef: {
-      state: {
-        sendCode,
-        verifyCode,
-        verifyPassword,
-        user: null as null | { id: string; email: string },
-        isLoading: false,
-      },
+} = vi.hoisted(() => ({
+  mockSendCode: vi.fn(),
+  mockVerifyCode: vi.fn(),
+  mockIssueCliToken: vi.fn(),
+  mockListWorkspaces: vi.fn(),
+  mockListMyInvitations: vi.fn(),
+  mockPush: vi.fn(),
+  mockReplace: vi.fn(),
+  searchParamsState: { params: new URLSearchParams() },
+  authStateRef: {
+    state: {
+      sendCode: vi.fn(),
+      verifyCode: vi.fn(),
+      user: null as null | { id: string; email: string; onboarded_at?: string | null },
+      isLoading: false,
     },
-  };
-});
+  },
+}));
 
-// Mock next/navigation
+// Mock next/navigation — router spies are hoisted so tests can assert
+// which navigation (if any) the page issued.
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
   usePathname: () => "/login",
   useSearchParams: () => searchParamsState.params,
 }));
 
-// Mock auth store — shared LoginPage uses getState().sendCode/verifyCode/verifyPassword,
+// Mock auth store — shared LoginPage uses getState().sendCode/verifyCode,
 // web wrapper uses useAuthStore((s) => s.user/isLoading). Keep the real
 // sanitizeNextUrl so the redirect-sanitization rules are exercised rather
 // than silently drifting behind a mock reimplementation.
-vi.mock("@teamify/core/auth", async () => {
+vi.mock("@iteamify/core/auth", async () => {
   const actual =
-    await vi.importActual<typeof import("@teamify/core/auth")>(
-      "@teamify/core/auth",
+    await vi.importActual<typeof import("@iteamify/core/auth")>(
+      "@iteamify/core/auth",
     );
+  authStateRef.state.sendCode = mockSendCode;
+  authStateRef.state.verifyCode = mockVerifyCode;
   const useAuthStore = Object.assign(
     (selector: (s: typeof authStateRef.state) => unknown) =>
       selector(authStateRef.state),
@@ -80,22 +83,17 @@ vi.mock("@/features/auth/auth-cookie", () => ({
 }));
 
 // Mock api
-vi.mock("@teamify/core/api", () => ({
+vi.mock("@iteamify/core/api", async () => ({
+  ApiError: (await vi.importActual<typeof import("@iteamify/core/api")>("@iteamify/core/api")).ApiError,
   api: {
-    listWorkspaces: vi.fn().mockResolvedValue([]),
-    listMyInvitations: vi.fn().mockResolvedValue([]),
+    withRequestContext() { return this; },
+    listWorkspaces: mockListWorkspaces,
+    listMyInvitations: mockListMyInvitations,
     verifyCode: vi.fn(),
     setToken: vi.fn(),
     getMe: vi.fn(),
     issueCliToken: mockIssueCliToken,
   },
-}));
-
-// AuthEntryPage wraps the form in LandingNav + LandingFooter; stub them so the
-// form-level assertions stay focused and don't need the marketing namespace.
-vi.mock("@teamify/views/marketing", () => ({
-  LandingNav: () => null,
-  LandingFooter: () => null,
 }));
 
 import LoginPage from "./page";
@@ -106,22 +104,27 @@ describe("LoginPage", () => {
     searchParamsState.params = new URLSearchParams();
     authStateRef.state.user = null;
     authStateRef.state.isLoading = false;
+    mockListWorkspaces.mockResolvedValue([]);
+    mockListMyInvitations.mockResolvedValue([]);
   });
 
-  it("renders login form with phone input and continue button (SMS code default)", () => {
+  it("renders login form with email input and continue button", () => {
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    expect(screen.getByText("Sign in to Teamify")).toBeInTheDocument();
+    expect(screen.getByRole("banner")).toBeInTheDocument();
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
     expect(
-      screen.getByText("Enter your phone number to get an SMS code"),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("Phone")).toBeInTheDocument();
+      screen.getAllByRole("link", { name: "iteamify" }),
+    ).toHaveLength(2);
+    expect(screen.getByText("Sign in to iteamify")).toBeInTheDocument();
+    expect(screen.getByText("Enter your email to get a login code")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Continue" }),
+      screen.getByRole("button", { name: "Continue" })
     ).toBeInTheDocument();
   });
 
-  it("does not call sendCode when phone is empty", async () => {
+  it("does not call sendCode when email is empty", async () => {
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
@@ -129,61 +132,38 @@ describe("LoginPage", () => {
     expect(mockSendCode).not.toHaveBeenCalled();
   });
 
-  it("calls sendCode with email after switching to email code mode", async () => {
+  it("calls sendCode with email on submit", async () => {
     mockSendCode.mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    await user.click(screen.getByRole("button", { name: "Email code" }));
-    await user.type(screen.getByLabelText("Email"), "test@teamify.world");
+    await user.type(screen.getByLabelText("Email"), "test@aurocreator.com");
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     await waitFor(() => {
-      expect(mockSendCode).toHaveBeenCalledWith({
-        email: "test@teamify.world",
-        channel: "email",
-      });
+      expect(mockSendCode).toHaveBeenCalledWith("test@aurocreator.com", "en");
     });
   });
 
-  it("calls sendCode with phone in default SMS code mode", async () => {
-    mockSendCode.mockResolvedValueOnce(undefined);
+  it("shows 'Sending code...' while submitting", async () => {
+    mockSendCode.mockReturnValueOnce(new Promise(() => {}));
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    await user.type(screen.getByLabelText("Phone"), "+1 555 010 1234");
+    await user.type(screen.getByLabelText("Email"), "test@aurocreator.com");
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     await waitFor(() => {
-      expect(mockSendCode).toHaveBeenCalledWith({
-        phone: "+1 555 010 1234",
-        channel: "sms",
-      });
+      expect(screen.getByText("Sending code...")).toBeInTheDocument();
     });
   });
 
-  it("shows 'Logging in...' while submitting in password mode", async () => {
-    mockVerifyPassword.mockReturnValueOnce(new Promise(() => {}));
-    const user = userEvent.setup();
-    render(<LoginPage />, { wrapper: createWrapper() });
-
-    await user.click(screen.getByRole("button", { name: /use password/i }));
-    await user.type(screen.getByLabelText("Email"), "test@teamify.world");
-    await user.type(screen.getByLabelText("Password"), "password123");
-    await user.click(screen.getByRole("button", { name: "Log in" }));
-
-    await waitFor(() => {
-      expect(screen.getByText("Logging in...")).toBeInTheDocument();
-    });
-  });
-
-  it("shows verification code step after switching to email code mode and sending", async () => {
+  it("shows verification code step after sending code", async () => {
     mockSendCode.mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    await user.click(screen.getByRole("button", { name: "Email code" }));
-    await user.type(screen.getByLabelText("Email"), "test@teamify.world");
+    await user.type(screen.getByLabelText("Email"), "test@aurocreator.com");
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     await waitFor(() => {
@@ -191,29 +171,26 @@ describe("LoginPage", () => {
     });
   });
 
-  it("shows error when password login fails", async () => {
-    mockVerifyPassword.mockRejectedValueOnce(new Error("Invalid credentials"));
-
+  it("shows error when sendCode fails", async () => {
+    mockSendCode.mockRejectedValueOnce(new Error("Network error"));
     const user = userEvent.setup();
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    await user.click(screen.getByRole("button", { name: /use password/i }));
-    await user.type(screen.getByLabelText("Email"), "test@teamify.world");
-    await user.type(screen.getByLabelText("Password"), "wrongpass1");
-    await user.click(screen.getByRole("button", { name: "Log in" }));
+    await user.type(screen.getByLabelText("Email"), "test@aurocreator.com");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Invalid credentials")).toBeInTheDocument();
+      expect(screen.getByText("Network error")).toBeInTheDocument();
     });
   });
 
   // Regression: MUL-1080 — if the user is already authenticated on the web
   // and the Desktop app redirects them to /login?platform=desktop, the web
   // must exchange the cookie session for a bearer token and hand it off via
-  // the teamify:// deep link, not silently redirect to the workspace page.
+  // the iteamify:// deep link, not silently redirect to the workspace page.
   it("mints a token and deep-links to Desktop when already logged in with platform=desktop", async () => {
     searchParamsState.params = new URLSearchParams({ platform: "desktop" });
-    authStateRef.state.user = { id: "u1", email: "test@teamify.world" };
+    authStateRef.state.user = { id: "u1", email: "test@aurocreator.com" };
     mockIssueCliToken.mockImplementation(() =>
       Promise.resolve({ token: "handoff-jwt" }),
     );
@@ -233,11 +210,11 @@ describe("LoginPage", () => {
       });
       await waitFor(() => {
         expect(hrefSetter).toHaveBeenCalledWith(
-          "teamify://auth/callback?token=handoff-jwt",
+          "iteamify://auth/callback?token=handoff-jwt",
         );
       });
       expect(
-        await screen.findByRole("button", { name: "Open TeamifyDesktop" }),
+        await screen.findByRole("button", { name: "Open iteamify Desktop" }),
       ).toBeInTheDocument();
     } finally {
       Object.defineProperty(window, "location", {
@@ -245,5 +222,64 @@ describe("LoginPage", () => {
         value: originalLocation,
       });
     }
+  });
+
+  // Regression: #5009 — the "already authenticated on arrival" effect used to
+  // fire for fresh form logins too. verifyCode writes `user` while handleVerify
+  // is still fetching the workspace list, so the effect read an empty cache and
+  // raced handleSuccess with replace("/workspaces/new"); depending on the
+  // interleaving the user could end up stuck on the create-workspace page
+  // despite having workspaces.
+  describe("post-login redirect ownership (#5009)", () => {
+    const onboardedUser = {
+      id: "u1",
+      email: "test@aurocreator.com",
+      onboarded_at: "2026-01-01T00:00:00Z",
+    };
+
+    it("does not redirect from the arrival effect when the user logs in via the form", async () => {
+      // Auth settles as logged-out first — the page latches "any user from
+      // now on came from the form".
+      const wrapper = createWrapper();
+      const { rerender } = render(<LoginPage />, { wrapper });
+      // verifyCode set the user; the workspace list fetch is still in flight
+      // (cache cold). The arrival effect must stay silent — handleSuccess
+      // owns this navigation.
+      authStateRef.state.user = onboardedUser;
+      rerender(<LoginPage />);
+
+      await act(async () => {});
+      expect(mockReplace).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalled();
+      expect(mockListWorkspaces).not.toHaveBeenCalled();
+    });
+
+    it("fetches the workspace list before redirecting a visitor who arrived authenticated", async () => {
+      // Cold Query cache on a fresh page load: reading it would say "no
+      // workspaces" and misroute to /workspaces/new. The effect must fetch.
+      authStateRef.state.user = onboardedUser;
+      mockListWorkspaces.mockResolvedValue([{ id: "ws-1", slug: "acme" }]);
+
+      render(<LoginPage />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(mockReplace).toHaveBeenCalledWith("/acme/issues");
+      });
+      expect(mockListWorkspaces).toHaveBeenCalledTimes(1);
+    });
+
+    it("still honors ?next= for a visitor who arrived authenticated", async () => {
+      searchParamsState.params = new URLSearchParams({
+        next: "/invite/abc",
+      });
+      authStateRef.state.user = onboardedUser;
+
+      render(<LoginPage />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(mockReplace).toHaveBeenCalledWith("/invite/abc");
+      });
+      expect(mockListWorkspaces).not.toHaveBeenCalled();
+    });
   });
 });

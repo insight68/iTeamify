@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY managed_assembly_rollout_target_id_uidx ON managed_assembly_rollout_target (id);

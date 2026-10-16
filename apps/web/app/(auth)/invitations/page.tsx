@@ -2,9 +2,9 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@teamify/core/auth";
-import { paths } from "@teamify/core/paths";
-import { InvitationsPage } from "@teamify/views/invitations";
+import { useAuthStore } from "@iteamify/core/auth";
+import { paths } from "@iteamify/core/paths";
+import { InvitationsPage } from "@iteamify/views/invitations";
 
 export default function InvitationsRoutePage() {
   const router = useRouter();

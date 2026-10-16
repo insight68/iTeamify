@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { projectListOptions, projectDetailOptions } from "@teamify/core/projects/queries";
-import { useWorkspaceId } from "@teamify/core/hooks";
+import { projectListOptions, projectDetailOptions } from "@iteamify/core/projects/queries";
+import { useWorkspaceId } from "@iteamify/core/hooks";
 import { ProjectIcon } from "./project-icon";
 import { useT } from "../../i18n";
 

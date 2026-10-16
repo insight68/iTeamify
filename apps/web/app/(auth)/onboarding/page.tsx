@@ -1,80 +1,55 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@teamify/core/auth";
-import {
-  paths,
-  resolvePostAuthDestination,
-  useHasOnboarded,
-} from "@teamify/core/paths";
-import { workspaceListOptions } from "@teamify/core/workspace/queries";
-import { CliInstallInstructions, OnboardingFlow } from "@teamify/views/onboarding";
+import { useAuthStore } from "@iteamify/core/auth";
+import { paths, resolvePostAuthDestination } from "@iteamify/core/paths";
+import { parseOnboardingStep, useOnboardingDraftStore, type OnboardingStep } from "@iteamify/core/onboarding";
+import { workspaceListOptions } from "@iteamify/core/workspace/queries";
+import { CliInstallInstructions, OnboardingFlow } from "@iteamify/views/onboarding";
+import { useNavigation } from "@iteamify/views/navigation";
 
-/**
- * Web shell for the onboarding flow. The route is the platform chrome on
- * web (matching `WindowOverlay` on desktop); content is the shared
- * `<OnboardingFlow />`. Kept minimal — guard on auth, render, exit.
- *
- * On complete: if a workspace was just created, navigate into it;
- * otherwise fall back to root (proxy / landing picks the user's first ws
- * or bounces to onboarding if still zero).
- *
- * `CliInstallInstructions` is passed in as the `runtimeInstructions`
- * slot so the flow can render it inside the CLI dialog. The commands it
- * shows are hardcoded — nothing environmental to thread through.
- */
 export default function OnboardingPage() {
-  const router = useRouter();
-  const user = useAuthStore((s) => s.user);
-  const isLoading = useAuthStore((s) => s.isLoading);
-  const hasOnboarded = useHasOnboarded();
-  const { data: workspaces = [], isFetched: workspacesFetched } = useQuery({
-    ...workspaceListOptions(),
-    enabled: !!user,
-  });
+  const { push, replace, searchParams } = useNavigation();
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const draft = useOnboardingDraftStore((state) => state.draft);
+  const requestedStep = searchParams.get("step");
+  const requestedWorkspaceId = searchParams.get("workspace");
+  const explicitStep = parseOnboardingStep(requestedStep);
+  const workspaces = useQuery({ ...workspaceListOptions(), enabled: !!user });
+  const completing = useRef(false);
+  const hasOnboarded = user?.onboarded_at != null;
 
   useEffect(() => {
-    if (isLoading || !user) {
-      if (!isLoading && !user) router.replace(paths.login());
+    if (isLoading) return;
+    if (!user) {
+      replace(`${paths.login()}?next=${encodeURIComponent(paths.onboarding(explicitStep ?? undefined, requestedWorkspaceId ?? undefined))}`);
       return;
     }
-    if (!workspacesFetched) return;
-    // Bounce out only when onboarding genuinely doesn't apply: the user is
-    // already onboarded. We deliberately don't bounce on `workspaces.length`
-    // here — Step 3 of the flow creates a workspace mid-onboarding, and a
-    // hasWorkspaces bounce here would kick the user out before Steps 4–5
-    // (runtime / agent / first issue) can run. The new entry-point
-    // judgment in callback / login handles "where should this user go on
-    // login" so OnboardingPage no longer needs to second-guess it.
-    if (hasOnboarded) {
-      router.replace(resolvePostAuthDestination(workspaces, hasOnboarded));
+    if (!workspaces.isSuccess || completing.current || explicitStep || !hasOnboarded) return;
+    const workspace = workspaces.data.find((entry) => entry.id === draft.workspaceId);
+    // A committed task survives a later completion/refresh failure.
+    if (draft.ownerId === user.id && draft.issueId && workspace) {
+      replace(paths.workspace(workspace.slug).issueDetail(draft.issueId));
+    } else {
+      replace(resolvePostAuthDestination(workspaces.data, true));
     }
-  }, [isLoading, user, hasOnboarded, workspacesFetched, workspaces, router]);
+  }, [isLoading, user, workspaces.isSuccess, workspaces.data, hasOnboarded, explicitStep, requestedWorkspaceId, draft.ownerId, draft.workspaceId, draft.issueId, replace]);
 
-  if (isLoading || !user || hasOnboarded) return null;
-
-  // Layout: page owns its own scroll (root layout sets `body {
-  // overflow: hidden }` for the app-shell convention). OnboardingFlow
-  // owns the per-step width constraint internally — Welcome renders a
-  // wide two-column hero, all other steps wrap themselves at max-w-xl.
-  return (
-    <div className="h-full overflow-y-auto bg-background">
-      <OnboardingFlow
-        onComplete={(ws) => {
-          // No more firstIssueId handoff — the welcome issue is created
-          // inside the workspace via StarterContentPrompt, not during
-          // onboarding. Always land on the workspace issues list (or
-          // root if the flow never produced a workspace).
-          if (ws) {
-            router.push(paths.workspace(ws.slug).issues());
-          } else {
-            router.push(paths.root());
-          }
-        }}
-        runtimeInstructions={<CliInstallInstructions />}
-      />
-    </div>
-  );
+  const onStepChange = useCallback((step: OnboardingStep, workspaceId?: string, correct = false) => {
+    (correct ? replace : push)(paths.onboarding(step, workspaceId));
+  }, [push, replace]);
+  if (isLoading || !user || (hasOnboarded && !explicitStep && !completing.current)) return null;
+  return <div className="h-full overflow-y-auto bg-background">
+    <OnboardingFlow
+      requestedStep={requestedStep} requestedWorkspaceId={requestedWorkspaceId} onStepChange={onStepChange}
+      onCompleting={() => { completing.current = true; }}
+      onComplete={(workspace, issueId) => {
+        if (workspace) replace(issueId ? paths.workspace(workspace.slug).issueDetail(issueId) : paths.workspace(workspace.slug).issues());
+        else replace(paths.newWorkspace());
+      }}
+      runtimeInstructions={<CliInstallInstructions />}
+    />
+  </div>;
 }

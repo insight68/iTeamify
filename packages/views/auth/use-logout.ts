@@ -2,11 +2,10 @@
 
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@teamify/core/auth";
-import { workspaceKeys } from "@teamify/core/workspace/queries";
-import { clearWorkspaceStorage, defaultStorage } from "@teamify/core/platform";
-import { paths } from "@teamify/core/paths";
-import type { Workspace } from "@teamify/core/types";
+import { useAuthStore } from "@iteamify/core/auth";
+import { defaultStorage } from "@iteamify/core/platform";
+import { clearClientSessionData } from "@iteamify/core/platform";
+import { paths } from "@iteamify/core/paths";
 import { useNavigation } from "../navigation";
 
 /**
@@ -28,30 +27,7 @@ export function useLogout() {
   const { push } = useNavigation();
 
   return useCallback(() => {
-    // Clear workspace-scoped storage for every workspace this user has
-    // access to, BEFORE clearing the React Query cache (which holds the
-    // workspace list). Otherwise per-workspace drafts/chat/etc would leak
-    // to the next user on this device.
-    const cachedWorkspaces =
-      queryClient.getQueryData<Workspace[]>(workspaceKeys.list()) ?? [];
-    for (const ws of cachedWorkspaces) {
-      clearWorkspaceStorage(defaultStorage, ws.slug);
-    }
-
-    // Clear the last-workspace-slug cookie. Otherwise on a shared device
-    // the next user gets redirected by the proxy to the previous user's
-    // last workspace, then bounced to NoAccessPage — confusing.
-    if (typeof document !== "undefined") {
-      document.cookie =
-        "last_workspace_slug=; path=/; max-age=0; SameSite=Lax";
-    }
-
-    // Clear desktop tab state. Tab paths can contain workspace slugs and
-    // issue UUIDs that must not survive across user sessions on a shared
-    // machine. No-op on web (web doesn't write this key).
-    defaultStorage.removeItem("teamify_tabs");
-
-    queryClient.clear();
+    clearClientSessionData(queryClient, defaultStorage);
     authLogout();
 
     // Navigate to /login explicitly. authLogout() clears state but doesn't

@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS public_expert_control_audit_id_uidx;

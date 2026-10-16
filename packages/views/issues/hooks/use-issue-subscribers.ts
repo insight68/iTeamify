@@ -2,14 +2,14 @@
 
 import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { IssueSubscriber } from "@teamify/core/types";
+import type { IssueSubscriber } from "@iteamify/core/types";
 import type {
   SubscriberAddedPayload,
   SubscriberRemovedPayload,
-} from "@teamify/core/types";
-import { issueSubscribersOptions, issueKeys } from "@teamify/core/issues/queries";
-import { useToggleIssueSubscriber } from "@teamify/core/issues/mutations";
-import { useWSEvent, useWSReconnect } from "@teamify/core/realtime";
+} from "@iteamify/core/types";
+import { issueSubscribersOptions, issueKeys } from "@iteamify/core/issues/queries";
+import { useToggleIssueSubscriber } from "@iteamify/core/issues/mutations";
+import { useWSEvent, useWSReconnect } from "@iteamify/core/realtime";
 
 export function useIssueSubscribers(issueId: string, userId?: string) {
   const qc = useQueryClient();

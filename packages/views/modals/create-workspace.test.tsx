@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { I18nProvider } from "@teamify/core/i18n/react";
+import { I18nProvider } from "@iteamify/core/i18n/react";
 import enCommon from "../locales/en/common.json";
 import enWorkspace from "../locales/en/workspace.json";
 
@@ -18,14 +18,14 @@ vi.mock("../navigation", () => ({
   useNavigation: () => ({ push: mockPush }),
 }));
 
-vi.mock("@teamify/core/workspace/mutations", () => ({
+vi.mock("@iteamify/core/workspace/mutations", () => ({
   useCreateWorkspace: () => ({
     mutate: mockCreateWorkspaceMutate,
     isPending: false,
   }),
 }));
 
-vi.mock("@teamify/ui/components/ui/dialog", () => ({
+vi.mock("@iteamify/ui/components/ui/dialog", () => ({
   Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogTitle: ({ children }: { children: ReactNode }) => <h1>{children}</h1>,

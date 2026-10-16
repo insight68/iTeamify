@@ -3,18 +3,19 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { sanitizeNextUrl, useAuthStore } from "@teamify/core/auth";
-import { workspaceKeys } from "@teamify/core/workspace/queries";
-import { paths, resolvePostAuthDestination } from "@teamify/core/paths";
-import { api } from "@teamify/core/api";
+import { sanitizeNextUrl, useAuthStore } from "@iteamify/core/auth";
+import { workspaceKeys } from "@iteamify/core/workspace/queries";
+import { paths, resolvePostAuthDestination } from "@iteamify/core/paths";
+import { api } from "@iteamify/core/api";
+import { validateCliCallback, redirectToCliCallback } from "@iteamify/views/auth";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from "@teamify/ui/components/ui/card";
-import { Button } from "@teamify/ui/components/ui/button";
+} from "@iteamify/ui/components/ui/card";
+import { Button } from "@iteamify/ui/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 function CallbackContent() {
@@ -46,15 +47,45 @@ function CallbackContent() {
     // so an attacker-controlled `state=next:https://evil` cannot redirect here.
     const nextUrl = sanitizeNextUrl(nextPart ? nextPart.slice(5) : null);
 
+    // CLI callback params — carried across the Google OAuth round-trip so
+    // headless/WSL2 `iteamify login` can receive the JWT after browser-based
+    // Google auth completes.
+    const cliCallbackPart = stateParts.find((p) => p.startsWith("cli_callback:"));
+    const cliStatePart = stateParts.find((p) => p.startsWith("cli_state:"));
+    const cliCallbackRaw = cliCallbackPart
+      ? decodeURIComponent(cliCallbackPart.slice("cli_callback:".length))
+      : null;
+    const cliState = cliStatePart
+      ? decodeURIComponent(cliStatePart.slice("cli_state:".length))
+      : "";
+
     const redirectUri = `${window.location.origin}/auth/callback`;
 
-    if (isDesktop) {
+    // Validate the CLI callback URL before redirecting — the state parameter
+    // passes through Google OAuth and must be treated as attacker-controlled.
+    const cliCallback =
+      cliCallbackRaw && validateCliCallback(cliCallbackRaw)
+        ? cliCallbackRaw
+        : null;
+
+    if (cliCallback) {
+      // CLI login flow: exchange the Google code for a JWT, then redirect the
+      // token back to the CLI's local HTTP listener (e.g. WSL2 host).
+      api
+        .googleLogin(code, redirectUri)
+        .then(({ token }) => {
+          redirectToCliCallback(cliCallback, token, cliState);
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : "Login failed");
+        });
+    } else if (isDesktop) {
       // Desktop flow: exchange code for token, then redirect via deep link
       api
         .googleLogin(code, redirectUri)
         .then(({ token }) => {
           setDesktopToken(token);
-          window.location.href = `teamify://auth/callback?token=${encodeURIComponent(token)}`;
+          window.location.href = `iteamify://auth/callback?token=${encodeURIComponent(token)}`;
         })
         .catch((err) => {
           setError(err instanceof Error ? err.message : "Login failed");
@@ -77,7 +108,7 @@ function CallbackContent() {
 
           // 2. Un-onboarded users may have pending invitations on their
           //    email even when no `next=` was carried (came from a fresh
-          //    login on instead of clicking the email link,
+          //    login on aurocreator.com instead of clicking the email link,
           //    or `state` was lost across the round-trip). Look them up by
           //    email and route to the batch /invitations page if any.
           //    Already-onboarded users skip this lookup — their new invites
@@ -100,7 +131,10 @@ function CallbackContent() {
 
           // 3. Default: hand off to the resolver (onboarding for first-timers,
           //    first workspace for returning users, /workspaces/new for
-          //    onboarded users with zero workspaces).
+          //    onboarded users with zero workspaces). Source-attribution
+          //    backfill for onboarded users with no recorded source is
+          //    handled by `<SourceBackfillModal />` inside the dashboard
+          //    shell — not a route detour, so we route straight to dest.
           router.push(resolvePostAuthDestination(wsList, onboarded));
         })
         .catch((err) => {
@@ -114,9 +148,9 @@ function CallbackContent() {
       <div className="flex min-h-screen items-center justify-center">
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Opening Teamify</CardTitle>
+            <CardTitle className="text-2xl">Opening iteamify</CardTitle>
             <CardDescription>
-              You should see a prompt to open the Teamify desktop app. If
+              You should see a prompt to open the iteamify desktop app. If
               nothing happens, click the button below.
             </CardDescription>
           </CardHeader>
@@ -124,10 +158,10 @@ function CallbackContent() {
             <Button
               variant="outline"
               onClick={() => {
-                window.location.href = `teamify://auth/callback?token=${encodeURIComponent(desktopToken)}`;
+                window.location.href = `iteamify://auth/callback?token=${encodeURIComponent(desktopToken)}`;
               }}
             >
-              Open Teamify Desktop
+              Open iteamify Desktop
             </Button>
           </CardContent>
         </Card>

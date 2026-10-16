@@ -2,21 +2,24 @@
 
 import { useMemo, useState } from "react";
 import { Lock, UserMinus } from "lucide-react";
-import type { Agent, IssueAssigneeType, UpdateIssueRequest } from "@teamify/core/types";
+import type { Agent, IssueAssigneeType, UpdateIssueRequest } from "@iteamify/core/types";
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@teamify/core/auth";
-import { canAssignAgentToIssue } from "@teamify/core/permissions";
-import { useActorName } from "@teamify/core/workspace/hooks";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { memberListOptions, agentListOptions, assigneeFrequencyOptions } from "@teamify/core/workspace/queries";
+import { useAuthStore } from "@iteamify/core/auth";
+import { canAssignAgentToIssue } from "@iteamify/core/permissions";
+import { useActorName } from "@iteamify/core/workspace/hooks";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { memberListOptions, agentListOptions, squadListOptions, assigneeFrequencyOptions } from "@iteamify/core/workspace/queries";
 import { ActorAvatar } from "../../../common/actor-avatar";
+import { DeferredPopup } from "../../../common/deferred-popup";
 import {
   PropertyPicker,
   PickerItem,
   PickerSection,
   PickerEmpty,
+  PICKER_TRIGGER_CLASS,
 } from "./property-picker";
 import { useT } from "../../../i18n";
+import { matchesPinyin } from "../../../editor/extensions/pinyin-match";
 
 /**
  * Legacy boolean shape kept around for callers (e.g. `use-issue-actions.ts`)
@@ -36,25 +39,66 @@ export function canAssignAgent(
   }).allowed;
 }
 
-export function AssigneePicker({
+interface AssigneePickerProps {
+  assigneeType: IssueAssigneeType | null;
+  assigneeId: string | null;
+  /**
+   * `true` when a batch selection spans different assignees ("mixed"): no row
+   * is checked, including the unassigned row. Distinct from `assigneeType` /
+   * `assigneeId` both being `null`, which means every selected issue is
+   * genuinely unassigned and the unassigned row should be checked.
+   */
+  mixed?: boolean;
+  onUpdate: (updates: Partial<UpdateIssueRequest>) => void;
+  trigger?: React.ReactNode;
+  triggerRender?: React.ReactElement<Record<string, unknown>>;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  align?: "start" | "center" | "end";
+}
+
+/**
+ * Mounting the real picker subscribes to members/agents/squads/frequency
+ * queries — multiplied per board card / list row that cost froze tab
+ * switches. Uncontrolled callers that bring their own trigger content get a
+ * deferred lookalike trigger instead; the picker mounts on first interaction.
+ * The default trigger needs `getActorName` (a members/agents subscription
+ * itself), so trigger-less callers stay eager.
+ */
+export function AssigneePicker(props: AssigneePickerProps) {
+  const hasDeferredTriggerContent =
+    props.trigger !== undefined || props.triggerRender?.props.children != null;
+  const canDefer =
+    props.open === undefined &&
+    props.onOpenChange === undefined &&
+    hasDeferredTriggerContent;
+  if (!canDefer) {
+    return <AssigneePickerImpl {...props} />;
+  }
+  return (
+    <DeferredPopup
+      trigger={props.trigger}
+      triggerRender={props.triggerRender}
+      triggerClassName={PICKER_TRIGGER_CLASS}
+    >
+      {(open, onOpenChange) => (
+        <AssigneePickerImpl {...props} open={open} onOpenChange={onOpenChange} />
+      )}
+    </DeferredPopup>
+  );
+}
+
+function AssigneePickerImpl({
   assigneeType,
   assigneeId,
+  mixed = false,
   onUpdate,
   trigger: customTrigger,
   triggerRender,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   align,
-}: {
-  assigneeType: IssueAssigneeType | null;
-  assigneeId: string | null;
-  onUpdate: (updates: Partial<UpdateIssueRequest>) => void;
-  trigger?: React.ReactNode;
-  triggerRender?: React.ReactElement;
-  open?: boolean;
-  onOpenChange?: (v: boolean) => void;
-  align?: "start" | "center" | "end";
-}) {
+}: AssigneePickerProps) {
   const { t } = useT("issues");
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -64,6 +108,7 @@ export function AssigneePicker({
   const wsId = useWorkspaceId();
   const { data: members = [] } = useQuery(memberListOptions(wsId));
   const { data: agents = [] } = useQuery(agentListOptions(wsId));
+  const { data: squads = [] } = useQuery(squadListOptions(wsId));
   const { data: frequency = [] } = useQuery(assigneeFrequencyOptions(wsId));
   const { getActorName } = useActorName();
 
@@ -83,11 +128,23 @@ export function AssigneePicker({
 
   const query = filter.trim().toLowerCase();
   const filteredMembers = members
-    .filter((m) => m.name.toLowerCase().includes(query))
+    .filter((m) => m.name.toLowerCase().includes(query) || matchesPinyin(m.name, query))
     .sort((a, b) => getFreq("member", b.user_id) - getFreq("member", a.user_id));
   const filteredAgents = agents
-    .filter((a) => !a.archived_at && a.name.toLowerCase().includes(query))
+    .filter((a) => !a.archived_at && (a.name.toLowerCase().includes(query) || matchesPinyin(a.name, query)))
     .sort((a, b) => getFreq("agent", b.id) - getFreq("agent", a.id));
+  const filteredSquads = squads
+    .filter((s) => {
+      const leader = agents.find((a) => a.id === s.leader_id);
+      return (
+        !s.archived_at &&
+        !!leader &&
+        !leader.archived_at &&
+        canAssignAgent(leader, user?.id, memberRole) &&
+        (s.name.toLowerCase().includes(query) || matchesPinyin(s.name, query))
+      );
+    })
+    .sort((a, b) => getFreq("squad", b.id) - getFreq("squad", a.id));
 
   const isSelected = (type: string, id: string) =>
     assigneeType === type && assigneeId === id;
@@ -104,7 +161,7 @@ export function AssigneePicker({
         setOpen(v);
         if (!v) setFilter("");
       }}
-      width="w-52"
+      width="w-64"
       align={align}
       searchable
       searchPlaceholder={t(($) => $.pickers.assignee.search_placeholder)}
@@ -113,7 +170,7 @@ export function AssigneePicker({
       trigger={
         customTrigger ? customTrigger : assigneeType && assigneeId ? (
           <>
-            <ActorAvatar actorType={assigneeType} actorId={assigneeId} size={18} enableHoverCard showStatusDot />
+            <ActorAvatar actorType={assigneeType} actorId={assigneeId} size="sm" enableHoverCard showStatusDot />
             <span className="truncate">{triggerLabel}</span>
           </>
         ) : (
@@ -124,7 +181,7 @@ export function AssigneePicker({
       {/* Unassigned option — hidden when search is active */}
       {!query && (
         <PickerItem
-          selected={!assigneeType && !assigneeId}
+          selected={!mixed && !assigneeType && !assigneeId}
           onClick={() => {
             onUpdate({ assignee_type: null, assignee_id: null });
             setOpen(false);
@@ -150,8 +207,8 @@ export function AssigneePicker({
                 setOpen(false);
               }}
             >
-              <ActorAvatar actorType="member" actorId={m.user_id} size={18} />
-              <span>{m.name}</span>
+              <ActorAvatar actorType="member" actorId={m.user_id} size="sm" />
+              <span className="truncate">{m.name}</span>
             </PickerItem>
           ))}
         </PickerSection>
@@ -186,8 +243,8 @@ export function AssigneePicker({
                   setOpen(false);
                 }}
               >
-                <ActorAvatar actorType="agent" actorId={a.id} size={18} showStatusDot />
-                <span className={allowed ? "" : "text-muted-foreground"}>{a.name}</span>
+                <ActorAvatar actorType="agent" actorId={a.id} size="sm" showStatusDot />
+                <span className={`truncate ${allowed ? "" : "text-muted-foreground"}`}>{a.name}</span>
                 {a.visibility === "private" && (
                   <Lock className="ml-auto h-3 w-3 text-muted-foreground" />
                 )}
@@ -197,8 +254,32 @@ export function AssigneePicker({
         </PickerSection>
       )}
 
+      {/* Squads — group ownership; assigning to a squad routes the issue to
+          its leader agent on the backend. */}
+      {filteredSquads.length > 0 && (
+        <PickerSection label={t(($) => $.pickers.assignee.squads_group)}>
+          {filteredSquads.map((s) => (
+            <PickerItem
+              key={s.id}
+              selected={isSelected("squad", s.id)}
+              onClick={() => {
+                onUpdate({
+                  assignee_type: "squad",
+                  assignee_id: s.id,
+                });
+                setOpen(false);
+              }}
+            >
+              <ActorAvatar actorType="squad" actorId={s.id} size="sm" />
+              <span className="truncate">{s.name}</span>
+            </PickerItem>
+          ))}
+        </PickerSection>
+      )}
+
       {filteredMembers.length === 0 &&
         filteredAgents.length === 0 &&
+        filteredSquads.length === 0 &&
         filter && <PickerEmpty />}
     </PropertyPicker>
   );

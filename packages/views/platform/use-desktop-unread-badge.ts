@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useInboxUnreadCount } from "@teamify/core/inbox/queries";
+import { useInboxUnreadCount } from "@iteamify/core/inbox/queries";
 
 type BadgeCapableAPI = {
   setUnreadBadge?: (count: number) => void;

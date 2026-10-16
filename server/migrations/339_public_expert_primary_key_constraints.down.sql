@@ -1,0 +1,15 @@
+ALTER TABLE public_expert_page DROP CONSTRAINT IF EXISTS public_expert_page_pkey;
+ALTER TABLE public_expert_page_release DROP CONSTRAINT IF EXISTS public_expert_page_release_pkey;
+ALTER TABLE public_expert_session DROP CONSTRAINT IF EXISTS public_expert_session_pkey;
+ALTER TABLE public_expert_message DROP CONSTRAINT IF EXISTS public_expert_message_pkey;
+ALTER TABLE public_expert_task DROP CONSTRAINT IF EXISTS public_expert_task_pkey;
+ALTER TABLE public_expert_session_event DROP CONSTRAINT IF EXISTS public_expert_session_event_pkey;
+ALTER TABLE public_expert_contact DROP CONSTRAINT IF EXISTS public_expert_contact_pkey;
+ALTER TABLE public_expert_consent_record DROP CONSTRAINT IF EXISTS public_expert_consent_record_pkey;
+ALTER TABLE public_expert_qualification DROP CONSTRAINT IF EXISTS public_expert_qualification_pkey;
+ALTER TABLE public_expert_pending_action DROP CONSTRAINT IF EXISTS public_expert_pending_action_pkey;
+ALTER TABLE public_expert_usage_reservation DROP CONSTRAINT IF EXISTS public_expert_usage_reservation_pkey;
+ALTER TABLE task_dispatch_outbox DROP CONSTRAINT IF EXISTS task_dispatch_outbox_pkey;
+ALTER TABLE delivery_outbox DROP CONSTRAINT IF EXISTS delivery_outbox_pkey;
+ALTER TABLE public_quote_contact_verification DROP CONSTRAINT IF EXISTS public_quote_contact_verification_pkey;
+ALTER TABLE public_quote_acceptance_evidence DROP CONSTRAINT IF EXISTS public_quote_acceptance_evidence_pkey;

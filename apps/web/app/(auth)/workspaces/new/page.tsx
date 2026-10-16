@@ -3,10 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@teamify/core/auth";
-import { paths } from "@teamify/core/paths";
-import { workspaceListOptions } from "@teamify/core/workspace/queries";
-import { NewWorkspacePage } from "@teamify/views/workspace/new-workspace-page";
+import { useAuthStore } from "@iteamify/core/auth";
+import { paths } from "@iteamify/core/paths";
+import { workspaceListOptions } from "@iteamify/core/workspace/queries";
+import { NewWorkspacePage } from "@iteamify/views/workspace/new-workspace-page";
 
 export default function Page() {
   const router = useRouter();
@@ -31,7 +31,7 @@ export default function Page() {
 
   return (
     <NewWorkspacePage
-      onSuccess={(ws) => router.push(paths.workspace(ws.slug).issues())}
+      onSuccess={(ws) => router.push(paths.workspace(ws.slug).root())}
       onBack={onBack}
     />
   );

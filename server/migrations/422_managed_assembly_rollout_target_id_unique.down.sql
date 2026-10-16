@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS managed_assembly_rollout_target_id_uidx;

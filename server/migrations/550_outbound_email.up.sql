@@ -1,0 +1,31 @@
+-- One record is both the editable draft and the durable delivery job.
+-- Relationships are validated/cleaned up by the application, without FKs.
+CREATE TABLE outbound_email (
+    id UUID NOT NULL DEFAULT gen_random_uuid(),
+    workspace_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    chat_session_id UUID NOT NULL,
+    task_id UUID,
+    lead_id UUID,
+    connection_id UUID NOT NULL,
+    from_address TEXT NOT NULL,
+    to_addresses TEXT[] NOT NULL,
+    cc_addresses TEXT[] NOT NULL DEFAULT '{}',
+    bcc_addresses TEXT[] NOT NULL DEFAULT '{}',
+    subject TEXT NOT NULL,
+    body TEXT NOT NULL,
+    attachments JSONB NOT NULL DEFAULT '[]',
+    version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+    status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'queued', 'sending', 'sent', 'failed', 'unknown')),
+    attempts INTEGER NOT NULL DEFAULT 0,
+    available_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    lease_until TIMESTAMPTZ,
+    claim_token UUID,
+    error_code TEXT NOT NULL DEFAULT '',
+    gmail_message_id TEXT NOT NULL DEFAULT '',
+    gmail_thread_id TEXT NOT NULL DEFAULT '',
+    queued_at TIMESTAMPTZ,
+    sent_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

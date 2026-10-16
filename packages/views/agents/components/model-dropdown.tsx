@@ -3,28 +3,25 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Cpu, Loader2, Plus, Check, Info } from "lucide-react";
-import { runtimeModelsOptions } from "@teamify/core/runtimes";
-import type { RuntimeModel } from "@teamify/core/types";
+import { runtimeModelsOptions } from "@iteamify/core/runtimes";
+import type { RuntimeModel } from "@iteamify/core/types";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from "@teamify/ui/components/ui/popover";
-import { Input } from "@teamify/ui/components/ui/input";
-import { Label } from "@teamify/ui/components/ui/label";
+} from "@iteamify/ui/components/ui/popover";
+import { Input } from "@iteamify/ui/components/ui/input";
+import { Label } from "@iteamify/ui/components/ui/label";
 import { useT } from "../../i18n";
-import {
-  DEFAULT_MODEL_PRICING_CNY,
-  formatCny,
-} from "../../runtimes/utils";
 
 // ModelDropdown renders a searchable, creatable model picker for an agent.
 // It fetches the supported-model catalog from the selected runtime — the
 // daemon enumerates models on demand via heartbeat piggyback. Providers
-// that don't honour per-agent model selection at runtime (currently
-// hermes) return supported=false, and the dropdown renders disabled
-// with an explanation instead of silently accepting a value the
-// backend would ignore.
+// whose runtime ignores per-agent model selection return supported=false,
+// and the dropdown renders disabled with an explanation instead of silently
+// accepting a value the backend would ignore. No built-in provider does so
+// today — Antigravity gained `--model` in agy 1.0.6 — but the path stays for
+// any future model-less runtime.
 export function ModelDropdown({
   runtimeId,
   runtimeOnline,
@@ -47,6 +44,7 @@ export function ModelDropdown({
   );
 
   const supported = modelsQuery.data?.supported ?? true;
+  const selectionMode = modelsQuery.data?.selection_mode ?? "custom";
   // Stable reference for the model list — `?? []` would mint a fresh
   // array each render and force every downstream useMemo to invalidate.
   const models = useMemo(
@@ -83,7 +81,8 @@ export function ModelDropdown({
   const exactMatch = models.some(
     (m) => m.id === trimmedSearch || m.label === trimmedSearch,
   );
-  const canCreate = trimmedSearch.length > 0 && !exactMatch;
+  const canCreate =
+    selectionMode === "custom" && trimmedSearch.length > 0 && !exactMatch;
 
   const select = (id: string) => {
     onChange(id);
@@ -101,8 +100,10 @@ export function ModelDropdown({
 
   if (!supported && !modelsQuery.isLoading) {
     return (
-      <div className="min-w-0">
-        <Label className="text-xs text-muted-foreground">{t(($) => $.model_dropdown.label)}</Label>
+      <div className="flex flex-col min-w-0">
+        <div className="flex h-6 items-center">
+          <Label className="text-xs text-muted-foreground">{t(($) => $.model_dropdown.label)}</Label>
+        </div>
         <div className="mt-1.5 flex items-start gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground">
           <Info className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="min-w-0">
@@ -116,9 +117,34 @@ export function ModelDropdown({
     );
   }
 
+  if (selectionMode === "fixed" && !modelsQuery.isLoading) {
+    const fixedModel = models.find((model) => model.default) ?? models[0];
+    return (
+      <div className="flex min-w-0 flex-col">
+        <div className="flex h-6 items-center">
+          <Label className="text-xs text-muted-foreground">
+            {t(($) => $.model_dropdown.label)}
+          </Label>
+        </div>
+        <div className="mt-1.5 flex items-start gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-sm">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="min-w-0">
+            <div className="truncate font-medium">
+              {fixedModel?.label ??
+                t(($) => $.model_dropdown.default_provider)}
+            </div>
+            <div className="mt-0.5 text-xs text-muted-foreground">
+              {t(($) => $.model_dropdown.managed_by_runtime_hint)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-w-0">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col min-w-0">
+      <div className="flex h-6 items-center justify-between">
         <Label className="text-xs text-muted-foreground">{t(($) => $.model_dropdown.label)}</Label>
         {modelsQuery.isError && (
           <span className="text-xs text-muted-foreground">{t(($) => $.model_dropdown.discovery_failed)}</span>
@@ -131,8 +157,11 @@ export function ModelDropdown({
         >
           <Cpu className="h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
-            <div className="truncate font-medium">
-              {triggerLabel}
+            {/* Wrapped in flex to mirror RuntimePicker's trigger DOM. The
+                two pickers sit side-by-side; inline-in-flex vs block-line-
+                box height calc would otherwise leave them ~1px misaligned. */}
+            <div className="flex items-center gap-2">
+              <span className="truncate font-medium">{triggerLabel}</span>
             </div>
             {value && (
               <div className="truncate text-xs text-muted-foreground">
@@ -158,27 +187,6 @@ export function ModelDropdown({
             />
           </div>
           <div className="max-h-72 overflow-y-auto p-1">
-            <button
-              type="button"
-              onClick={() => select("")}
-              className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors ${
-                value === "" ? "bg-accent" : "hover:bg-accent/50"
-              }`}
-            >
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">
-                  {t(($) => $.pickers.model_default_option)}
-                </div>
-                <div className="truncate text-xs text-muted-foreground">
-                  {t(($) => $.pickers.model_default_price, {
-                    input: formatCny(DEFAULT_MODEL_PRICING_CNY.input),
-                    output: formatCny(DEFAULT_MODEL_PRICING_CNY.output),
-                  })}
-                </div>
-              </div>
-              {value === "" && <Check className="h-4 w-4 shrink-0 text-primary" />}
-            </button>
-
             {modelsQuery.isLoading && (
               <div className="flex items-center gap-2 px-3 py-6 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -196,6 +204,7 @@ export function ModelDropdown({
                   )}
                   {list.map((m) => (
                     <button
+                      type="button"
                       key={m.id}
                       onClick={() => select(m.id)}
                       className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors ${
@@ -203,14 +212,7 @@ export function ModelDropdown({
                       }`}
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="truncate font-medium">{m.label}</span>
-                          {m.default && (
-                            <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
-                              {t(($) => $.pickers.model_default_badge)}
-                            </span>
-                          )}
-                        </div>
+                        <div className="truncate font-medium">{m.label}</div>
                         {m.label !== m.id && (
                           <div className="truncate text-xs text-muted-foreground">
                             {m.id}
@@ -235,6 +237,7 @@ export function ModelDropdown({
 
             {canCreate && (
               <button
+                type="button"
                 onClick={() => select(trimmedSearch)}
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-primary transition-colors hover:bg-accent/50"
               >
@@ -245,6 +248,15 @@ export function ModelDropdown({
               </button>
             )}
 
+            {value && (
+              <button
+                type="button"
+                onClick={() => select("")}
+                className="mt-1 flex w-full items-center gap-2 border-t border-border px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-accent/50"
+              >
+                {t(($) => $.model_dropdown.clear_full)}
+              </button>
+            )}
           </div>
         </PopoverContent>
       </Popover>

@@ -1,0 +1,51 @@
+{
+  "page": { "title": "Basic Info", "eyebrow": "Company basic information" },
+  "status": { "updated": "Updated {{time}}", "readonly": "Read only", "saving": "Saving…" },
+  "actions": {
+    "retry": "Retry", "manage": "Manage company", "ai": "Improve with AI", "manual": "Enter manually",
+    "add_offer": "Add service", "add_audience": "Add ideal customer", "add_proof": "Add proof", "add_source": "Add source", "add_persona": "Add decision-maker persona",
+    "delete": "Delete", "cancel": "Cancel", "save": "Save", "saving": "Saving…"
+  },
+  "metrics": { "completeness": "Completeness", "offers": "Services", "audiences": "Ideal customers", "personas": "Decision-maker personas", "evidence": "Evidence" },
+  "sections": {
+    "foundation_title": "Positioning foundation", "foundation_description": "The stable language every teammate and AI assistant should use when explaining who you are.",
+    "portfolio_title": "Service portfolio", "portfolio_description": "What customers can buy, the outcome they receive, and which market each service fits.",
+    "market_title": "Ideal customer landscape", "market_description": "Turn broad customer ideas into explicit industries, company sizes, markets, triggers, and disqualifiers.",
+    "buying_title": "Buying committee", "buying_description": "The people who discover, champion, evaluate, approve, and use your service.",
+    "evidence_title": "Trust and evidence", "evidence_description": "Connect claims to cases and source material that sales and AI can rely on."
+  },
+  "fields": {
+    "business_name": "Legacy company name", "brand_name": "Public brand name", "brand_name_placeholder": "Only when the public brand differs from the company name", "website": "Website", "summary": "What the company does", "positioning": "Positioning",
+    "differentiators": "Differentiators", "principles": "Operating principles", "exclusions": "Boundaries / what we do not do", "one_per_line": "One item per line",
+    "offer_name": "Service name", "offer_summary": "Customer value", "outcomes": "Customer outcomes", "deliverables": "Deliverables", "timeline": "Typical timeline", "pricing_note": "Pricing note", "fit_notes": "Best-fit situations", "matched_audiences": "Matched ideal customers",
+    "audience_name": "Ideal customer name", "audience_description": "One-line definition", "priority": "Market priority", "industries": "Industries", "company_sizes": "Company sizes", "geographies": "Markets / regions", "pain_points": "Pain points", "buying_triggers": "Buying triggers", "must_haves": "Required fit signals",
+    "personas": "Decision-maker personas", "personas_hint": "People who influence discovering, evaluating, approving, or using the service.", "persona": "Decision-maker persona", "persona_name": "Persona name", "buying_role": "Buying role", "persona_role": "Role description", "titles": "Typical titles", "goals": "Goals", "objections": "Common objections", "channels": "Preferred channels",
+    "proof_title": "Proof title", "proof_summary": "What this proves", "source_url": "Source URL", "related_offers": "Related services", "source_title": "Source title", "source_notes": "What AI should learn from it"
+  },
+  "charts": {
+    "completeness_title": "Information completeness", "complete": "complete", "missing": "Add", "matched_audiences": "matched ideal customers",
+    "matrix_title": "Service × ideal customer fit map", "matrix_description": "Click a cell to define which services should be recommended to each ideal customer.", "services_axis": "Service / ideal customer", "match": "Matched", "no_match": "Not set",
+    "market_title": "Market signal coverage", "market_description": "How many ideal customers share each industry, size, or region signal.", "icp_coverage": "Ideal customer coverage",
+    "priority_title": "Market priority", "priority_description": "Keep the team focused on the segments that matter most.",
+    "evidence_title": "Evidence coverage", "evidence_description": "How much supporting proof is connected to each service."
+  },
+  "completion": { "identity": "Company identity", "positioning": "Positioning", "offers": "Service portfolio", "audiences": "Ideal customers", "evidence": "Trust evidence" },
+  "priorities": { "core": "Core market", "secondary": "Secondary", "explore": "Explore" },
+  "roles": { "initiator": "Initiator", "champion": "Champion", "influencer": "Influencer", "decision_maker": "Decision maker", "user": "User" },
+  "editor": {
+    "foundation_title": "Edit company foundation", "offer_title": "Edit service", "audience_title": "Edit ideal customer", "proof_title": "Edit proof", "source_title": "Edit source",
+    "description": "Changes are saved directly to Company Basic Info."
+  },
+  "empty": {
+    "title": "Build your company profile", "description": "Describe the business naturally with AI, or enter the first facts manually. The result becomes a structured profile for the whole team.",
+    "summary": "Click to add a concise description of what this company does.", "click_to_add": "Click to add", "untitled_offer": "Untitled service", "untitled_audience": "Untitled ideal customer", "untitled_persona": "Untitled decision-maker persona", "untitled_proof": "Untitled proof", "untitled_source": "Untitled source", "no_timeline": "Timeline not set",
+    "add_offer": "Add the first service so the team knows what can be recommended.", "no_offers": "No services yet.", "matrix": "Add at least one service and one ideal customer to create the fit map.", "market": "Add industry, company size, or region signals to an ideal customer.", "personas": "Add decision-maker personas inside an ideal customer to map the buying committee.", "evidence": "Add a case, proof point, or source to support business claims."
+  },
+  "conversation": {
+    "start_prompt": "Interview me to build our Company Basic Info. Ask one important question at a time, summarize what you will update, and save only after I explicitly confirm.",
+    "improve_prompt": "Read our current Company Basic Info and help improve the gaps that most affect lead quality. Ask one important question at a time, summarize the exact changes, and save only after I explicitly confirm."
+  },
+  "audit": { "manual_update": "Updated Company Basic Info", "item_removed": "Removed an item from Company Basic Info", "matrix_update": "Updated service and ideal customer fit" },
+  "toast": { "saved": "Basic Info saved", "save_failed": "Basic Info could not be saved. Check the fields and try again.", "conflict": "The information changed elsewhere. The latest data has been reloaded." },
+  "error": { "title": "Unable to load Basic Info", "description": "Check the connection and try again." }
+}

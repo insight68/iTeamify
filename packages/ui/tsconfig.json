@@ -1,5 +1,5 @@
 {
-  "extends": "@teamify/tsconfig/react-library.json",
+  "extends": "@iteamify/tsconfig/react-library.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": ".",

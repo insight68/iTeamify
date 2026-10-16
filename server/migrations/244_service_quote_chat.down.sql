@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS service_quote_workspace_chat_created_idx;

@@ -2,26 +2,26 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useWSEvent } from "@teamify/core/realtime";
+import { useWSEvent } from "@iteamify/core/realtime";
 import {
   runtimeKeys,
   runtimeListOptions,
-} from "@teamify/core/runtimes/queries";
-import type { AgentRuntime } from "@teamify/core/types";
+} from "@iteamify/core/runtimes/queries";
+import type { AgentRuntime } from "@iteamify/core/types";
 
 /**
  * Step 3's runtime data layer, shared by Desktop (`StepRuntimeConnect`)
  * and Web (`StepPlatformFork`):
  *
- *   - Polls every 2s while the list is empty so the UI flips to
- *     "found" the moment a runtime registers.
+ *   - Polls every 2s until a runtime is online, including when
+ *     registered runtimes are temporarily offline.
  *   - `daemon:register` WS event triggers an instant refetch — no
  *     polling lag for online users.
  *   - Auto-selects online first, falls back to the first runtime.
- *     Only runs when the user hasn't picked anything, so a manual
- *     selection survives subsequent refetches.
+ *     A valid manual selection survives subsequent refetches;
+ *     a removed selection is replaced after loading completes.
  */
-export function useRuntimePicker(wsId: string): {
+export function useRuntimePicker(wsId: string, initialSelectedId?: string): {
   runtimes: AgentRuntime[];
   selected: AgentRuntime | null;
   selectedId: string | null;
@@ -30,9 +30,9 @@ export function useRuntimePicker(wsId: string): {
 } {
   const qc = useQueryClient();
 
-  const { data: runtimes = [] } = useQuery({
+  const { data: runtimes = [], isPending } = useQuery({
     ...runtimeListOptions(wsId, "me"),
-    refetchInterval: (q) => (q.state.data?.length ? false : 2000),
+    refetchInterval: (q) => (q.state.data?.some((runtime) => runtime.status === "online") ? false : 2000),
   });
 
   const handleDaemonEvent = useCallback(() => {
@@ -40,14 +40,14 @@ export function useRuntimePicker(wsId: string): {
   }, [qc, wsId]);
   useWSEvent("daemon:register", handleDaemonEvent);
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId || null);
 
   useEffect(() => {
-    if (selectedId) return;
+    if (isPending || (selectedId && runtimes.some((runtime) => runtime.id === selectedId))) return;
     const preferred =
       runtimes.find((r) => r.status === "online") ?? runtimes[0];
     if (preferred) setSelectedId(preferred.id);
-  }, [runtimes, selectedId]);
+  }, [runtimes, selectedId, isPending]);
 
   const selected = runtimes.find((r) => r.id === selectedId) ?? null;
 

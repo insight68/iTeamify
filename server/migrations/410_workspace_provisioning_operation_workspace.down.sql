@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS workspace_provisioning_operation_workspace_idx;

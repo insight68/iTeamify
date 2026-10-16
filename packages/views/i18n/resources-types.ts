@@ -1,4 +1,8 @@
 import "i18next";
+// Pulls in the `ui` namespace augmentation owned by packages/ui — see
+// packages/ui/types/i18next.ts. Side-effect import is required for views'
+// typecheck program to see ui's contribution to `I18nResources`.
+import "@iteamify/ui/i18n-types";
 import type common from "../locales/en/common.json";
 import type auth from "../locales/en/auth.json";
 import type settings from "../locales/en/settings.json";
@@ -20,57 +24,63 @@ import type chat from "../locales/en/chat.json";
 import type modals from "../locales/en/modals.json";
 import type runtimes from "../locales/en/runtimes.json";
 import type layout from "../locales/en/layout.json";
-import type org from "../locales/en/org.json";
-import type datasources from "../locales/en/datasources.json";
-import type inventory from "../locales/en/inventory.json";
-import type productCategories from "../locales/en/product-categories.json";
-import type supplyReconciliation from "../locales/en/supply-reconciliation.json";
-import type marketing from "../locales/en/marketing.json";
-import type duizhang from "../locales/en/duizhang.json";
-import type workflows from "../locales/en/workflows.json";
+import type usage from "../locales/en/usage.json";
+import type squads from "../locales/en/squads.json";
+import type billing from "../locales/en/billing.json";
+import type connections from "../locales/en/connections.json";
+import type business from "../locales/en/business.json";
+import type knowledge from "../locales/en/knowledge.json";
 
 // Module augmentation enables i18next v26 selector API across the monorepo:
 // `t($ => $.signin.title)` resolves to the value in en/auth.json.
 // Apps don't need to redeclare this — the augmentation is global, pulled
 // into the compilation graph by `use-t.ts`'s side-effect import.
 //
-// Adding a namespace: drop a JSON file under en/ and zh-Hans/, then add
+// Adding a namespace: drop a JSON file under every locale directory, then add
 // the matching `import type` + entry below. Type inference on `t($ => $)`
 // follows automatically.
+//
+// The resource shape lives on a global `I18nResources` interface (not a
+// type literal inside CustomTypeOptions) so other packages can contribute
+// namespaces via declaration merging. See packages/ui/types/i18next.d.ts —
+// it adds the `ui` namespace there, which lets packages/ui typecheck the
+// selector form standalone without depending on @iteamify/views.
+declare global {
+  interface I18nResources {
+    common: typeof common;
+    auth: typeof auth;
+    settings: typeof settings;
+    issues: typeof issues;
+    agents: typeof agents;
+    editor: typeof editor;
+    onboarding: typeof onboarding;
+    invite: typeof invite;
+    labels: typeof labels;
+    members: typeof members;
+    "my-issues": typeof myIssues;
+    search: typeof search;
+    inbox: typeof inbox;
+    workspace: typeof workspace;
+    projects: typeof projects;
+    autopilots: typeof autopilots;
+    skills: typeof skills;
+    chat: typeof chat;
+    modals: typeof modals;
+    runtimes: typeof runtimes;
+    layout: typeof layout;
+    usage: typeof usage;
+    squads: typeof squads;
+    billing: typeof billing;
+    connections: typeof connections;
+    business: typeof business;
+    knowledge: typeof knowledge;
+  }
+}
+
 declare module "i18next" {
   interface CustomTypeOptions {
     defaultNS: "common";
-    resources: {
-      common: typeof common;
-      auth: typeof auth;
-      settings: typeof settings;
-      issues: typeof issues;
-      agents: typeof agents;
-      editor: typeof editor;
-      onboarding: typeof onboarding;
-      invite: typeof invite;
-      labels: typeof labels;
-      members: typeof members;
-      "my-issues": typeof myIssues;
-      search: typeof search;
-      inbox: typeof inbox;
-      workspace: typeof workspace;
-      projects: typeof projects;
-      autopilots: typeof autopilots;
-      skills: typeof skills;
-      chat: typeof chat;
-      modals: typeof modals;
-      runtimes: typeof runtimes;
-      layout: typeof layout;
-      org: typeof org;
-      datasources: typeof datasources;
-      inventory: typeof inventory;
-      "product-categories": typeof productCategories;
-      "supply-reconciliation": typeof supplyReconciliation;
-      marketing: typeof marketing;
-      duizhang: typeof duizhang;
-      workflows: typeof workflows;
-    };
+    resources: I18nResources;
     enableSelector: true;
   }
 }

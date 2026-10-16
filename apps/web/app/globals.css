@@ -1,169 +1,45 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@teamify/ui/styles/tokens.css";
-@import "@teamify/ui/styles/base.css";
+@import "../../../packages/ui/styles/tokens.css";
+@import "../../../packages/ui/styles/base.css";
+@import "./custom.css";
+
 @custom-variant dark (&:is(.dark *));
 
 @source "../../../packages/ui/**/*.{ts,tsx}";
 @source "../../../packages/core/**/*.{ts,tsx}";
 @source "../../../packages/views/**/*.{ts,tsx}";
 
-/* =============================================================================
- * TeamifyWeb — Custom styles (non-shadcn, web-only)
- * Shared styles (shiki, entrance-spin, sidebar, sonner, scrollbar) are in
- * @teamify/ui/styles/base.css
- * ============================================================================= */
+/* Font stack. `--font-inter` is the next/font Inter family (+ its synthetic
+   size-adjusted fallback), set on <html> by inter.variable in app/layout.tsx.
+   We compose `--font-sans` here in static CSS — rather than baking the CJK tail
+   into next/font's `fallback` — so it can be overridden per `<html lang>` and
+   stays CSP-safe (no inline <style>). Tailwind's `font-sans` utility resolves
+   `var(--font-sans)` (see packages/ui/styles/tokens.css `@theme inline`).
 
-/* The landing route tree is intentionally always-light (hero/cli/cloud
- * sections use hardcoded dark/light palettes). Shared components rendered
- * inside (e.g. CloudWaitListExpand on /download) use semantic tokens that
- * otherwise flip to dark values under the `.dark` class set by next-themes,
- * producing a palette mismatch against the hardcoded section. Re-declare
- * tokens to their light values so nested token-driven components stay in
- * lockstep with the surrounding design. */
-.landing-light,
-.landing-light * {
-    color-scheme: light;
-}
-.landing-light {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.141 0.005 285.823);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.141 0.005 285.823);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.141 0.005 285.823);
-    --primary: oklch(0.21 0.006 285.885);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.967 0.001 286.375);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.967 0.001 286.375);
-    --muted-foreground: oklch(0.552 0.016 285.938);
-    --accent: oklch(0.967 0.001 286.375);
-    --accent-foreground: oklch(0.21 0.006 285.885);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.92 0.004 286.32);
-    --input: oklch(0.92 0.004 286.32);
-    --ring: oklch(0.705 0.015 286.067);
-    --brand: oklch(0.55 0.16 255);
-    --brand-foreground: oklch(0.985 0 0);
-    --success: oklch(0.55 0.16 145);
-    --warning: oklch(0.75 0.16 85);
-    --info: oklch(0.55 0.18 250);
-    --scrollbar-thumb: oklch(0 0 0 / 10%);
-    --scrollbar-thumb-hover: oklch(0 0 0 / 18%);
-    --scrollbar-track: transparent;
+   Default (en / zh / ko): Latin chars render with Inter; CJK chars fall through
+   to the platform Chinese fonts, then Korean. Chinese MUST stay before Korean so
+   zh users never get Korean Hanja glyph shapes (Hangul is a separate Unicode
+   block, so ko users still get Korean fonts for Hangul). Kept in sync with
+   apps/desktop/src/renderer/src/globals.css. */
+:root {
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo",
+    "Malgun Gothic", "Noto Sans CJK KR", sans-serif;
 }
 
-
-/* Deep Space landing theme — dark mode with electric cyan brand + amber gold
- * CTA. Overrides all semantic tokens so the entire landing surface renders
- * with deep-space blacks, blue-shifted grays, and sharp cyan/amber accents,
- * regardless of the user's system preference or the .dark class. */
-.landing-deep-space,
-.landing-deep-space * {
-    color-scheme: dark;
-}
-.landing-deep-space {
-    /* Core backgrounds */
-    --background: oklch(0.13 0.02 255);           /* Deep space black */
-    --foreground: oklch(0.92 0.01 255);           /* Cold white */
-
-    /* Card / surface layers */
-    --card: oklch(0.18 0.03 255);                 /* Deep blue-gray */
-    --card-foreground: oklch(0.92 0.01 255);
-    --popover: oklch(0.16 0.03 255);
-    --popover-foreground: oklch(0.92 0.01 255);
-
-    /* Primary action — amber gold for CTAs */
-    --primary: oklch(0.75 0.16 75);               /* Amber gold */
-    --primary-foreground: oklch(0.13 0.02 255);   /* Deep space black */
-
-    /* Muted / secondary surfaces */
-    --secondary: oklch(0.25 0.03 255);
-    --secondary-foreground: oklch(0.92 0.01 255);
-    --muted: oklch(0.22 0.03 255);
-    --muted-foreground: oklch(0.65 0.02 255);
-    --accent: oklch(0.25 0.03 255);
-    --accent-foreground: oklch(0.92 0.01 255);
-
-    /* Brand — electric cyan */
-    --brand: oklch(0.75 0.15 195);                /* Electric cyan */
-    --brand-foreground: oklch(0.13 0.02 255);     /* Deep space black */
-
-    /* Semantic colors */
-    --destructive: oklch(0.65 0.20 25);
-    --success: oklch(0.65 0.15 145);
-    --warning: oklch(0.75 0.16 75);               /* Matches primary */
-    --info: oklch(0.75 0.15 195);                 /* Matches brand */
-
-    /* Borders / inputs / focus */
-    --border: oklch(0.30 0.03 255);
-    --input: oklch(0.30 0.03 255);
-    --ring: oklch(0.75 0.15 195);                 /* Cyan focus ring */
-
-    /* Scrollbar */
-    --scrollbar-thumb: oklch(1 0 0 / 15%);
-    --scrollbar-thumb-hover: oklch(1 0 0 / 25%);
-    --scrollbar-track: transparent;
-
-    /* Sidebar (if ever rendered in landing context) */
-    --sidebar: oklch(0.16 0.03 255);
-    --sidebar-foreground: oklch(0.92 0.01 255);
-    --sidebar-primary: oklch(0.75 0.15 195);
-    --sidebar-primary-foreground: oklch(0.13 0.02 255);
-    --sidebar-accent: oklch(0.25 0.03 255);
-    --sidebar-accent-foreground: oklch(0.92 0.01 255);
-    --sidebar-border: oklch(0.30 0.03 255);
-    --sidebar-ring: oklch(0.75 0.15 195);
-
-    /* Chart — cyan gradient */
-    --chart-1: oklch(0.75 0.15 195);
-    --chart-2: oklch(0.65 0.12 195);
-    --chart-3: oklch(0.55 0.10 195);
-    --chart-4: oklch(0.45 0.06 195);
-    --chart-5: oklch(0.35 0.03 195);
-}
-
-/* Light Tech landing theme — near-white backgrounds with cool blue undertones,
- * vibrant blue-purple brand, and clean card surfaces. Gives a futuristic,
- * polished feel while staying readable and bright. */
-.landing-light-tech,
-.landing-light-tech * {
-    color-scheme: light;
-}
-.landing-light-tech {
-    --background: oklch(0.985 0.002 260);         /* Near-white, cool blue */
-    --foreground: oklch(0.15 0.02 260);           /* Deep navy */
-
-    --card: oklch(1 0 0);                         /* Pure white */
-    --card-foreground: oklch(0.15 0.02 260);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.15 0.02 260);
-
-    --primary: oklch(0.55 0.2 260);               /* Vibrant blue-purple */
-    --primary-foreground: oklch(1 0 0);           /* White on CTA */
-
-    --secondary: oklch(0.95 0.01 260);
-    --secondary-foreground: oklch(0.15 0.02 260);
-    --muted: oklch(0.96 0.005 260);               /* Light gray bg */
-    --muted-foreground: oklch(0.50 0.02 260);     /* Medium gray text */
-    --accent: oklch(0.93 0.02 260);
-    --accent-foreground: oklch(0.15 0.02 260);
-
-    --brand: oklch(0.64 0.15 195);                 /* Teal brand for suanpan */
-    --brand-foreground: oklch(1 0 0);
-
-    --destructive: oklch(0.58 0.22 25);
-    --success: oklch(0.55 0.16 145);
-    --warning: oklch(0.75 0.16 75);
-    --info: oklch(0.55 0.18 250);
-
-    --border: oklch(0.91 0.01 260);               /* Subtle blue-gray */
-    --input: oklch(0.91 0.01 260);
-    --ring: oklch(0.55 0.2 260);
-
-    --scrollbar-thumb: oklch(0 0 0 / 10%);
-    --scrollbar-thumb-hover: oklch(0 0 0 / 18%);
-    --scrollbar-track: transparent;
+/* Japanese: Kanji are Han ideographs sharing the same Unicode block as Chinese,
+   and CSS font-fallback order is NOT affected by `<html lang>` — so the
+   Chinese-first default above would hand Japanese users Chinese glyph shapes
+   for shared ideographs. Promote a Japanese-first CJK chain only for Japanese.
+   `[lang|="ja"]` is the BCP-47 language-range selector: it matches exactly `ja`
+   or `ja-<region>` (layout.tsx emits `ja-JP`), never unrelated 3-letter subtags
+   such as `jam`. Inter still leads for Latin; zh/ko remain as a deep fallback. */
+html[lang|="ja"] {
+  --font-sans: var(--font-inter), "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", "YuGothic", "Meiryo", "Noto Sans CJK JP", "Noto Sans JP",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic",
+    "Noto Sans CJK KR", sans-serif;
 }

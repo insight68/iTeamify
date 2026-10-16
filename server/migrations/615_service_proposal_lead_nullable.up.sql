@@ -1,0 +1,24 @@
+-- A proposal may be attached to a deal that has no acquisition lead.
+--
+-- 602 declared lead_id NOT NULL because every deal came from a lead then: the
+-- only way an opportunity existed was through the lead approval flow, and
+-- lead_opportunity.lead_id was filled in by that flow. That is no longer the
+-- only way. CreateCRMOpportunity inserts a deal scoped to an account and never
+-- writes lead_id at all, and lead_opportunity.lead_id is nullable to allow it.
+-- service_quote.lead_id is nullable for the same reason. service_proposal was
+-- the last table still demanding a lead, so quoting an account-scoped deal
+-- failed with SQLSTATE 23502 (null value in column "lead_id") and surfaced as
+-- an opaque 500 rather than anything the operator could act on.
+--
+-- Nullability here means "this deal's origin is not a lead", not "we forgot to
+-- record it": proposal.account_id, which the create path already requires, is
+-- what identifies the customer. The lead-scoped read paths stay correct without
+-- change -- every one of them LEFT JOINs leads or matches on the pair
+-- (p.lead_id = $1 OR p.account_id = $1), so a NULL simply does not match a lead
+-- filter instead of dropping the row from the customer's list.
+--
+-- The index from 605 (workspace_id, lead_id, updated_at DESC) keeps working:
+-- PostgreSQL indexes NULLs, they are just never matched by an equality lookup.
+-- No backfill is possible or wanted here; there is no lead to recover.
+
+ALTER TABLE service_proposal ALTER COLUMN lead_id DROP NOT NULL;

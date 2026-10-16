@@ -1,0 +1,119 @@
+{
+  "title": "工作区积分",
+  "subtitle": "充值并查看当前工作区拥有的积分。",
+  "access": {
+    "title": "工作区账单",
+    "member_hint": "请联系工作区所有者或管理员充值积分。",
+    "read_only": "仅工作区所有者和管理员可以充值积分。"
+  },
+  "balance": {
+    "title": "余额",
+    "credits_suffix": "积分",
+    "meta": "更新时间：{{updated}}",
+    "negative_hint": "当前工作区已用完可用额度，充值前可能无法开始新任务。",
+    "shared_hint": "当前工作区的所有成员共享此余额。"
+  },
+  "buy": {
+    "title": "购买积分",
+    "no_tiers": "充值暂未开放，请联系管理员。",
+    "tier_money_to_credits": "{{money}} → {{credits}} 积分",
+    "tier_bonus": " + 赠送 {{credits}} 点",
+    "tier_bonus_with_expiry": " + 赠送 {{credits}} 点（{{expiry}}）",
+    "tier_id": "ID：{{id}}",
+    "open_portal": "打开 Stripe 账单管理页面",
+    "portal_hint": "尚未付款的用户通常会收到 400，因为 Stripe 中还没有对应的客户记录。",
+    "toast_no_url": "暂时无法获取付款地址",
+    "toast_checkout_failed": "结账失败",
+    "toast_no_portal_url": "未获取到账单管理地址",
+    "toast_portal_failed": "账单管理页面打开失败",
+    "subtitle": "选择充值金额，所有选项使用相同兑换比例。",
+    "options_label": "充值金额",
+    "one_time": "一次性付款",
+    "same_rate": "统一兑换比例",
+    "redirecting": "正在打开安全支付页面…",
+    "pay_button": "继续支付",
+    "stripe_note": "付款由 Stripe 安全处理。"
+  },
+  "checkout": {
+    "session_label": "结账会话 {{prefix}}…",
+    "loading": "正在加载订单状态…",
+    "fetch_failed": "拉取订单状态失败：{{error}}",
+    "fetch_failed_unknown": "未知错误",
+    "final_status": "最终状态：{{status}}",
+    "polling_status": "正在轮询订单状态…当前：{{status}}",
+    "status_unknown": "未知",
+    "label_order": "订单",
+    "label_tier": "档位",
+    "label_charged": "已收款",
+    "charged_value": "{{money}} · {{credits}} 点",
+    "charged_with_bonus": "{{money}} · {{credits}} 点 + 赠送 {{bonus}} 点",
+    "clear_url": "清除网址中的会话参数",
+    "timeout_title": "付款确认时间较长",
+    "timeout_hint": "付款可能仍在处理中。请先重新查询，不要重复付款。",
+    "processing": "正在确认付款",
+    "status_hint": "Stripe 确认付款后，本页面会自动更新。",
+    "fetch_failed_short": "暂时无法查询这笔付款。",
+    "retry": "重新查询",
+    "dismiss": "知道了"
+  },
+  "transactions": {
+    "title": "流水",
+    "empty": "暂无流水。",
+    "credits_value": "{{value}} 积分",
+    "row_meta": "{{date}} · 余额：{{balance}} 积分 · 关联记录：{{ref}}",
+    "ref_empty": "—",
+    "reference": "关联任务 {{ref}}",
+    "balance_after": "余额 {{balance}}"
+  },
+  "batches": {
+    "title": "额度批次",
+    "empty": "暂无批次。",
+    "remaining_over_total": "{{remaining}} / {{total}} 点",
+    "id_suffix": "{{id}}…",
+    "consumed": "已使用：{{value}} 点",
+    "expires_suffix": " · {{value}} 到期",
+    "never_expires_suffix": " · 永不过期"
+  },
+  "topups": {
+    "title": "充值订单",
+    "empty": "暂无充值订单。",
+    "amount_to_credits": "{{money}} → {{credits}} 积分",
+    "amount_to_credits_with_bonus": "{{money}} → {{credits}} 点 + 赠送 {{bonus}} 点",
+    "row_meta": "{{date}} · Stripe：{{checkout}}",
+    "stripe_empty": "—",
+    "details": "付款详情",
+    "order_reference": "订单 {{ref}}"
+  },
+  "shared": {
+    "request_failed": "请求失败",
+    "refresh": "刷新",
+    "paging": "第 {{page}} / {{totalPages}} 页 · 共 {{total}} 条",
+    "date_dash": "—",
+    "next": "下一页",
+    "previous": "上一页"
+  },
+  "labels": {
+    "pending": "等待付款",
+    "credited": "已到账",
+    "canceled": "已取消",
+    "failed": "失败",
+    "loading": "加载中",
+    "trial": "试用积分",
+    "topup": "充值",
+    "usage": "积分消耗",
+    "adjustment": "人工调整",
+    "unknown": "未知"
+  },
+  "eyebrow": "账单与充值",
+  "trust": {
+    "never_expires": "积分永不过期",
+    "one_time": "一次性付款",
+    "workspace_owned": "工作区成员共享"
+  },
+  "history": {
+    "title": "账务记录",
+    "subtitle": "查看当前工作区的积分变化和充值订单。",
+    "all": "全部记录",
+    "topups": "充值记录"
+  }
+}

@@ -1,13 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { Agent, MemberRole } from "@teamify/core/types";
-import { useWorkspaceId } from "@teamify/core";
-import { agentRunCounts30dOptions } from "@teamify/core/agents";
-import { agentListOptions, memberListOptions } from "@teamify/core/workspace/queries";
-import { useWorkspacePaths } from "@teamify/core/paths";
-import { ActorAvatar as ActorAvatarBase } from "@teamify/ui/components/common/actor-avatar";
-import { Skeleton } from "@teamify/ui/components/ui/skeleton";
+import type { Agent, MemberRole } from "@iteamify/core/types";
+import { useWorkspaceId } from "@iteamify/core";
+import { agentRunCounts30dOptions } from "@iteamify/core/agents";
+import { agentListOptions, memberListOptions } from "@iteamify/core/workspace/queries";
+import { resolvePublicFileUrl } from "@iteamify/core/workspace/avatar-url";
+import { useWorkspacePaths } from "@iteamify/core/paths";
+import { ActorAvatar as ActorAvatarBase } from "@iteamify/ui/components/common/actor-avatar";
+import { Skeleton } from "@iteamify/ui/components/ui/skeleton";
 import { ActorAvatar } from "../common/actor-avatar";
 import { AppLink } from "../navigation";
 import { useT } from "../i18n";
@@ -26,6 +27,7 @@ interface MemberProfileCardProps {
 // and we don't want to fabricate one.
 export function MemberProfileCard({ userId }: MemberProfileCardProps) {
   const { t } = useT("members");
+  const paths = useWorkspacePaths();
   const wsId = useWorkspaceId();
   const { data: members = [], isLoading: membersLoading } = useQuery(
     memberListOptions(wsId),
@@ -80,13 +82,13 @@ export function MemberProfileCard({ userId }: MemberProfileCardProps) {
         <ActorAvatarBase
           name={member.name}
           initials={initials}
-          avatarUrl={member.avatar_url}
-          size={40}
+          avatarUrl={resolvePublicFileUrl(member.avatar_url)}
+          size="xl"
           className="rounded-full"
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <p className="truncate text-sm font-semibold">{member.name}</p>
+            <AppLink href={paths.memberDetail(userId)} className="truncate text-sm font-semibold hover:underline">{member.name || member.email}</AppLink>
             <RoleBadge role={member.role} />
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -139,9 +141,9 @@ function OwnedAgentsSection({ agents }: { agents: Agent[] }) {
             <ActorAvatar
               actorType="agent"
               actorId={a.id}
-              size={20}
+              size="sm"
               showStatusDot
-              className="mt-0.5 shrink-0 rounded-md"
+              className="mt-0.5 shrink-0"
             />
             <div className="min-w-0 flex-1">
               <div className="truncate font-medium">{a.name}</div>

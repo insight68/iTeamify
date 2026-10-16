@@ -6,8 +6,8 @@ import {
   VISIBILITY_DESCRIPTION,
   VISIBILITY_LABEL,
   VISIBILITY_TOOLTIP,
-} from "@teamify/core/agents";
-import type { AgentVisibility } from "@teamify/core/types";
+} from "@iteamify/core/agents";
+import type { AgentVisibility } from "@iteamify/core/types";
 import {
   PickerItem,
   PropertyPicker,

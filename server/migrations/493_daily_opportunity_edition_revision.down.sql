@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS daily_opportunity_edition_revision_idx;

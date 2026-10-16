@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Wrapper around `electron-builder` that keeps the Desktop version in
 // lockstep with the CLI. Both are derived from `git describe --tags
-// --always --dirty` — the same source GoReleaser reads for the CLI
+// --match 'v[0-9]*' --always --dirty` — the same source GoReleaser reads
+// for the CLI
 // binary via the `main.version` ldflag — so a single `vX.Y.Z` tag push
 // produces matching CLI and Desktop versions.
 //
@@ -11,7 +12,7 @@
 // the override applies at build time without mutating the tracked
 // package.json.
 //
-// The electron-vite step is important: electron-builder only packages
+// The Turbo build step is required: electron-builder only packages
 // whatever is already in out/, so skipping it (or relying on stale
 // artifacts from a prior partial build) ships an app with missing
 // renderer code and white-screens on launch.
@@ -21,10 +22,13 @@
 // build, set `CSC_IDENTITY_AUTO_DISCOVERY=false` so electron-builder falls
 // back to an ad-hoc signature instead of requiring a Developer ID cert.
 //
-// The `normalizeGitVersion` helper is exported so tests can cover the
-// version-derivation logic without shelling out.
+// The `normalizeGitVersion`, `deriveVersion`, and `DESCRIBE_ARGS` exports let
+// tests cover version derivation both as a pure string transform and as the
+// real `git describe` invocation against a throwaway repo.
 
-import { execFileSync, spawnSync, execSync } from "node:child_process";
+import { resolveDownloadUrl } from "./distribution.mjs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { rmSync } from "node:fs";
 import { delimiter, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -64,15 +68,24 @@ const ARCH_FLAGS = new Map([
 const SUPPORTED_CLI_ARCHS = new Set(["x64", "arm64"]);
 const MAC_ALL_PLATFORM_TARGETS = [
   { platform: "mac", arch: "arm64" },
+  { platform: "mac", arch: "x64" },
   { platform: "win", arch: "x64" },
   { platform: "win", arch: "arm64" },
   { platform: "linux", arch: "x64" },
   { platform: "linux", arch: "arm64" },
 ];
 
-function sh(cmd) {
+// Run a git subcommand with its arguments handed straight to the binary,
+// never through a shell. A match pattern like `v[0-9]*` must reach git as a
+// single literal argument on every platform. Passing the whole command as a
+// shell string (execSync) is unsafe on Windows: cmd.exe does not strip the
+// POSIX single quotes around 'v[0-9]*', so git receives the quotes verbatim,
+// matches no tag, and the version silently degrades to the 0.0.0-g<hash>
+// fallback — which is exactly how a `0.0.0-…` Windows Desktop build once
+// escaped to a GitHub Release.
+function git(args, cwd = resolve(desktopRoot, "../..")) {
   try {
-    return execSync(cmd, { encoding: "utf-8" }).trim();
+    return execFileSync("git", args, { encoding: "utf-8", cwd }).trim();
   } catch {
     return "";
   }
@@ -98,22 +111,51 @@ export function stripLeadingSeparator(argv) {
  *   - "v0.1.36"                → "0.1.36"
  *   - "v0.1.35-14-gf1415e96"   → "0.1.35-14-gf1415e96"  (semver prerelease)
  *   - "v0.1.35-…-dirty"        → same, dirty suffix preserved
- *   - "f1415e96" (no tag)      → "0.0.0-f1415e96"        (fallback)
+ *   - "f1415e96" (no tag)      → "0.0.0-gf1415e96"       (fallback)
+ *   - "2f24057b" (no tag, hash begins with a digit) → "0.0.0-g2f24057b"
+ *   - "0123456"  (no tag, all-digit hash w/ leading zero) → "0.0.0-g0123456"
  *
  * Leading `v` is stripped so the result is valid semver for package.json.
+ * The fallback matters because a bare commit hash is never valid semver —
+ * even one that happens to start with a digit (e.g. "2f24057b") — and
+ * electron-updater throws on launch if package.json carries such a version.
+ * The hash is prefixed with `g` so the pre-release identifier is always
+ * alphanumeric; a bare all-digit hash with a leading zero (e.g. "0123456")
+ * would otherwise form `0.0.0-0123456`, which is invalid semver.
  */
 export function normalizeGitVersion(raw) {
   if (!raw) return null;
   const stripped = raw.replace(/^v/, "");
-  if (!/^\d/.test(stripped)) {
-    // No reachable tag — `git describe` fell back to just the commit hash.
-    return `0.0.0-${stripped}`;
+  // A real version begins with major.minor.patch. The bare commit hash
+  // that `git describe --always` falls back to (no reachable tag) does not,
+  // so coerce it to a 0.0.0 prerelease rather than passing it through.
+  // Prefix the hash with `g` (mirroring `git describe`'s own `g<hash>`
+  // shorthand) so a hash like "0123456" yields "0.0.0-g0123456" — a single
+  // alphanumeric identifier — instead of the invalid "0.0.0-0123456".
+  if (!/^\d+\.\d+\.\d+/.test(stripped)) {
+    return `0.0.0-g${stripped}`;
   }
   return stripped;
 }
 
-function deriveVersion() {
-  return normalizeGitVersion(sh("git describe --tags --always --dirty"));
+// The exact argv handed to `git describe` for version derivation. Kept as a
+// standalone array — never a shell command string — so the `v[0-9]*` match
+// pattern reaches git as one literal argument regardless of platform (see the
+// git() note above for why a shell string breaks on Windows).
+export const DESCRIBE_ARGS = [
+  "describe",
+  "--tags",
+  "--match",
+  "v[0-9]*",
+  "--always",
+  "--dirty",
+];
+
+// Exported (with an optional cwd) so tests can exercise the real describe
+// invocation against a throwaway repo, not just normalizeGitVersion in
+// isolation — the gap that let the Windows quoting regression through CI.
+export function deriveVersion(cwd) {
+  return normalizeGitVersion(git(DESCRIBE_ARGS, cwd));
 }
 
 function uniqueOrdered(values) {
@@ -135,6 +177,16 @@ export function envWithLocalBins(env = process.env, root = desktopRoot) {
       .filter(Boolean),
   ]).join(delimiter);
   return { ...env, [pathKey]: mergedPath };
+}
+
+export function envForBuilder(env = process.env, root = desktopRoot) {
+  const result = envWithLocalBins(env, root);
+  // Actions supplies absent signing secrets as empty strings. Builder treats
+  // an empty certificate link as the working directory and tries to read it.
+  for (const key of ["CSC_LINK", "WIN_CSC_LINK"]) {
+    if (!result[key]?.trim()) delete result[key];
+  }
+  return result;
 }
 
 function hostPlatformKey(platform = process.platform) {
@@ -299,28 +351,55 @@ export function builderArgsForTarget(
       `-c.directories.output=dist/${target.platform}-${target.arch}`,
     );
   }
-  // electron-builder's update metadata file is `latest.yml` for Windows
-  // regardless of arch (only Linux gets an arch suffix automatically — see
-  // app-builder-lib's getArchPrefixForUpdateFile). Without an explicit
-  // channel override, building Windows x64 and arm64 in two invocations
-  // makes both publish `latest.yml` to the same GitHub Release, so the
-  // second upload overwrites the first and one of the two architectures
-  // ends up with no auto-update metadata. Route Windows arm64 to its own
-  // channel so x64 keeps `latest.yml` and arm64 ships `latest-arm64.yml`;
-  // the renderer-side updater pins the matching channel per arch.
+  // electron-builder only adds an architecture suffix to Linux update
+  // metadata. Windows x64/arm64 would both publish `latest.yml`, while macOS
+  // arm64/x64 would both publish `latest-mac.yml`. Keep the established x64
+  // Windows and arm64 macOS feeds unchanged for installed clients, and route
+  // the additional architectures to explicit channels. updater.ts pins the
+  // matching channel at runtime.
   if (target.platform === "win" && target.arch === "arm64") {
     builderArgs.push("-c.publish.channel=latest-arm64");
+  }
+  if (target.platform === "mac" && target.arch === "x64") {
+    builderArgs.push("-c.publish.channel=latest-x64");
   }
   return builderArgs;
 }
 
+export function configurePublication(builderArgs, downloadUrl) {
+  const args = builderArgs.filter((arg) => !arg.startsWith("-c.publish.") ||
+    (!!downloadUrl && arg.startsWith("-c.publish.channel=")));
+  if (downloadUrl) {
+    args.push("-c.publish.provider=generic", `-c.publish.url=${downloadUrl}`);
+    if (!args.some((arg) => arg.startsWith("-c.publish.channel="))) {
+      args.push("-c.publish.channel=latest");
+    }
+  }
+  return args;
+}
+
 function main() {
+  const downloadUrl = resolveDownloadUrl();
+  if (process.argv.some((arg) => arg === "always" || arg === "onTag" || arg === "onTagOrDraft")) {
+    throw new Error("[package] build with --publish never, verify every target, then publish artifacts together");
+  }
   const passthrough = stripLeadingSeparator(process.argv.slice(2));
   const parsed = parsePackageArgs(passthrough);
   const buildMatrix = resolveBuildMatrix(parsed);
   console.log(
     `[package] build matrix → ${buildMatrix.map(formatTarget).join(", ")}`,
   );
+
+  // Step 0: start every release from an empty output directory. Stale
+  // artifacts from a prior run would otherwise be repacked into this run's
+  // app.asar (see the `!dist/**` note in electron-builder.yml). This clean
+  // is belt-and-braces only — it does NOT by itself prevent the same-run
+  // cross-arch contamination that broke the Intel DMG, because the first
+  // arch writes into dist/ mid-run before the next arch is packaged; the
+  // `!dist/**` files exclusion is what actually guarantees isolation.
+  const distDir = resolve(desktopRoot, "dist");
+  rmSync(distDir, { recursive: true, force: true });
+  console.log(`[package] cleaned output dir → ${distDir}`);
 
   // Step 1: build the Electron main/preload/renderer bundles. Without
   // this step electron-builder silently packages whatever is already in
@@ -330,21 +409,21 @@ function main() {
   // CI invokes this script via `node scripts/package.mjs`, so we cannot
   // rely on pnpm/npm to inject package-local binaries into PATH.
   //
-  // `shell: true` is required on Windows: `node_modules/.bin/electron-vite`
-  // ships as a `.cmd` shim there, and Node's `spawnSync` does not honour
+  // `shell: true` is required on Windows: pnpm is installed as a .cmd shim
+  // there, and Node's `spawnSync` does not honour
   // PATHEXT when spawning a bare command without a shell — it would fail
   // with `ENOENT`. On POSIX hosts the shim is a real executable so going
   // through the shell is harmless. See
   // https://nodejs.org/api/child_process.html#spawning-bat-and-cmd-files-on-windows
-  const viteResult = spawnSync("electron-vite", ["build"], {
+  const viteResult = spawnSync("pnpm", ["exec", "turbo", "build", "--filter=@iteamify/desktop"], {
     stdio: "inherit",
-    cwd: desktopRoot,
+    cwd: resolve(desktopRoot, "../.."),
     env: envWithLocalBins(),
     shell: true,
   });
   if (viteResult.error) {
     console.error(
-      "[package] failed to spawn electron-vite:",
+      "[package] failed to run renderer build:",
       viteResult.error.message,
     );
     process.exit(1);
@@ -354,7 +433,7 @@ function main() {
   }
 
   // Step 2: derive the version that should be written into the app.
-  const version = deriveVersion();
+  const version = process.env.DESKTOP_BUILD_VERSION?.replace(/^v/, "") || deriveVersion();
   if (version) {
     console.log(`[package] Desktop version → ${version} (from git describe)`);
   } else {
@@ -363,6 +442,11 @@ function main() {
     );
   }
 
+  if (process.env.DESKTOP_RELEASE_SIGNING === "required" && buildMatrix.some((target) => target.platform === "mac")) {
+    for (const key of ["CSC_LINK", "CSC_KEY_PASSWORD", "APPLE_ID", "APPLE_APP_SPECIFIC_PASSWORD", "APPLE_TEAM_ID"]) {
+      if (!process.env[key]) throw new Error(`[package] signed macOS release requires ${key}`);
+    }
+  }
   const disableMacNotarize = !process.env.APPLE_TEAM_ID;
   if (disableMacNotarize) {
     console.warn(
@@ -378,7 +462,7 @@ function main() {
   for (const target of buildMatrix) {
     console.log(`[package] bundling CLI → ${formatTarget(target)}`);
     execFileSync(
-      "node",
+      process.execPath,
       [
         bundleCliScript,
         "--target-platform",
@@ -389,14 +473,17 @@ function main() {
       {
         stdio: "inherit",
         cwd: desktopRoot,
+        env: { ...process.env, ...(version ? { DESKTOP_BUILD_VERSION: version } : {}) },
       },
     );
 
-    const builderArgs = builderArgsForTarget(target, parsed, version, {
+    const builderArgs = configurePublication(builderArgsForTarget(target, parsed, version, {
       disableMacNotarize,
       hostPlatform: process.platform,
       useScopedOutputDir,
-    });
+    }), downloadUrl);
+
+    if (process.env.DESKTOP_RELEASE_SIGNING === "required") builderArgs.push("-c.forceCodeSigning=true");
 
     // Step 4: invoke electron-builder for the current target only.
     // `shell: true` for the same Windows `.cmd` shim reason as the
@@ -404,7 +491,7 @@ function main() {
     const result = spawnSync("electron-builder", builderArgs, {
       stdio: "inherit",
       cwd: desktopRoot,
-      env: envWithLocalBins(),
+      env: envForBuilder(),
       shell: true,
     });
 

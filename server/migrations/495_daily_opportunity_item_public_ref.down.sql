@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS daily_opportunity_item_public_ref_idx;

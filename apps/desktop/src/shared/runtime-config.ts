@@ -13,21 +13,13 @@ export type RuntimeConfigResult =
   | { ok: true; config: RuntimeConfig }
   | { ok: false; error: RuntimeConfigError };
 
-// Production defaults baked into the packaged desktop app. Operators can
-// override per-install via `desktop.json` (see `runtime-config-loader.ts`).
-// The cloud host is a single domain (no `api.` subdomain), so apiUrl and
-// appUrl are identical here — the `deriveAppUrl` `api.` stripping heuristic
-// is a no-op on it.
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = Object.freeze({
   schemaVersion: 1,
-  apiUrl: "https://pub.niuwoai.com",
-  wsUrl: "wss://pub.niuwoai.com/ws",
-  appUrl: "https://pub.niuwoai.com",
+  apiUrl: "https://api.aurocreator.com",
+  wsUrl: "wss://api.aurocreator.com/ws",
+  appUrl: "https://aurocreator.com",
 });
 
-// Dev fallback used by `runtimeConfigFromDevEnv` when VITE_API_URL is unset
-// or points at localhost: the renderer is served from a separate dev port
-// (3000) so the appUrl cannot be derived from the api host.
 const LOCAL_DEV_RUNTIME_CONFIG: RuntimeConfig = Object.freeze({
   schemaVersion: 1,
   apiUrl: "http://localhost:8080",
@@ -101,8 +93,8 @@ export function deriveWsUrl(apiUrl: string): string {
   return trimTrailingSlash(url.toString());
 }
 
-// Convention: api hosts are exposed at `api.<web-host>` (api.teamify.world →
-// teamify.world, api.test.teamify.world → test.teamify.world). Strip the leading
+// Convention: api hosts are exposed at `api.<web-host>` (api.aurocreator.com →
+// aurocreator.com, api.test.aurocreator.com → test.aurocreator.com). Strip the leading
 // `api.` label so a single `apiUrl` configuration produces the right
 // shareable web URL. Hosts that don't match the convention (no leading
 // `api.` label, or short two-label hosts like `api.local`) fall through

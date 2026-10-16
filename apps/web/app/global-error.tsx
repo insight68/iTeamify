@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
+import { captureException } from "@iteamify/core/analytics";
 
 /**
- * Root-level error boundary. Next.js renders this only when the root layout
- * itself throws — it replaces the entire document, so it must render its own
- * <html>/<body> and cannot rely on providers, fonts, or theme. Keep it
- * dependency-free and self-contained.
+ * Route-level error boundary for the web app. Next.js renders this (replacing
+ * the root layout) when an error escapes everything below it — the full-page
+ * white-screen case. React catches these before they reach window.onerror, so
+ * posthog-js's automatic exception capture never sees them; we report them
+ * explicitly here. Section-level failures are handled in place by
+ * `@iteamify/ui` ErrorBoundary and don't reach this far.
  */
 export default function GlobalError({
   error,
@@ -16,58 +19,39 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Best-effort telemetry. Analytics may not be initialised this early —
-    // captureException buffers pre-init, and a failure here must never mask
-    // the original error.
-    void import("@teamify/core/analytics")
-      .then(({ captureException }) =>
-        captureException(error, {
-          source: "web-global-error",
-          digest: error.digest,
-        }),
-      )
-      .catch(() => {});
+    captureException(error, { source: "global-error", digest: error.digest });
   }, [error]);
 
   return (
-    <html lang="en">
+    <html>
       <body
         style={{
-          margin: 0,
-          minHeight: "100vh",
           display: "flex",
-          flexDirection: "column",
+          minHeight: "100vh",
           alignItems: "center",
           justifyContent: "center",
-          gap: "1rem",
-          padding: "4rem 1.5rem",
-          textAlign: "center",
-          fontFamily:
-            "system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
-          background: "#ffffff",
-          color: "#0a0a0a",
+          fontFamily: "system-ui, sans-serif",
         }}
       >
-        <h1 style={{ fontSize: "1.125rem", fontWeight: 600, margin: 0 }}>
-          Something went wrong.
-        </h1>
-        <p style={{ maxWidth: "28rem", fontSize: "0.875rem", color: "#666" }}>
-          {error.message || "An unexpected error occurred."}
-        </p>
-        <button
-          onClick={reset}
-          style={{
-            marginTop: "0.5rem",
-            padding: "0.5rem 1rem",
-            fontSize: "0.875rem",
-            borderRadius: "0.375rem",
-            border: "1px solid #d4d4d4",
-            background: "transparent",
-            cursor: "pointer",
-          }}
-        >
-          Try again
-        </button>
+        <div style={{ maxWidth: 420, textAlign: "center" }}>
+          <h1 style={{ fontSize: 18, fontWeight: 600 }}>Something went wrong</h1>
+          <p style={{ marginTop: 8, color: "#666" }}>
+            The page hit an unexpected error. Try reloading.
+          </p>
+          <button
+            type="button"
+            onClick={reset}
+            style={{
+              marginTop: 16,
+              padding: "8px 16px",
+              borderRadius: 6,
+              border: "1px solid #ccc",
+              cursor: "pointer",
+            }}
+          >
+            Reload
+          </button>
+        </div>
       </body>
     </html>
   );

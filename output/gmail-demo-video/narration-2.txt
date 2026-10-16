@@ -1,0 +1,1 @@
+Selecting Add Gmail account opens Google authorization. The current application requests read-only Gmail access. Google identifies the application as Aurocreator.

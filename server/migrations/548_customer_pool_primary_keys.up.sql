@@ -1,0 +1,8 @@
+ALTER TABLE customer_pool_company ADD CONSTRAINT customer_pool_company_pkey PRIMARY KEY USING INDEX customer_pool_company_id_idx;
+ALTER TABLE customer_pool_contact ADD CONSTRAINT customer_pool_contact_pkey PRIMARY KEY USING INDEX customer_pool_contact_id_idx;
+ALTER TABLE customer_pool_source ADD CONSTRAINT customer_pool_source_pkey PRIMARY KEY USING INDEX customer_pool_source_id_idx;
+ALTER TABLE customer_pool_source_record ADD CONSTRAINT customer_pool_source_record_pkey PRIMARY KEY USING INDEX customer_pool_source_record_id_idx;
+ALTER TABLE customer_pool_request ADD CONSTRAINT customer_pool_request_pkey PRIMARY KEY USING INDEX customer_pool_request_id_idx;
+ALTER TABLE customer_pool_request_item ADD CONSTRAINT customer_pool_request_item_pkey PRIMARY KEY USING INDEX customer_pool_request_item_id_idx;
+ALTER TABLE customer_pool_provider_call ADD CONSTRAINT customer_pool_provider_call_pkey PRIMARY KEY USING INDEX customer_pool_provider_call_id_idx;
+ALTER TABLE customer_pool_event ADD CONSTRAINT customer_pool_event_pkey PRIMARY KEY USING INDEX customer_pool_event_id_idx;

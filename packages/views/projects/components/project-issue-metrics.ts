@@ -1,4 +1,4 @@
-import type { Project } from "@teamify/core/types";
+import type { Project } from "@iteamify/core/types";
 
 export function getProjectIssueMetrics(
   project: Pick<Project, "issue_count" | "done_count">,

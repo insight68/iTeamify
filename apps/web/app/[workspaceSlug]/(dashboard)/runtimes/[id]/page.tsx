@@ -1,8 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { OwnerGuard } from "@teamify/views/layout";
-import { RuntimeDetailPage } from "@teamify/views/runtimes";
+import { RuntimeDetailPage } from "@iteamify/views/runtimes";
 
 export default function RuntimeDetailRoute({
   params,
@@ -10,9 +9,5 @@ export default function RuntimeDetailRoute({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  return (
-    <OwnerGuard>
-      <RuntimeDetailPage runtimeId={id} />
-    </OwnerGuard>
-  );
+  return <RuntimeDetailPage runtimeId={id} />;
 }

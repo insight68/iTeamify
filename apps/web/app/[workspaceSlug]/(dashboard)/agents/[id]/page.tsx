@@ -1,8 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { OwnerGuard } from "@teamify/views/layout";
-import { AgentDetailPage } from "@teamify/views/agents";
+import { AgentDetailPage } from "@iteamify/views/agents";
 
 export default function AgentDetailRoute({
   params,
@@ -10,9 +9,5 @@ export default function AgentDetailRoute({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  return (
-    <OwnerGuard>
-      <AgentDetailPage agentId={id} />
-    </OwnerGuard>
-  );
+  return <AgentDetailPage agentId={id} />;
 }

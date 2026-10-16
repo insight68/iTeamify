@@ -1,20 +1,26 @@
 {
   "step_header": {
-    "step_of": "第 {{current}} 步 / 共 {{total}} 步"
+    "step_of": "第 {{current}} 步 / 共 {{total}} 步",
+    "labels": {
+      "profile": "完善个人信息",
+      "workspace": "设置工作区",
+      "assistant": "准备智能体",
+      "task": "开始第一个任务"
+    }
   },
   "welcome": {
-    "wordmark": "欢迎使用 Teamify",
+    "wordmark": "欢迎使用 iteamify",
     "headline_line1": "你的 AI 队友，",
     "headline_line2": "在",
     "headline_emphasis": "同一个工作区。",
-    "lede": "像分配给同事一样把 task 交给它们——它们会接手、推进状态、完成后留下评论。",
-    "lede_web": "桌面端自带运行时，无需安装。在 web 端继续可以连接你自己的 CLI。",
-    "lede_desktop": "完成本流程后，真实的智能体会回复你创建的第一个事项。",
+    "lede": "像给同事安排工作一样，把任务交给 AI 队友。它们会接手任务、更新进度，并在完成后留下说明。",
+    "lede_web": "桌面版自带运行环境，无需额外安装；继续使用网页版，也可以连接自己的命令行工具。",
+    "lede_desktop": "完成设置后，真实的智能体会回复你创建的第一个事项。",
     "download_desktop": "下载桌面端",
-    "continue_on_web": "在 web 端继续",
+    "continue_on_web": "继续使用网页版",
     "start_exploring": "开始探索",
     "skip_existing": "我之前做过了",
-    "illustration_caption": "每个事项、每条对话、每个决策——团队和智能体共享同一份上下文。",
+    "illustration_caption": "每个事项、每段对话、每项决策，都由团队与智能体共享同一份上下文。",
     "illustration": {
       "card1_actor_name": "你",
       "card1_actor_initial": "N",
@@ -23,7 +29,7 @@
       "card1_mention_content": "@内容智能体",
       "card1_mention_research": "@研究智能体",
       "card2_actor_name": "内容智能体",
-      "card2_body": "好的，正在拉取研究智能体的引述，围绕\"节省的时间\"展开...",
+      "card2_body": "好的，正在拉取研究智能体的引述，围绕“节省的时间”展开…",
       "card3_actor_name": "研究智能体",
       "card3_body": "本周用户访谈整理完成 —— 12 通电话、4 个反复出现的主题、3 段可引用语。",
       "card3_timestamp": "15 分钟前",
@@ -38,73 +44,99 @@
   },
   "common": {
     "back": "返回",
-    "continue": "继续"
+    "continue": "继续",
+    "skip": "跳过",
+    "cancel": "取消",
+    "close": "关闭",
+    "later": "稍后填写",
+    "optional": "可选"
   },
-  "questionnaire": {
-    "eyebrow": "开始之前",
-    "headline": "三个问题，更了解你。",
-    "q1_question": "谁会用这个工作区？",
-    "q1_solo": "只有我自己",
-    "q1_team": "我的团队（2–10 人）",
-    "q1_other_placeholder": "例如：我维护的一个小社区",
-    "q2_question": "哪个最贴近你？",
-    "q2_developer": "软件开发者",
-    "q2_product_lead": "产品或项目负责人",
-    "q2_writer": "写作者或内容创作者",
-    "q2_founder": "创始人或运营",
-    "q2_other_placeholder": "例如：研究员、设计师、运营负责人",
-    "q3_question": "你想用 Teamify做什么？",
-    "q3_coding": "写代码、发版",
-    "q3_planning": "规划和管理项目",
-    "q3_writing_research": "研究或写作",
-    "q3_explore": "暂时只是探索",
-    "q3_other_placeholder": "例如：自动化每周报告",
-    "answered_progress": "已回答 {{count}} / 3",
-    "why_eyebrow": "为什么是三问",
-    "why_headline": "让你一上手就能跑。",
-    "what_eyebrow": "你会得到",
-    "unlock_starter_title": "为你定制的入门项目",
-    "unlock_starter_body": "根据你的回答生成的\"上手清单\"。",
-    "unlock_agents_title": "智能体抢跑",
-    "unlock_agents_body": "连接一个运行时，按你的角色挑选模板 —— 顺手把第一个 task 也写好。",
-    "learn_more": "了解智能体怎么工作 →"
+  "source_backfill": {
+    "eyebrow": "顺便问一句",
+    "lede": "一个小问题——能帮我们更了解像你一样的用户。答完立刻回到你正在做的事。",
+    "submit": "提交",
+    "hint_ready": "看起来不错，准备好就点提交。"
+  },
+  "questions": {
+    "eyebrow_about_you": "完善个人信息",
+    "about_you": {
+      "question": "简单介绍一下你自己。",
+      "description": "把任务交给 AI 智能体，在工作区查看进度。填写角色和使用目的，让助手提供适合你的建议；也可以稍后填写。",
+      "role_hint": "选择一个角色 · 选填",
+      "use_case_hint": "可以选择多个使用目的 · 选填"
+    },
+    "source": {
+      "question": "你是从哪里了解到 iteamify 的？",
+      "friends_colleagues": "朋友或同事",
+      "search": "Google / 搜索",
+      "social_x": "X / Twitter",
+      "social_linkedin": "LinkedIn",
+      "social_youtube": "YouTube",
+      "social_github": "GitHub",
+      "social_misc": "其他社区",
+      "blog_newsletter": "博客 / 电子报",
+      "ai_assistant": "ChatGPT / Claude / Cursor 推荐",
+      "from_work": "工作场景接触到",
+      "event_conference": "线下活动 / 行业会议",
+      "dont_remember": "想不起来了",
+      "other": "其他",
+      "other_placeholder": "例如：一档播客"
+    },
+    "role": {
+      "question": "你是什么角色？",
+      "engineer": "工程师 / 开发者",
+      "product": "产品经理",
+      "designer": "设计师",
+      "founder": "创始人 / 高管",
+      "marketing": "市场 / 增长",
+      "writer": "写作 / 内容",
+      "research": "研究员 / 分析师",
+      "ops": "运营 / 项目管理",
+      "student": "学生 / 个人使用",
+      "other": "其他",
+      "other_placeholder": "例如：教师、支持负责人"
+    },
+    "use_case": {
+      "question": "你打算用 iteamify 做什么？",
+      "ship_code": "让 AI 智能体帮我写代码",
+      "manage_team": "给团队做任务管理",
+      "personal_tasks": "管理我自己的任务",
+      "plan_research": "计划、头脑风暴、调研",
+      "write_publish": "写作、编辑、发布",
+      "automate_ops": "自动化日常运营",
+      "evaluate": "先逛逛看看",
+      "other": "其他",
+      "other_placeholder": "例如：协调学习小组"
+    }
   },
   "option_card": {
     "other_label": "其他",
     "other_aria": "描述其他选项"
   },
+  "step_question": {
+    "hint_pick": "可以填写其中一项，也可以稍后填写。",
+    "hint_continue": "可以了。准备好就点继续。"
+  },
   "runtime_aside": {
-    "what_eyebrow": "什么是运行时？",
-    "what_prefix": "",
-    "what_term": "运行时",
-    "what_suffix": "是守护进程和一款 AI 编程工具（Claude Code、Codex 等）的组合——一台机器装了多款工具就会出现多个运行时。它代替智能体执行接到的 task。",
+    "what_eyebrow": "什么是运行环境？",
+    "what_prefix": "你连接的“电脑”，在 iteamify 中称为",
+    "what_term": "运行环境",
+    "what_suffix": "。它由电脑上的 iteamify 后台服务和一款 AI 编程工具（如 Claude Code、Codex）组成，负责替智能体执行收到的任务。",
     "good_eyebrow": "需要知道",
     "swap_title": "随时切换",
-    "swap_body": "每个智能体的运行时只是一个设置。想换就换。",
+    "swap_body": "运行环境只是智能体的一项设置，可以随时更换。",
     "add_more_title": "之后再加",
-    "add_more_body": "可以在另一台机器上连接第二个运行时给团队用，或每个智能体配一个专用运行时。",
-    "learn_more": "了解运行时 →"
+    "add_more_body": "可以为团队再连接一台电脑，或给每个智能体一台专属电脑。"
   },
   "cli_install": {
     "copy_aria": "复制",
-    "intro": "守护进程需要本机有一个 AI 编程工具（Claude Code、Codex、Cursor 等）才能执行真实工作。也支持服务器和远程开发机。",
-    "step1_label": "安装 TeamifyCLI",
-    "step2_label": "启动守护进程"
-  },
-  "starter_content": {
-    "title": "欢迎 —— 要不要添加入门 task？",
-    "description_prefix": "一个 ",
-    "description_term": "上手指南",
-    "description_suffix": " 项目，包含若干简短 task，带你了解 Teamify中的智能体、事项和上下文是怎么工作的。",
-    "dismiss_action": "从空白工作区开始",
-    "import_action": "添加入门 task",
-    "success_toast": "入门 task 已添加，看一下侧边栏",
-    "import_failed": "导入失败，请重试",
-    "dismiss_failed": "跳过失败，请重试"
+    "intro": "要让智能体在这台电脑上执行任务，请先安装一款受支持的 AI 编程工具（如 Claude Code、Codex 或 Cursor），再连接 iteamify。服务器和远程开发机同样支持。",
+    "step1_label": "安装 iteamify CLI",
+    "step2_label": "启动后台服务"
   },
   "cloud_waitlist": {
-    "intro_main": "云运行时尚未上线。留下邮箱，上线时通过邮件通知你。",
-    "intro_warning": "提示：没有运行时，智能体无法执行 task —— 如果现在跳过，工作区会是只读状态，直到你回来安装一个。",
+    "intro_main": "云端运行环境尚未上线。留下邮箱，上线后我们会通知你。",
+    "intro_warning": "没有运行环境，智能体就无法执行任务。如果现在跳过，工作区将保持只读，直到你回来连接运行环境。",
     "email_label": "邮箱",
     "email_placeholder": "you@work.com",
     "reason_label": "为什么选择云？",
@@ -112,88 +144,91 @@
     "reason_placeholder": "例如：希望智能体 24/7 运行，或团队在不同设备协作。",
     "join": "加入候补",
     "on_list": "已在候补名单",
-    "success_toast": "已加入候补名单。云运行时上线时会通过邮件通知你。",
+    "success_toast": "已加入候补名单。云运行环境上线时会通过邮件通知你。",
     "failed_toast": "加入候补名单失败"
   },
-  "first_issue": {
-    "error_title": "出错了",
+  "welcome_after_onboarding": {
+    "loading_helper": "正在为你准备 iteamify Helper……",
+    "error_title": "准备失败",
+    "error_generic": "出了点问题，请重试。",
     "retry": "重试",
-    "retry_failed": "重试失败",
-    "finishing": "即将完成",
-    "opening": "马上就好 —— 正在打开你的工作区。"
-  },
-  "step_agent": {
-    "eyebrow": "你的第一个智能体",
-    "headline": "和你的第一位队友打个招呼。",
-    "lede_prefix": "根据你的回答，推荐的是 ",
-    "lede_suffix": "。从这四个模板里挑一个最贴你的——每个模板都开箱即用，可以立刻接事项。之后可以在智能体设置页里再调整指令。",
-    "footer_hint": "一个智能体足够上手了。之后可以从侧边栏添加更多。",
-    "create_action": "创建 {{name}}",
-    "create_failed": "创建智能体失败",
-    "recommended_badge": "推荐",
-    "templates": {
-      "coding": {
-        "label": "编码智能体",
-        "blurb": "写代码、重构、发版。会读你的仓库。",
-        "instructions": "你是产品团队里的编码智能体。负责接编码相关的事项 —— 实现功能、修 bug、写测试、提 PR。开工前先读一下仓库，遵循已有的代码规范，保持 diff 聚焦。验收标准模糊时主动问清楚。"
+    "dismiss_error": "知道了",
+    "error_close": "关闭",
+    "user_context_heading": "关于我",
+    "user_context_role_label": "角色",
+    "user_context_use_case_label": "想用 iteamify 做",
+    "runtime": {
+      "greeting": "你好，欢迎使用 iteamify",
+      "subtitle": "我是你的第一个智能体助手。",
+      "capabilities": "你可以询问任何 iteamify 使用问题，也可以让我在工作区中完成任务，例如创建事项、设置定时任务或新建智能体。",
+      "section_label": "选择一个或多个任务，让我开始处理：",
+      "assign_empty": "选一个或多个",
+      "assign_count": "分配 {{count}} 个任务给我 →",
+      "assign_count_plural": "分配 {{count}} 个任务给我 →",
+      "cards": {
+        "intro": {
+          "subtitle": "用一两段话说明 iteamify 是什么、能做什么。"
+        },
+        "tour": {
+          "subtitle": "带你了解事项、智能体、小队和自动化如何协同。"
+        },
+        "welcome_page": {
+          "subtitle": "我用单文件 HTML 演示稿介绍 iteamify 能为你做什么，按你的角色定制，复制下来双击就能在浏览器里打开。"
+        }
       },
-      "planning": {
-        "label": "规划智能体",
-        "blurb": "拆解工作、写规格、维护看板。",
-        "instructions": "你是规划智能体。把零散的想法和开放事项转化成范围清晰、可立即执行的工作：拆成子任务、写验收标准、提出负责人和先后顺序。清晰优先于速度。缺少上下文时提一个具体问题，不要猜。"
-      },
-      "writing": {
-        "label": "写作智能体",
-        "blurb": "起草、摘要、调研。擅长长文。",
-        "instructions": "你是写作智能体。负责起草文档、总结长文，必要时上网调研主题。输出要做成读者可以直接用的成文 —— 不是大纲。引用资料时注明来源。语气和事项中用户的语气保持一致。"
-      },
-      "assistant": {
-        "label": "通用助手",
-        "blurb": "通用型。任务不明确时的默认选择。",
-        "instructions": "你是一名通用型队友。处理各种任务 —— 轻度编码、写作、调研、规划 —— 对范围保持务实。任务模糊时先问一个澄清性问题再开工。默认输出简短有用，而不是详尽冗长。"
+      "success": {
+        "title": "都搞定了！",
+        "subtitle": "稍作等待，你的 {{agentName}} 正在为你工作 ☕",
+        "tip_inbox": "它有进展时，你能在「收件箱」收到通知。",
+        "tip_chat": "想直接聊聊？点右下角的对话气泡就行。",
+        "got_it": "知道了 →"
       }
     },
-    "about_eyebrow": "什么是智能体",
-    "about_headline": "住在你工作区里的 AI 队友。",
-    "about_body": "智能体会出现在每个负责人选择器里，就像任何同事一样 —— 区别是它们可以 24/7 在你指定的运行时上工作。",
-    "ways_eyebrow": "和智能体协作的方式",
-    "way_assign_title": "分配事项",
-    "way_assign_body": "它会接下任务，并在评论里反馈进展。",
-    "way_mention_title": "在评论中 @提及",
-    "way_mention_body": "把它拉进对话，给个快速反馈。",
-    "way_chat_title": "一对一聊天",
-    "way_chat_body": "无需创建事项，直接问快速问题。",
-    "way_autopilot_title": "交给自动化",
-    "way_autopilot_body": "按周期跑：每日整理、每周摘要、每月审计。",
-    "add_more_hint": "随时添加更多智能体。一支专长各异的小团队胜过一个万能选手。",
-    "docs_link": "创建第一个智能体 →"
+    "skip": {
+      "loading": "正在为你准备工作区……",
+      "title": "欢迎来到 iteamify！",
+      "subtitle": "我们为你创建了两个入门事项，方便你继续完成设置。",
+      "got_it": "知道了",
+      "status_in_progress": "进行中",
+      "status_todo": "待办",
+      "cards": {
+        "install_runtime": {
+          "title": "连接一个运行环境",
+          "subtitle": "安装 Codex 或 Kimi 让智能体上线。"
+        },
+        "create_agent": {
+          "title": "创建你的第一个智能体",
+          "subtitle": "运行环境上线后，把第一个智能体建出来。"
+        }
+      }
+    }
   },
   "step_workspace": {
     "eyebrow_first": "你的第一个工作区",
     "eyebrow_resume": "继续，或重新开始",
-    "headline_first": "给工作区起个名字。",
+    "headline_first": "给你的工作起个名字。",
     "headline_resume": "继续 {{name}}，或新建一个。",
     "lede_first": "工作区是事项、智能体和项目所在的地方。之后可以邀请同事，或再开一个工作区。",
     "lede_resume": "用已有的工作区继续，或在它旁边再建一个新的 —— 你可以加入任意多个工作区。",
     "name_label": "工作区名称",
-    "name_placeholder": "Acme Inc、我的实验室、副业...",
-    "url_label": "URL",
+    "name_placeholder": "Acme Inc、我的实验室、副业…",
+    "url_label": "工作区地址 · 修改",
     "slug_placeholder": "acme",
     "issue_prefix_label": "事项前缀",
     "issue_prefix_prefix": "事项编号会形如 ",
     "issue_prefix_suffix": "。之后可以在设置里修改。",
     "create_new_title": "创建一个新工作区",
     "create_new_subtitle": "重新开始 —— 给工作的另一面留一个独立空间。",
-    "hint_opening": "正在打开 {{name}}。",
-    "hint_creating": "正在创建 {{name}}。",
-    "hint_creating_pending": "正在创建 {{name}}...",
+    "hint_opening": "将使用 {{name}}。",
+    "hint_creating": "将创建 {{name}}。",
+    "hint_creating_pending": "正在创建 {{name}}…",
     "hint_creating_fallback": "你的工作区",
     "hint_name_first": "先给工作区起个名字才能创建。",
     "hint_pick": "选择你的工作区或开一个新的。",
-    "cta_open": "打开 {{name}}",
-    "cta_create_named": "创建 {{name}}",
-    "cta_create_workspace": "创建工作区",
-    "cta_creating": "创建中...",
+    "cta_open": "使用 {{name}}",
+    "cta_create_named": "创建 {{name}} 并继续",
+    "cta_create_workspace": "创建并继续",
+    "cta_creating": "创建中…",
     "slug_format_error": "只能包含小写字母、数字和连字符",
     "slug_taken_error": "该工作区 URL 已被占用。",
     "slug_reserved_error": "该工作区 URL 是系统保留的，无法使用。",
@@ -205,101 +240,147 @@
     "side_next_eyebrow": "接下来",
     "side_preview_name": "你的工作区",
     "side_preview_slug": "workspace",
-    "perk_assign": "像分配给同事一样把事项分配给智能体",
-    "perk_chat": "无需创建事项，直接和任意智能体对话",
+    "perk_assign": "像给同事安排工作一样，把事项分配给智能体",
+    "perk_chat": "无需创建事项，直接与任意智能体对话",
     "perk_invite": "邀请同事 —— 他们只会看到这个工作区",
     "perk_switch": "随时从左上角切换到其他工作区",
-    "next_runtime": "连接一个运行时，给智能体一个跑的地方",
-    "next_agent": "创建符合你角色的第一个智能体",
-    "next_starter": "看它接下入门 task 并回复",
+    "next_runtime": "连接一台电脑，为智能体提供运行环境",
+    "next_agent": "使用已连接的运行环境创建 iteamify Helper",
+    "next_starter": "提交第一个任务，查看智能体执行进度",
     "preview": {
       "inbox_label": "收件箱",
       "inbox_meta": "你的通知",
       "issues_label": "事项",
-      "issues_meta": "共享任务面板",
+      "issues_meta": "共享工作面板",
       "agents_label": "智能体",
       "agents_meta": "你的 AI 队友",
       "projects_label": "项目",
-      "projects_meta": "把相关 issue 分组",
+      "projects_meta": "整理相关事项",
       "autopilot_label": "自动化",
-      "autopilot_meta": "定时自动化",
-      "runtimes_label": "运行时",
-      "runtimes_meta": "智能体跑的地方",
-      "skills_label": "skill",
-      "skills_meta": "可复用的剧本",
+      "autopilot_meta": "按计划自动推进",
+      "runtimes_label": "运行环境",
+      "runtimes_meta": "智能体执行任务的位置",
+      "skills_label": "技能",
+      "skills_meta": "可复用的工作方法",
       "more_label": "更多",
-      "more_meta": "and more"
-    }
+      "more_meta": "等等"
+    },
+    "creation_disabled_eyebrow": "已禁用创建工作区",
+    "creation_disabled_headline": "请联系管理员邀请你加入工作区。",
+    "creation_disabled_lede": "该 iteamify 实例不允许创建新的工作区。等管理员把你邀请到某个工作区后，接受邀请并刷新即可继续。",
+    "creation_disabled_logout": "退出登录",
+    "creation_disabled_eyebrow_resume": "你的工作区",
+    "creation_disabled_headline_resume": "继续使用 {{name}}。",
+    "creation_disabled_lede_resume": "该实例已禁用创建工作区，继续进入你已有的工作区即可。"
   },
   "step_runtime": {
-    "scanning_headline": "正在寻找你的工具...",
-    "scanning_lede_prefix": "Teamify驱动本地的 AI 编程工具，比如 ",
-    "scanning_lede_suffix": " 等。等待你机器上的反馈中。",
-    "found_headline": "找到了你的运行时。",
-    "found_lede": "扫描到你机器上已经设置好的 AI 编码工具。挑一个给你的第一个智能体。",
-    "runtime_count_other": "{{count}} 个运行时",
+    "scanning_headline": "正在连接这台电脑…",
+    "scanning_lede_prefix": "你的智能体借助本机已安装的 AI 编程工具运行，例如 ",
+    "scanning_lede_suffix": " 等。我们正在检测这台电脑上装了哪些。",
+    "found_headline": "准备你的第一个智能体。",
+    "found_lede": "已检测到可用运行环境。选择一个在线的运行环境，供你的助手执行任务。",
+    "runtime_count_other": "{{count}} 个运行环境",
     "status_all_online": "全部在线",
     "status_none_online": "全部离线",
     "status_n_online": "{{count}} 个在线",
     "online_label": "在线",
     "offline_label": "离线",
-    "empty_headline": "未检测到支持的工具。",
-    "empty_lede_prefix": "Teamify驱动本地的 AI 编程工具，比如 ",
-    "empty_lede_suffix": " 等 —— 这台机器上没找到。装一个再回来，或在下面挑一条路。",
-    "empty_skip_title": "暂时跳过",
-    "empty_skip_subtitle": "进入工作区（只读模式）。没有运行时连接前，智能体无法执行 task —— 但你仍可以浏览、规划、邀请同事。",
-    "empty_skip_action": "跳过",
-    "empty_waitlist_title": "加入云运行时候补",
-    "empty_waitlist_subtitle": "由 Teamify托管运行时 —— 无需本地安装，无需配置。尚未上线，点击留下邮箱。",
-    "empty_waitlist_action": "加入候补",
-    "empty_waitlist_done": "已在候补",
-    "dialog_title": "加入云运行时候补名单",
-    "dialog_description": "云运行时尚未上线。留下邮箱，上线时通过邮件通知你。",
-    "dialog_close": "关闭",
-    "dialog_cancel": "取消",
-    "skip": "暂时跳过",
+    "empty_headline": "这台电脑上还没有可用的运行环境。",
+    "empty_lede_prefix": "iteamify 会把已安装的 AI 编程工具连接为运行环境，例如 ",
+    "empty_lede_suffix": "。装好其中之一后点刷新，或在下面挑一条路。",
+    "empty_skip_title": "先进入工作区",
+    "empty_skip_subtitle": "先进入工作区浏览和规划。连接运行环境前，智能体暂时无法执行任务。",
+    "empty_skip_action": "先进入工作区",
+    "empty_waitlist_title": "改用云端运行环境",
+    "empty_waitlist_subtitle": "我们会在云上为你运行一台电脑。尚未上线。",
+    "empty_waitlist_action": "即将推出",
+    "skip": "先进入工作区",
+    "refresh": "刷新",
+    "refreshing": "正在刷新…",
     "hint_selected": "已选择：{{name}}",
-    "hint_pick": "在上方选一个运行时继续。",
-    "hint_waiting": "等待第一个结果...",
-    "hint_waitlist_done": "已在候补名单 —— 跳过即可继续探索。",
-    "hint_skip_or_waitlist": "跳过进入工作区，或在上方加入云候补。"
+    "hint_pick": "请在上方选择一个运行环境。",
+    "hint_waiting": "等待第一个结果…",
+    "hint_skip_or_refresh": "装好后点刷新，或跳过进入工作区。",
+    "start_exploring": "继续"
   },
   "step_platform": {
-    "eyebrow": "第 3 步 · 运行时",
-    "headline": "挑一个运行时来源。",
-    "lede": "运行时是智能体真正执行 task 的地方。挑一种安装方式让本机出现一个运行时。",
-    "hint_default": "在上方挑一条路 —— 或跳过，之后再配置运行时。",
-    "hint_downloaded": "在下载页完成安装，然后回到此标签页。",
-    "hint_waitlist": "已在候补名单 —— 选择\"跳过\"继续探索。",
-    "download_title": "下载桌面端",
-    "download_title_after": "已在下载页继续...",
-    "download_subtitle": "内置守护进程，零配置。下一页选你的平台。",
-    "download_subtitle_after": "已在新标签页打开。在那里选安装包，然后在桌面端完成设置。",
+    "eyebrow": "连接一台电脑",
+    "headline": "准备你的第一个智能体。",
+    "lede": "智能体会在你连接到 iteamify 的真实电脑上运行。请选择一种连接方式。",
+    "hint_default": "在上方选一种方式 —— 或先跳过，之后再连接电脑。",
+    "hint_downloaded": "安装后打开桌面版，使用同一账号登录。可以在桌面端继续设置，也可以在连接就绪后回到这里继续。",
+    "download_title": "使用这台电脑",
+    "download_title_after": "正在打开下载页…",
+    "download_subtitle": "安装桌面版即可连接这台电脑。还需要安装受支持的 AI 工具，并完成该工具的登录。",
+    "download_subtitle_after": "安装后打开桌面版，使用同一账号登录。可以在桌面端继续设置，也可以在连接就绪后回到这里继续。",
     "download_button": "下载",
-    "cli_title": "安装 CLI",
-    "cli_subtitle": "适合服务器、远程开发机和无头环境。需要终端。",
+    "cli_title": "通过终端连接",
+    "cli_subtitle": "适用于服务器、远程开发机或其他没有图形界面的电脑，需要使用终端。",
     "cli_action": "查看步骤",
-    "cloud_title": "云运行时",
-    "cloud_subtitle": "由 Teamify托管运行时。尚未上线 —— 加入候补。",
-    "cloud_action": "加入候补",
-    "cloud_action_done": "已在名单",
-    "cli_dialog_title": "安装 CLI",
-    "cli_dialog_description": "和桌面端相同的守护进程，通过终端安装。当桌面端不合适时使用 —— 服务器、远程开发机或无头环境。",
-    "cli_dialog_pick_hint": "在上方选择一个运行时。",
+    "cloud_title": "使用云端运行环境",
+    "cloud_subtitle": "我们会在云上为你运行一台电脑。尚未上线。",
+    "cloud_action": "即将推出",
+    "cli_dialog_title": "通过终端连接",
+    "cli_dialog_description": "和桌面端相同的连接，通过终端配置。适用于服务器、远程开发机或任意无头电脑。",
+    "cli_dialog_pick_hint": "在上方选一台电脑。",
     "cli_dialog_connect": "连接并继续",
-    "runtimes_connected_other": "已连接 {{count}} 个运行时",
-    "live_listening": "实时 · 正在监听你的守护进程",
+    "runtimes_connected_other": "已连接 {{count}} 台电脑",
+    "live_listening": "实时 · 正在等待你的电脑",
     "stage_normal_prefix": "运行上面的命令。当 ",
-    "stage_normal_suffix": " 完成浏览器登录、守护进程启动后，你的运行时会自动出现在这里（通常 10–30 秒）。",
+    "stage_normal_suffix": " 完成浏览器登录后，你的电脑会自动出现在这里（通常 10–30 秒）。",
     "stage_midway_prefix": "仍在监听。请确保完成了 ",
-    "stage_midway_suffix": " 打开的浏览器标签页 —— 必须批准登录才能启动守护进程。",
+    "stage_midway_suffix": " 打开的浏览器标签页 —— 需要批准登录后，你的电脑才能连接。",
     "stage_slow_prefix": "比平时慢一些。请检查运行 ",
     "stage_slow_suffix": " 的终端是否有错误。",
     "stage_stalled_prefix": "还没有任何信号传来。如果你不太习惯终端，",
     "stage_stalled_term": "桌面端",
-    "stage_stalled_suffix": " 更顺手 —— 它内置守护进程。关闭这个对话框选择桌面端，或点跳过继续。"
+    "stage_stalled_suffix": " 更顺手 —— 一键搞定，这台电脑就连接好了。关闭这个对话框选择桌面端，或点跳过继续。",
+    "other_connections": "其他连接方式"
   },
   "errors": {
     "skip_failed": "完成上手引导失败"
+  },
+  "flow": {
+    "loading": "正在恢复你的设置…",
+    "load_failed": "暂时无法加载设置，请重试。",
+    "failed": "这一步暂时无法完成，请检查连接后重试。",
+    "retry": "重试",
+    "runtime_unavailable": "运行环境已离线，请重新连接或选择一个在线的运行环境。",
+    "opening": "正在打开工作区…"
+  },
+  "setup_banner": {
+    "label": "继续完成设置",
+    "assistant": "准备好智能体后，就可以把第一个任务交给它。",
+    "profile": "完善个人信息，让助手提供更适合你的建议。",
+    "continue": "继续设置"
+  },
+  "step_task": {
+    "title": "先交给它一件事。",
+    "description": "{{name}} 已准备好。修改下面的示例任务，或写下你自己的需求。",
+    "title_label": "任务名称",
+    "description_label": "希望它做什么？",
+    "submit": "交给智能体处理",
+    "skip": "先自己探索",
+    "submitted": "任务已提交。打开事项后，可以查看实际执行进度。",
+    "open_task": "打开事项",
+    "examples": {
+      "plan": {
+        "title": "整理本周工作计划",
+        "description": "请帮我起草一份可修改的本周工作计划，列出优先级和下一步行动。先用一个清晰的示例，并说明还需要我补充哪些信息。"
+      },
+      "code": {
+        "title": "拆解一个功能需求",
+        "description": "请帮我把一个功能想法拆解为实施方案、验收标准和任务清单。先给出示例，再询问需要补充的项目背景。"
+      },
+      "content": {
+        "title": "起草一篇发布文案",
+        "description": "请起草一篇简短的产品发布文案，包括标题、核心信息和下一步行动。先给出可修改的示例，并标明需要我补充的信息。"
+      },
+      "research": {
+        "title": "制定一份调研计划",
+        "description": "请帮我制定一份调研计划，列出关键问题、需要查阅的资料和最终结论的组织方式。先给出一个可修改的示例。"
+      }
+    },
+    "recovering": "上次提交的结果尚未确认。重试时会先查找已提交的任务。"
   }
 }

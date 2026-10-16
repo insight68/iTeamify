@@ -1,0 +1,9 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "env": ["DESKTOP_DOWNLOAD_URL"],
+      "outputs": ["out/**"]
+    }
+  }
+}

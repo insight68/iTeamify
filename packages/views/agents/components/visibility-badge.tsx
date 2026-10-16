@@ -1,8 +1,8 @@
 "use client";
 
 import { Globe, Lock } from "lucide-react";
-import type { AgentVisibility } from "@teamify/core/types";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@teamify/ui/components/ui/tooltip";
+import type { AgentVisibility } from "@iteamify/core/types";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@iteamify/ui/components/ui/tooltip";
 import { useT } from "../../i18n";
 
 /**

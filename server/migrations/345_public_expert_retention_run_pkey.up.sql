@@ -1,0 +1,1 @@
+ALTER TABLE public_expert_retention_run ADD CONSTRAINT public_expert_retention_run_pkey PRIMARY KEY USING INDEX public_expert_retention_run_id_uidx;

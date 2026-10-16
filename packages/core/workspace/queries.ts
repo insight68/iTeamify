@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
-import type { Agent, Workspace } from "../types";
+import type { Agent, Squad, Workspace } from "../types";
 
 export const workspaceKeys = {
   all: (wsId: string) => ["workspaces", wsId] as const,
@@ -9,6 +9,12 @@ export const workspaceKeys = {
   invitations: (wsId: string) => ["workspaces", wsId, "invitations"] as const,
   myInvitations: () => ["invitations", "mine"] as const,
   agents: (wsId: string) => ["workspaces", wsId, "agents"] as const,
+  squads: (wsId: string) => ["workspaces", wsId, "squads"] as const,
+  // Per-squad member status. Lives under the workspace key tree so
+  // workspace switches naturally drop the cache, and so a broad
+  // `["workspaces", wsId, "squads"]` invalidation covers it.
+  squadMemberStatus: (wsId: string, squadId: string) =>
+    ["workspaces", wsId, "squads", squadId, "members-status"] as const,
   skills: (wsId: string) => ["workspaces", wsId, "skills"] as const,
   assigneeFrequency: (wsId: string) => ["workspaces", wsId, "assignee-frequency"] as const,
 };
@@ -16,7 +22,11 @@ export const workspaceKeys = {
 export function workspaceListOptions() {
   return queryOptions({
     queryKey: workspaceKeys.list(),
-    queryFn: () => api.listWorkspaces(),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: null, signal });
+      return requestApi.listWorkspaces();
+    },
+    refetchOnReconnect: "always",
   });
 }
 
@@ -31,29 +41,68 @@ export function workspaceBySlugOptions(slug: string) {
 export function memberListOptions(wsId: string) {
   return queryOptions({
     queryKey: workspaceKeys.members(wsId),
-    queryFn: () => api.listMembers(wsId),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.listMembers(wsId);
+    },
   });
 }
 
 export function agentListOptions(wsId: string) {
-  return queryOptions({
+  return queryOptions<Agent[]>({
     queryKey: workspaceKeys.agents(wsId),
-    queryFn: () =>
-      api.listAgents({ workspace_id: wsId, include_archived: true }),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.listAgents({ workspace_id: wsId, include_archived: true });
+    },
+  });
+}
+
+export function squadListOptions(wsId: string) {
+  return queryOptions<Squad[]>({
+    queryKey: workspaceKeys.squads(wsId),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.listSquads();
+    },
+    enabled: !!wsId,
+  });
+}
+
+// Per-squad members status snapshot. The freshness signal is the WS task /
+// agent / runtime invalidation wired in use-realtime-sync (which broadly
+// invalidates `["workspaces", wsId, "squads"]`); the staleTime is a
+// tab-focus safety net.
+export function squadMemberStatusOptions(wsId: string, squadId: string) {
+  return queryOptions({
+    queryKey: workspaceKeys.squadMemberStatus(wsId, squadId),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.getSquadMemberStatus(squadId);
+    },
+    enabled: !!wsId && !!squadId,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
   });
 }
 
 export function skillListOptions(wsId: string) {
   return queryOptions({
     queryKey: workspaceKeys.skills(wsId),
-    queryFn: () => api.listSkills(),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.listSkills();
+    },
   });
 }
 
 export function skillDetailOptions(wsId: string, skillId: string) {
   return queryOptions({
     queryKey: [...workspaceKeys.skills(wsId), skillId] as const,
-    queryFn: () => api.getSkill(skillId),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.getSkill(skillId);
+    },
     enabled: !!skillId,
   });
 }
@@ -89,20 +138,29 @@ export function selectSkillAssignments(
 export function invitationListOptions(wsId: string) {
   return queryOptions({
     queryKey: workspaceKeys.invitations(wsId),
-    queryFn: () => api.listWorkspaceInvitations(wsId),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.listWorkspaceInvitations(wsId);
+    },
   });
 }
 
 export function myInvitationListOptions() {
   return queryOptions({
     queryKey: workspaceKeys.myInvitations(),
-    queryFn: () => api.listMyInvitations(),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ signal });
+      return requestApi.listMyInvitations();
+    },
   });
 }
 
 export function assigneeFrequencyOptions(wsId: string) {
   return queryOptions({
     queryKey: workspaceKeys.assigneeFrequency(wsId),
-    queryFn: () => api.getAssigneeFrequency(),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.getAssigneeFrequency();
+    },
   });
 }

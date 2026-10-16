@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import type { Agent } from "@teamify/core/types";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { skillListOptions } from "@teamify/core/workspace/queries";
+import type { Agent } from "@iteamify/core/types";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { skillListOptions } from "@iteamify/core/workspace/queries";
 import { SkillAddDialog } from "../skill-add-dialog";
 import { useT } from "../../../i18n";
 

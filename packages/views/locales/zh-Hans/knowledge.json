@@ -1,0 +1,53 @@
+{
+  "page": {
+    "title": "知识库",
+    "description": "团队与智能体共用、权限受控的可靠信息来源"
+  },
+  "hero": {
+    "shared_truth": "团队知识基线",
+    "production_version": "已发布版本 v{{version}}",
+    "not_published": "尚未发布版本",
+    "title": "把业务知识整理成每个智能体都能安全使用的上下文。",
+    "description": "由成员和 AI 共同起草，确认修改后发布为不可变版本。正式工作流只使用已确认的快照。"
+  },
+  "business": {
+    "title": "业务信息",
+    "description": "品牌定位、服务、理想客户、决策角色、排除条件、证明材料和可靠来源。",
+    "readiness": "完整度 {{percent}}%",
+    "completeness": "信息完整度",
+    "offers": "服务",
+    "audiences": "理想客户",
+    "personas": "决策人画像",
+    "evidence": "证明材料",
+    "draft_policy": "草稿修改不会影响正式运行的智能体"
+  },
+  "contract": {
+    "title": "知识使用契约",
+    "description": "明确共享知识如何从对话进入正式运行环境",
+    "propose_title": "编辑或提出建议",
+    "propose_description": "成员直接编辑结构化字段；AI 提交可供审核的结构化修改建议。",
+    "review_title": "按版本审核",
+    "review_description": "提交前检查版本，避免覆盖他人的最新修改。",
+    "publish_title": "发布正式版本",
+    "publish_description": "工作区所有者或管理员创建不可变的正式快照。",
+    "consume_title": "智能体使用快照",
+    "consume_description": "智能体使用已发布的业务信息。"
+  },
+  "signals": {
+    "releases_title": "正式版本",
+    "releases_empty": "发布第一个经过确认的业务信息版本。",
+    "proposals_title": "待审核的 AI 建议",
+    "proposals_description": "AI 的修改建议会在这里等待人工接受或拒绝。",
+    "sources_title": "证明与来源",
+    "sources_description": "用可追溯的依据支撑品牌定位和理想客户判断。"
+  },
+  "actions": {
+    "open_business": "打开业务信息",
+    "manage_business": "管理业务信息",
+    "retry": "重试"
+  },
+  "error": {
+    "title": "暂时无法加载知识库",
+    "description": "请检查连接后重试。"
+  }
+}

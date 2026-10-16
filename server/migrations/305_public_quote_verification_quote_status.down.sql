@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS public_quote_verification_quote_status_idx;

@@ -1,20 +1,38 @@
 {
   "page": {
-    "title": "Autopilot",
-    "new_autopilot": "New autopilot",
-    "start_blank": "Start from scratch",
+    "title": "Automation",
+    "new_autopilot": "Create automation",
+    "start_blank": "Build a custom rhythm",
     "table": {
-      "name": "Name",
+      "name": "Automation",
       "agent": "Agent",
-      "mode": "Mode",
+      "created_by": "Created by",
+      "mode": "Delivery",
       "status": "Status",
-      "last_run": "Last run"
+      "last_run": "Last result",
+      "assignee": "Owner",
+      "trigger": "Starts",
+      "next_run": "Next move",
+      "created": "Created"
     },
     "last_run_empty": "--",
     "empty": {
-      "title": "No autopilots yet",
-      "hint": "Schedule recurring tasks for your AI agents. Pick a template or start from scratch."
-    }
+      "title": "Keep the business behind your creativity moving.",
+      "hint": "You set the outcome, relationships, and boundaries. iteamify moves partnerships, launches, and reviews forward—and returns only the decisions that need you.",
+      "eyebrow": "Your digital business manager",
+      "primary_action": "Start with a decision brief",
+      "loop_label": "iteamify operating loop",
+      "loop_direction": "You set direction and guardrails",
+      "loop_execution": "iteamify keeps the work moving",
+      "loop_decision": "Key decisions return to you",
+      "loop_note": "Automation does not mean losing control. Sources, owners, status, and history remain visible.",
+      "templates_label": "Start with one operating rhythm",
+      "templates_title": "Hand off the work you should not have to remember",
+      "templates_hint": "Templates use workspace context and approved capabilities. External actions stay behind your approval boundary."
+    },
+    "scope_all": "All",
+    "no_matches": "No automations match",
+    "retry": "Retry"
   },
   "status": {
     "active": "Active",
@@ -22,8 +40,8 @@
     "archived": "Archived"
   },
   "execution_mode": {
-    "create_issue": "创建事项",
-    "run_only": "Run Only"
+    "create_issue": "Tracked brief",
+    "run_only": "Background run"
   },
   "relative_date": {
     "today": "Today",
@@ -32,159 +50,312 @@
     "months_ago": "{{count}}mo ago"
   },
   "templates": {
-    "daily_news": {
-      "title": "Daily news digest",
-      "summary": "Search and summarize today's news for the team"
+    "daily_decisions": {
+      "title": "Daily decision brief",
+      "summary": "Surface blockers, risks, and the few choices that genuinely need the creator.",
+      "category": "Decisions",
+      "cadence": "Weekdays · 08:30",
+      "output": "Decision brief"
     },
-    "pr_review": {
-      "title": "PR review reminder",
-      "summary": "Flag stale pull requests that need review"
+    "weekly_business_review": {
+      "title": "Weekly business review",
+      "summary": "Turn seven days of work into momentum, risks, and three clear priorities.",
+      "category": "Review",
+      "cadence": "Friday · 16:00",
+      "output": "Operating review"
     },
-    "bug_triage": {
-      "title": "Bug triage",
-      "summary": "Assess and prioritize new bug reports"
+    "partnership_follow_up": {
+      "title": "Partnership follow-up",
+      "summary": "Find quiet collaboration threads, unclear owners, and commitments that need a next move.",
+      "category": "Relationships",
+      "cadence": "Weekdays · 10:00",
+      "output": "Follow-up queue"
     },
-    "weekly_progress": {
-      "title": "Weekly progress report",
-      "summary": "Compile a weekly summary of team progress"
+    "launch_readiness": {
+      "title": "Launch readiness check",
+      "summary": "Check owners, approvals, dependencies, and deadlines before a launch becomes urgent.",
+      "category": "Launch",
+      "cadence": "Mon / Wed / Fri",
+      "output": "Risk brief"
     },
-    "dependency_audit": {
-      "title": "Dependency audit",
-      "summary": "Scan for security vulnerabilities and outdated packages"
+    "content_pipeline": {
+      "title": "Content pipeline check",
+      "summary": "Keep ideas, production, review, and publishing moving without becoming the project manager.",
+      "category": "Content",
+      "cadence": "Weekdays · 16:30",
+      "output": "Pipeline brief"
     },
-    "documentation_check": {
-      "title": "Documentation check",
-      "summary": "Review recent changes for documentation gaps"
+    "opportunity_radar": {
+      "title": "Creator opportunity radar",
+      "summary": "Research timely, evidence-backed opportunities that fit the creator's positioning.",
+      "category": "Growth",
+      "cadence": "Monday · 10:00",
+      "output": "Opportunity brief"
     }
   },
   "detail": {
-    "not_found": "Autopilot not found",
-    "pause_aria": "Pause autopilot",
-    "activate_aria": "Activate autopilot",
+    "not_found": "Automation not found",
+    "pause_aria": "Pause automation",
+    "activate_aria": "Activate automation",
     "edit": "Edit",
     "run_now": "Run now",
     "running": "Running...",
-    "toast_triggered": "Autopilot triggered",
-    "toast_trigger_failed": "Failed to trigger autopilot",
-    "section_properties": "Properties",
-    "section_triggers": "Triggers",
-    "section_run_history": "Run History",
+    "toast_triggered": "Automation triggered",
+    "toast_trigger_failed": "Failed to trigger automation",
+    "run_blocked_invocation_not_allowed": "Not triggered — you don't have permission to use this automation's agent",
+    "run_blocked_runtime_offline": "Not triggered — the agent's runtime is offline",
+    "run_blocked_target_unavailable": "Not triggered — the agent is unavailable",
+    "run_blocked_attribution": "Not triggered — the run couldn't be attributed to a responsible member",
+    "run_blocked_already_active": "Not triggered — a recent run already covers this",
+    "run_blocked_generic": "Not triggered — the run was blocked",
+    "section_properties": "Operating setup",
+    "section_triggers": "How it starts",
+    "section_run_history": "Result history",
     "section_danger": "Danger Zone",
     "field_agent": "Agent",
-    "field_output_mode": "Output Mode",
+    "field_created_by": "Created by",
+    "field_output_mode": "How results return",
+    "field_project": "Business context",
+    "no_project": "No project",
+    "project_unavailable": "Project unavailable",
     "field_prompt": "Prompt",
+    "field_subscribers": "Subscribers",
+    "field_subscribers_none": "None",
     "add_trigger": "Add trigger",
     "no_triggers": "No triggers configured. Add a schedule to run automatically.",
     "no_runs": "No runs yet. Click \"Run now\" to trigger manually.",
-    "delete_button": "Delete autopilot",
-    "toast_deleted": "Autopilot deleted",
-    "toast_delete_failed": "Failed to delete autopilot",
+    "delete_button": "Delete automation",
+    "toast_deleted": "Automation deleted",
+    "toast_delete_failed": "Failed to delete automation",
     "delete_dialog": {
-      "title": "Delete autopilot",
+      "title": "Delete automation",
       "description": "This will permanently delete \"{{title}}\", along with its triggers and run history. This action cannot be undone.",
       "cancel": "Cancel",
       "confirm": "Delete",
       "deleting": "Deleting..."
     }
   },
+  "access": {
+    "title": "Manage access",
+    "description": "Members you add can edit, run, and manage this automation's triggers and webhooks.",
+    "current_label": "With access",
+    "add": "Add member",
+    "search_placeholder": "Search members…",
+    "no_results": "No members found",
+    "remove_tooltip": "Remove access",
+    "empty": "No one has been granted access yet.",
+    "toast_granted": "Access granted",
+    "toast_revoked": "Access removed",
+    "toast_failed": "Couldn't update access",
+    "owner_note": "The creator and workspace admins always have access."
+  },
   "run_status": {
-    "issue_created": "事项已创建",
+    "issue_created": "Issue Created",
     "running": "Running",
+    "skipped": "Skipped",
     "completed": "Completed",
     "failed": "Failed"
   },
+  "run_source": {
+    "schedule": "Schedule",
+    "manual": "Manual",
+    "webhook": "Webhook",
+    "api": "API"
+  },
   "run": {
-    "issue_linked": "事项已关联",
-    "view_log": "View execution log"
+    "issue_linked": "Issue linked",
+    "view_log": "View execution log",
+    "skipped_group": {
+      "label": "Skipped",
+      "summary": "{{count}} skipped runs"
+    }
+  },
+  "webhook_payload": {
+    "label": "Webhook event:",
+    "unknown_event": "webhook.received",
+    "payload": "Payload",
+    "content_type": "Content-Type: {{type}}",
+    "copy": "Copy",
+    "copied": "Webhook payload copied",
+    "copied_short": "Copied",
+    "copy_failed": "Failed to copy",
+    "truncated_marker": "[truncated — click Copy to get the full payload]"
+  },
+  "trigger_kind": {
+    "schedule": "Schedule",
+    "webhook": "Webhook",
+    "api": "API"
   },
   "trigger_row": {
     "disabled_badge": "Disabled",
+    "deprecated_badge": "Deprecated",
     "next_label": "Next: {{date}}",
+    "webhook_url_label": "Webhook URL",
+    "show_url": "Show URL",
+    "hide_url": "Hide URL",
+    "hidden_url_aria": "Webhook URL hidden — click to show",
+    "copy_url": "Copy URL",
+    "url_copied": "Webhook URL copied",
+    "url_copy_failed": "Failed to copy",
+    "rotate_url": "Rotate URL",
+    "rotate_confirm_title": "Rotate webhook URL",
+    "rotate_confirm_description": "The current URL will stop working immediately. Any external systems calling it must be updated with the new URL. Continue?",
+    "rotate_confirm_cancel": "Cancel",
+    "rotate_confirm_action": "Rotate URL",
+    "rotate_in_progress": "Rotating...",
+    "toast_rotated": "Webhook URL rotated",
+    "toast_rotate_failed": "Failed to rotate URL",
     "toast_deleted": "Trigger deleted",
     "toast_delete_failed": "Failed to delete trigger",
     "delete_dialog": {
       "title": "Delete trigger",
-      "description": "This trigger will be removed and the autopilot will stop firing on this schedule. This action cannot be undone.",
+      "description": "This trigger will be removed and the automation will stop firing on this schedule. This action cannot be undone.",
       "cancel": "Cancel",
       "confirm": "Delete",
       "deleting": "Deleting..."
     }
   },
+  "deliveries": {
+    "section_title": "Webhook Deliveries",
+    "empty": "No webhook deliveries yet. Send a POST to the webhook URL to see entries here.",
+    "row": {
+      "attempts": "{{count}}× attempts",
+      "replay_badge": "Replay"
+    },
+    "status": {
+      "queued": "Queued",
+      "dispatched": "Dispatched",
+      "rejected": "Rejected",
+      "ignored": "Ignored",
+      "failed": "Failed"
+    },
+    "signature": {
+      "not_required": "No signature",
+      "valid": "Signature valid",
+      "invalid": "Signature invalid",
+      "missing": "Signature missing"
+    },
+    "detail": {
+      "title": "Delivery",
+      "received_at": "Received",
+      "last_attempt_at": "Last attempt",
+      "attempt_count": "Attempts",
+      "dispatch_attempts": "Dispatch attempts",
+      "available_at": "Next dispatch",
+      "response_status": "Response",
+      "dedupe_key": "Dedupe key",
+      "dedupe_source": "Dedupe source",
+      "content_type": "Content-Type",
+      "replayed_from": "Replayed from",
+      "error_label": "Error",
+      "raw_body": "Raw body",
+      "selected_headers": "Headers",
+      "response_body": "Response body"
+    },
+    "replay": {
+      "action": "Replay",
+      "in_progress": "Replaying...",
+      "toast_success": "Delivery replayed",
+      "toast_failed": "Replay failed",
+      "disabled_invalid_signature": "Can't replay — signature was invalid",
+      "disabled_rejected": "Can't replay a rejected delivery",
+      "disabled_queued": "Still queued — replay once it settles"
+    }
+  },
   "add_trigger_dialog": {
     "title": "Add Trigger",
+    "type_label": "Type",
+    "type_schedule": "Schedule",
+    "type_webhook": "Webhook",
     "label_field": "Label (optional)",
     "label_placeholder": "e.g. Weekday morning",
+    "webhook_help": "iteamify will generate a webhook URL after you save. POST any JSON to it to fire this automation.",
     "submit": "Add trigger",
     "submitting": "Adding...",
-    "toast_added": "Trigger added",
+    "toast_added_schedule": "Schedule trigger added",
+    "toast_added_webhook": "Webhook trigger added",
     "toast_add_failed": "Failed to add trigger"
   },
   "dialog": {
-    "sr_create": "New Autopilot",
-    "sr_edit": "Edit Autopilot",
-    "header_create": "New autopilot",
-    "header_edit": "Edit autopilot",
-    "subtitle": "A recurring AI task",
+    "sr_create": "Create automation",
+    "sr_edit": "Edit automation",
+    "header_create": "Create automation",
+    "header_edit": "Edit automation",
+    "subtitle": "A recurring operating rhythm",
     "expand": "Expand",
     "collapse": "Collapse",
     "close": "Close",
-    "title_placeholder": "Autopilot name",
-    "runbook_label": "Runbook",
-    "runbook_hint": "Read by the agent on every run",
-    "description_placeholder": "# Goal\nWhat should the agent accomplish?\n\n# Context\nWho is this for? Any constraints?\n\n# Steps\n1. …\n2. …",
-    "auto_run_hint": "Once saved, runs automatically until paused.",
+    "title_placeholder": "What should keep moving?",
+    "runbook_label": "Operating brief",
+    "runbook_hint": "iteamify reads this before every run",
+    "description_placeholder": "# Business outcome\nWhat should keep moving?\n\n# Judgment rules\nWhat matters, what should be skipped, and what are the boundaries?\n\n# Actions\nWhat should iteamify review, organize, or prepare?\n\n# Return to creator\nWhich decisions must come back for approval?",
+    "auto_run_hint": "iteamify will keep this rhythm until you pause it.",
     "cancel": "Cancel",
-    "create": "Create autopilot",
+    "create": "Start automation",
     "save": "Save",
     "creating": "Creating...",
     "saving": "Saving...",
-    "toast_created": "Autopilot created",
-    "toast_create_partial": "Autopilot created, but schedule failed to save",
-    "toast_create_failed": "Failed to create autopilot",
-    "toast_updated": "Autopilot updated",
-    "toast_update_partial": "Autopilot updated, but schedule failed to save",
-    "toast_update_failed": "Failed to update autopilot",
+    "toast_created": "Automation created",
+    "toast_create_partial": "Automation created, but schedule failed to save",
+    "toast_create_partial_with_reason": "Automation created, but schedule failed to save: {{reason}}",
+    "toast_create_failed": "Failed to create automation",
+    "toast_updated": "Automation updated",
+    "toast_update_partial": "Automation updated, but schedule failed to save",
+    "toast_update_partial_with_reason": "Automation updated, but schedule failed to save: {{reason}}",
+    "toast_update_failed": "Failed to update automation",
     "section_agent": "Agent",
+    "section_assignee": "Owner",
     "select_agent": "Select agent",
-    "section_output_mode": "Output mode",
-    "section_schedule": "Schedule",
-    "schedule_disabled_reason": "This autopilot has multiple schedules — edit them in the detail page.",
-    "next_run_label": "Next run:",
+    "select_assignee": "Select an agent or squad",
+    "section_project": "Business context",
+    "no_project": "Whole workspace",
+    "section_output_mode": "How results return",
+    "section_subscribers": "Keep in the loop",
+    "subscribers_hint": "Notified on every tracked result",
+    "subscribers_empty": "No one added — choose who should see every tracked result",
+    "subscribers_add": "Add teammate",
+    "subscribers_search_placeholder": "Search members by name…",
+    "subscribers_no_results": "No matching members",
+    "subscribers_remove_tooltip": "Remove",
+    "section_schedule": "Operating rhythm",
+    "section_trigger_kind": "How it starts",
+    "trigger_kind_schedule": "On a rhythm",
+    "trigger_kind_webhook": "Business event",
+    "section_webhook": "Webhook",
+    "webhook_help_create": "iteamify will generate a webhook URL after this automation is created. POST any JSON to that URL to fire it.",
+    "webhook_help_edit": "This automation is fired by webhook. Manage the URL (copy / rotate) on the automation's detail page.",
+    "webhook_created_title": "Webhook automation ready",
+    "webhook_created_description": "POST any JSON to the URL below and the automation will fire. Copy it now — you can also find and rotate it on the automation's detail page.",
+    "webhook_created_warning": "Treat this URL like a password. Anyone who has it can trigger the automation.",
+    "webhook_created_done": "Done",
+    "event_filter_label": "Event filters",
+    "event_filter_event_placeholder": "e.g. workflow_run",
+    "event_filter_actions_placeholder": "completed, failed",
+    "event_filter_hint": "Only process webhooks matching these events. Leave empty to accept all.",
+    "schedule_disabled_reason": "This automation has multiple schedules — edit them in the detail page.",
     "output_modes": {
       "create_issue": {
-        "label": "Create issue",
-        "description": "每次运行创建一个跟踪的事项"
+        "label": "Create a tracked brief",
+        "description": "Each run leaves a visible result with an owner and history"
       },
       "run_only": {
-        "label": "Run only",
-        "description": "静默运行，不创建事项"
+        "label": "Run in the background",
+        "description": "Keep the run history without creating a new issue"
       }
-    },
-    "frequency_long": {
-      "hourly": "Every hour",
-      "daily": "Every day",
-      "weekdays": "Every weekday",
-      "weekly": "Every week",
-      "custom": "Custom cron"
-    },
-    "days": {
-      "sunday": "Sunday",
-      "monday": "Monday",
-      "tuesday": "Tuesday",
-      "wednesday": "Wednesday",
-      "thursday": "Thursday",
-      "friday": "Friday",
-      "saturday": "Saturday"
     }
   },
-  "trigger_config": {
-    "frequencies": {
-      "hourly": "Hourly",
-      "daily": "Daily",
-      "weekdays": "Weekdays",
-      "weekly": "Days",
-      "custom": "Custom"
-    },
+  "schedule_editor": {
+    "time_label": "Time",
+    "time_at": "At a time",
+    "time_every": "At an interval",
+    "every_prefix": "Every",
+    "unit_hours": "hours",
+    "unit_minutes": "minutes",
+    "days_label": "Days",
+    "days_every": "Every day",
+    "days_weekly": "Days of week",
+    "days_monthly": "Day of month",
+    "monthly_short_month_hint": "Months without day {{day}} are skipped.",
     "days_short": {
       "sun": "Sun",
       "mon": "Mon",
@@ -194,39 +365,113 @@
       "fri": "Fri",
       "sat": "Sat"
     },
-    "cron_label": "Cron Expression",
-    "cron_hint": "Standard 5-field cron (min hour dom month dow)",
-    "minute_label": "Minute",
-    "time_label": "Time",
     "timezone_label": "Timezone",
-    "days_label": "Days",
-    "summary": {
-      "hourly": "Hourly · :{{min}}",
-      "daily": "Daily {{time}}",
-      "weekdays": "Weekdays {{time}}",
-      "weekly": "{{days}} {{time}}",
-      "custom": "Custom cron",
-      "no_days": "—"
-    },
+    "cron_toggle": "Cron",
+    "cron_click_to_edit": "click to edit",
+    "cron_hint": "Standard 5-field cron (min hour dom month dow)",
+    "cron_invalid": "This cron expression isn't valid.",
+    "timezone_invalid": "This timezone isn't recognized by the server.",
+    "advanced_hint": "This expression uses features the visual editor can't represent. Edit the cron text directly, or simplify it to re-enable the controls.",
+    "advanced_unverified": "The server couldn't be reached to check this expression, so the controls stay off. Make sure the cron text is right before saving.",
+    "advanced_checking": "Checking this expression with the server. The controls stay off until it answers.",
+    "next_runs_label": "Next runs",
+    "next_in": "in {{countdown}}",
+    "preview_unavailable": "Next runs unavailable right now.",
+    "no_upcoming_runs": "This expression has no upcoming runs.",
     "describe": {
-      "hourly": "Runs every hour at :{{min}}",
-      "daily": "Runs daily at {{time}} {{offset}}",
-      "weekdays": "Runs weekdays at {{time}} {{offset}}",
-      "weekly": "Runs every {{days}} at {{time}} {{offset}}",
-      "custom": "Custom schedule: {{cron}}"
+      "days_every": "Every day",
+      "days_monthly": "Day {{day}} of the month",
+      "days_long": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      },
+      "days_range": "{{from}}–{{to}}",
+      "days_join": ", ",
+      "time_at": "At {{time}}",
+      "time_every_hour": "Every hour at :{{minute}}",
+      "time_every_hours": "Every {{interval}} hours at :{{minute}}",
+      "time_every_hour_window": "Every hour",
+      "time_every_hours_window": "Every {{interval}} hours",
+      "time_every_minute": "Every minute",
+      "time_every_minutes": "Every {{interval}} minutes",
+      "window": "{{from}}–{{to}}"
     },
     "countdown": {
-      "days_hours": "{{days}}d {{hours}}h",
+      "days_hours": "{{days}}d {{hours}}h {{minutes}}m",
       "hours_minutes": "{{hours}}h {{minutes}}m",
       "minutes": "{{minutes}}m",
       "less_than_minute": "<1m"
+    },
+    "a11y": {
+      "fixed_hour": "Hour",
+      "fixed_minute": "Minute",
+      "interval": "Interval",
+      "interval_unit": "Interval unit",
+      "window_start_hour": "Window start hour",
+      "window_start_minute": "Window start minute",
+      "window_end_hour": "Window end hour",
+      "window_end_minute": "Window end minute",
+      "day_pattern": "Day pattern",
+      "day_of_month": "Day of month",
+      "timezone": "Timezone",
+      "days_full": {
+        "sun": "Sunday",
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday"
+      }
     }
   },
   "agent_picker": {
-    "filter_placeholder": "Filter agents...",
-    "select_agent": "Select agent"
+    "filter_placeholder": "Filter agents or squads...",
+    "select_agent": "Select agent",
+    "select_assignee": "Select agent or squad",
+    "agents_group": "Agents",
+    "squads_group": "Squads"
   },
   "timezone_picker": {
     "search_placeholder": "Search timezone..."
+  },
+  "toolbar": {
+    "result_count_title": "Matching automations / all automations",
+    "filter_label": "Filter",
+    "filter_active_count_one": "{{count}} filter",
+    "filter_active_count_other": "{{count}} filters",
+    "clear_filters": "Clear filters",
+    "section_assignee": "Owner",
+    "section_mode": "Delivery",
+    "section_trigger": "Starts",
+    "section_creator": "Created by",
+    "display": "Display",
+    "sort_by": "Sort by",
+    "direction_asc": "Ascending",
+    "direction_desc": "Descending",
+    "section_columns": "Columns"
+  },
+  "actions": {
+    "row_menu": "Automation actions",
+    "pause": "Pause",
+    "resume": "Resume",
+    "delete": "Delete",
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "clear_selection": "Clear selection",
+    "delete_dialog": {
+      "title": "Delete automation?",
+      "description_one": "This will permanently delete \"{{name}}\" and its run history.",
+      "description_other": "This will permanently delete {{count}} automations and their run history.",
+      "warning": "This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete permanently",
+      "deleting": "Deleting…"
+    }
   }
 }

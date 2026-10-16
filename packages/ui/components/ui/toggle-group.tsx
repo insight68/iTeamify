@@ -5,8 +5,8 @@ import { Toggle as TogglePrimitive } from "@base-ui/react/toggle"
 import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group"
 import { type VariantProps } from "class-variance-authority"
 
-import { cn } from "@teamify/ui/lib/utils"
-import { toggleVariants } from "@teamify/ui/components/ui/toggle"
+import { cn } from "@iteamify/ui/lib/utils"
+import { toggleVariants } from "@iteamify/ui/components/ui/toggle"
 
 const ToggleGroupContext = React.createContext<
   VariantProps<typeof toggleVariants> & {
@@ -63,7 +63,7 @@ function ToggleGroupItem({
   size = "default",
   ...props
 }: TogglePrimitive.Props & VariantProps<typeof toggleVariants>) {
-  const context = React.useContext(ToggleGroupContext)
+  const context = React.use(ToggleGroupContext)
 
   return (
     <TogglePrimitive

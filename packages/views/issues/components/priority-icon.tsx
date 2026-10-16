@@ -1,19 +1,19 @@
-import type { IssuePriority } from "@teamify/core/types";
-import { PRIORITY_CONFIG } from "@teamify/core/issues/config";
+import type { IssuePriority } from "@iteamify/core/types";
+import { PRIORITY_CONFIG } from "@iteamify/core/issues/config";
 
 export function PriorityIcon({
   priority,
   className = "",
   inheritColor = false,
 }: {
-  priority: IssuePriority;
+  priority: IssuePriority | string;
   className?: string;
   inheritColor?: boolean;
 }) {
-  const cfg = PRIORITY_CONFIG[priority];
+  const cfg = priority in PRIORITY_CONFIG ? PRIORITY_CONFIG[priority as IssuePriority] : null;
 
   // "none" — simple horizontal dashes
-  if (cfg.bars === 0) {
+  if (!cfg || cfg.bars === 0) {
     return (
       <svg
         viewBox="0 0 16 16"

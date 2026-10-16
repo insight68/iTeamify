@@ -11,11 +11,11 @@ import {
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { Agent } from "@teamify/core/types";
-import type { AgentPresenceDetail } from "@teamify/core/agents";
-import { api } from "@teamify/core/api";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { workspaceKeys } from "@teamify/core/workspace/queries";
+import type { Agent } from "@iteamify/core/types";
+import type { AgentPresenceDetail } from "@iteamify/core/agents";
+import { api } from "@iteamify/core/api";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { workspaceKeys } from "@iteamify/core/workspace/queries";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,15 +25,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@teamify/ui/components/ui/alert-dialog";
-import { Button } from "@teamify/ui/components/ui/button";
+} from "@iteamify/ui/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@teamify/ui/components/ui/dropdown-menu";
+} from "@iteamify/ui/components/ui/dropdown-menu";
 import { useT } from "../../i18n";
 
 interface AgentRowActionsProps {
@@ -54,10 +53,12 @@ interface AgentRowActionsProps {
  * from (a) the agent's lifecycle state (active vs archived) and (b) the
  * caller's permission level. If no actions apply, the trigger is omitted so
  * the row renders an empty cell (column width still preserved by the parent
- * `<TableCell className="w-10" />`).
+ * ListGridCell).
  *
- * All triggers stop event propagation so clicks don't bubble up to the
- * row's navigate-to-detail handler.
+ * The row is a plain `<div>` whose whole-row navigation is a mouse `onClick`
+ * (see `useRowLink`), not an ancestor `<a>`. The host cell stops click
+ * propagation so opening this menu never navigates the row; the trigger
+ * itself needs no guard. Menu and dialog content is portaled out of the row.
  */
 export function AgentRowActions({
   agent,
@@ -134,24 +135,16 @@ export function AgentRowActions({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button
-              variant="ghost"
-              size="icon-sm"
+            <button
+              type="button"
               aria-label={t(($) => $.row.actions_aria)}
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-            />
+              className="flex size-7 items-center justify-center rounded-md text-muted-foreground opacity-100 @2xl:opacity-0 transition-opacity hover:bg-accent hover:text-accent-foreground group-hover/row:opacity-100 data-popup-open:bg-accent data-popup-open:opacity-100 data-popup-open:text-accent-foreground"
+            >
+              <MoreHorizontal className="size-4" />
+            </button>
           }
-        >
-          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          className="w-auto"
-          // Prevent the row's onClick from firing if a click on a menu item
-          // somehow bubbles back through the portal.
-          onClick={(e) => e.stopPropagation()}
-        >
+        />
+        <DropdownMenuContent align="end" className="w-auto">
           {showStop && (
             <DropdownMenuItem
               onClick={() => setConfirmCancel(true)}
@@ -176,7 +169,7 @@ export function AgentRowActions({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-destructive"
+                variant="destructive"
                 onClick={() => setConfirmArchive(true)}
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -194,10 +187,7 @@ export function AgentRowActions({
             if (!v) setConfirmCancel(false);
           }}
         >
-          <AlertDialogContent
-            // Keep clicks inside the dialog from bubbling to the row.
-            onClick={(e) => e.stopPropagation()}
-          >
+          <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>
                 {t(($) => $.row_actions.cancel_dialog_title, { name: agent.name })}
@@ -231,7 +221,7 @@ export function AgentRowActions({
             if (!v) setConfirmArchive(false);
           }}
         >
-          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogContent>
             <AlertDialogHeader>
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10">

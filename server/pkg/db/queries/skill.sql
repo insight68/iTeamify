@@ -1,0 +1,154 @@
+-- Skill CRUD
+
+-- name: ListSkillsByWorkspace :many
+SELECT * FROM skill
+WHERE workspace_id = $1
+ORDER BY name ASC;
+
+-- name: ListSkillSummariesByWorkspace :many
+-- Same as ListSkillsByWorkspace but omits the SKILL.md `content` column. Used
+-- by list endpoints (CLI table, web list page) where the body is never read;
+-- shipping it everywhere blew up payload size on workspaces with many skills
+-- and caused 15s CLI timeouts from high-latency regions (GH iteamify-ai/iteamify#2174).
+SELECT id, workspace_id, name, description, config, created_by, created_at, updated_at
+FROM skill
+WHERE workspace_id = $1
+ORDER BY name ASC;
+
+-- name: GetSkill :one
+SELECT * FROM skill
+WHERE id = $1;
+
+-- name: GetSkillInWorkspace :one
+SELECT * FROM skill
+WHERE id = $1
+  AND workspace_id = $2;
+
+-- name: GetSkillByWorkspaceAndName :one
+-- Used by agent-template materialization to implement find-or-create: when a
+-- template references a skill by name that already exists in the workspace,
+-- reuse the existing skill_id rather than INSERT (which would fail the
+-- UNIQUE(workspace_id, name) constraint from migration 008).
+SELECT * FROM skill
+WHERE workspace_id = $1 AND name = $2;
+
+-- name: CreateSkill :one
+INSERT INTO skill (workspace_id, name, description, content, config, created_by)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING *;
+
+-- name: UpdateSkill :one
+UPDATE skill SET
+    name = COALESCE(sqlc.narg('name'), name),
+    description = COALESCE(sqlc.narg('description'), description),
+    content = COALESCE(sqlc.narg('content'), content),
+    config = COALESCE(sqlc.narg('config'), config),
+    updated_at = now()
+WHERE id = $1
+RETURNING *;
+
+-- name: DeleteSkill :exec
+-- Defense-in-depth: workspace_id is a SQL-layer tenant guard. See DeleteIssue.
+DELETE FROM skill WHERE id = $1 AND workspace_id = $2;
+
+-- Skill File CRUD
+
+-- name: ListSkillFiles :many
+SELECT * FROM skill_file
+WHERE skill_id = $1
+ORDER BY path ASC;
+
+-- name: ListSkillFilesBySkillIDs :many
+-- Batch execution-path load: one query for every enabled skill attached to an
+-- Agent, avoiding a per-skill round trip during task claim.
+SELECT * FROM skill_file
+WHERE skill_id = ANY(@skill_ids::uuid[])
+ORDER BY skill_id ASC, path ASC;
+
+-- name: GetSkillFile :one
+SELECT * FROM skill_file
+WHERE id = $1;
+
+-- name: UpsertSkillFile :one
+INSERT INTO skill_file (skill_id, path, content)
+VALUES ($1, $2, $3)
+ON CONFLICT (skill_id, path) DO UPDATE SET
+    content = EXCLUDED.content,
+    updated_at = now()
+RETURNING *;
+
+-- name: DeleteSkillFile :exec
+DELETE FROM skill_file WHERE id = $1;
+
+-- name: DeleteSkillFilesBySkill :exec
+DELETE FROM skill_file WHERE skill_id = $1;
+
+-- Agent-Skill junction
+
+-- name: ListAgentSkills :many
+SELECT s.* FROM skill s
+JOIN agent_skill ask ON ask.skill_id = s.id
+WHERE ask.agent_id = $1 AND ask.enabled = TRUE
+ORDER BY s.name ASC;
+
+-- name: ListAgentSkillSummaries :many
+-- Summary variant for the agent skills list endpoint — omits `content` for
+-- the same reason as ListSkillSummariesByWorkspace.
+-- size_bytes and file_count describe the complete Skill file bundle.
+-- They stay server-side computed so the
+-- operator console can show how close a Skill is to the 48 KiB package cap
+-- without shipping SKILL.md bodies.
+SELECT s.id, s.workspace_id, s.name, s.description, s.config, s.created_by, s.created_at, s.updated_at, ask.enabled,
+       (octet_length(s.content) + COALESCE(support.bytes, 0))::bigint AS size_bytes,
+       COALESCE(support.files, 0)::bigint AS file_count
+FROM skill s
+JOIN agent_skill ask ON ask.skill_id = s.id
+LEFT JOIN LATERAL (
+    SELECT sum(octet_length(f.path) + octet_length(f.content)) AS bytes, count(*) AS files
+    FROM skill_file f
+    WHERE f.skill_id = s.id AND f.path <> 'SKILL.md'
+) support ON TRUE
+WHERE ask.agent_id = $1
+ORDER BY s.name ASC;
+
+-- name: ListAgentSkillNamesByAgentIDs :many
+SELECT ask.agent_id, s.name
+FROM agent_skill ask
+JOIN skill s ON s.id = ask.skill_id
+WHERE ask.agent_id = ANY(sqlc.arg('agent_ids')::uuid[])
+  AND ask.enabled = TRUE
+ORDER BY ask.agent_id, s.name ASC;
+
+-- name: AddAgentSkill :exec
+INSERT INTO agent_skill (agent_id, skill_id)
+VALUES ($1, $2)
+ON CONFLICT DO NOTHING;
+
+-- name: SetAgentSkillEnabled :execrows
+UPDATE agent_skill
+SET enabled = $3
+WHERE agent_id = $1 AND skill_id = $2;
+
+-- name: RemoveAgentSkill :exec
+DELETE FROM agent_skill
+WHERE agent_id = $1 AND skill_id = $2;
+
+-- name: RemoveAllAgentSkills :exec
+DELETE FROM agent_skill WHERE agent_id = $1;
+
+-- name: ListAgentSkillsByWorkspace :many
+-- Batch form of the above for a whole workspace. The size columns are the same
+-- Bundle metrics include supporting files and their paths; large bundles can be too
+-- big to publish, and this is where the console finds that out.
+SELECT ask.agent_id, s.id, s.name, s.description, ask.enabled,
+       (octet_length(s.content) + COALESCE(support.bytes, 0))::bigint AS size_bytes,
+       COALESCE(support.files, 0)::bigint AS file_count
+FROM agent_skill ask
+JOIN skill s ON s.id = ask.skill_id
+LEFT JOIN LATERAL (
+    SELECT sum(octet_length(f.path) + octet_length(f.content)) AS bytes, count(*) AS files
+    FROM skill_file f
+    WHERE f.skill_id = s.id AND f.path <> 'SKILL.md'
+) support ON TRUE
+WHERE s.workspace_id = $1
+ORDER BY s.name ASC;

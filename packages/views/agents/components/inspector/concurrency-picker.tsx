@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@teamify/ui/components/ui/button";
-import { Input } from "@teamify/ui/components/ui/input";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { Input } from "@iteamify/ui/components/ui/input";
 import { PropertyPicker } from "../../../issues/components/pickers";
 import { CHIP_CLASS } from "./chip";
 import { useT } from "../../../i18n";

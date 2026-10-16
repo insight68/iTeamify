@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { cn } from "@teamify/ui/lib/utils";
+import { cn } from "@iteamify/ui/lib/utils";
+import { useScrollFade } from "@iteamify/ui/hooks/use-scroll-fade";
 import { AppLink, useNavigation } from "../navigation";
 import { HelpLauncher } from "./help-launcher";
+import { TeamSidebarGroup } from "./team-sidebar-group";
 import {
   DndContext,
   PointerSensor,
@@ -15,42 +17,19 @@ import {
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  Inbox,
-  ListTodo,
-  Bot,
-  Monitor,
   ChevronDown,
   ChevronRight,
-  User,
   LogOut,
   Plus,
   Check,
-  CheckCircle2,
-  BookOpenText,
-  SquarePen,
-  CircleUser,
-  FolderKanban,
   X,
-  Zap,
-  Search,
-  Warehouse,
-  Building2,
-  Database,
-  KeyRound,
-  Server,
-  Settings,
-  Users,
-  Plug,
-  Tags,
-  Scale,
 } from "lucide-react";
 import { WorkspaceAvatar } from "../workspace/workspace-avatar";
-import { ActorAvatar } from "@teamify/ui/components/common/actor-avatar";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@teamify/ui/components/ui/tooltip";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@teamify/ui/components/ui/collapsible";
+import { ActorAvatar } from "@iteamify/ui/components/common/actor-avatar";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@iteamify/ui/components/ui/tooltip";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@iteamify/ui/components/ui/collapsible";
+import { CappedNumberFlow } from "@iteamify/ui/components/ui/number-flow";
 import { StatusIcon } from "../issues/components/status-icon";
-import { useCreateModeStore } from "@teamify/core/issues/stores/create-mode-store";
-import { useSearchStore } from "../search/search-store";
 import {
   Sidebar,
   SidebarContent,
@@ -63,7 +42,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@teamify/ui/components/ui/sidebar";
+} from "@iteamify/ui/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,33 +51,29 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@teamify/ui/components/ui/dropdown-menu";
-import { useAuthStore } from "@teamify/core/auth";
-import { useCurrentWorkspace, useWorkspacePaths, paths } from "@teamify/core/paths";
-import { workspaceListOptions, myInvitationListOptions, workspaceKeys } from "@teamify/core/workspace/queries";
+} from "@iteamify/ui/components/ui/dropdown-menu";
+import { useAuthStore } from "@iteamify/core/auth";
+import { useCurrentWorkspace, useWorkspacePaths, paths } from "@iteamify/core/paths";
+import {
+  workspaceListOptions,
+  myInvitationListOptions,
+  workspaceKeys,
+} from "@iteamify/core/workspace/queries";
+import { resolvePublicFileUrl } from "@iteamify/core/workspace/avatar-url";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { inboxKeys, deduplicateInboxItems } from "@teamify/core/inbox/queries";
-import { api, ApiError } from "@teamify/core/api";
-import { useModalStore } from "@teamify/core/modals";
-import { useMyRuntimesNeedUpdate } from "@teamify/core/runtimes/hooks";
-import { useIsOwner } from "@teamify/core/permissions";
-import { pinListOptions } from "@teamify/core/pins/queries";
-import { useDeletePin, useReorderPins } from "@teamify/core/pins/mutations";
-import { issueDetailOptions } from "@teamify/core/issues/queries";
-import { projectDetailOptions } from "@teamify/core/projects/queries";
-import {
-  isWorkspaceModuleNavVisible,
-  type WorkspaceModuleKey,
-} from "@teamify/core/workspace/modules";
-import {
-  isWorkspaceShortcutNavVisible,
-  type WorkspaceShortcutNavKey,
-} from "@teamify/core/workspace/navigation";
-import type { PinnedItem } from "@teamify/core/types";
+import { inboxKeys, deduplicateInboxItems, inboxUnreadSummaryOptions, hasOtherWorkspaceUnread, unreadWorkspaceIds } from "@iteamify/core/inbox/queries";
+import { api, ApiError } from "@iteamify/core/api";
+import { useModalStore } from "@iteamify/core/modals";
+import { useConfigStore } from "@iteamify/core/config";
+import { pinListOptions } from "@iteamify/core/pins/queries";
+import { useDeletePin, useReorderPins } from "@iteamify/core/pins/mutations";
+import { issueDetailOptions } from "@iteamify/core/issues/queries";
+import { projectDetailOptions } from "@iteamify/core/projects/queries";
+import type { PinnedItem } from "@iteamify/core/types";
 import { useLogout } from "../auth";
 import { ProjectIcon } from "../projects/components/project-icon";
+import { routeIconForPath } from "./route-icon-components";
 import { useT } from "../i18n";
-import { SidebarChatsGroup } from "./sidebar-chats-group";
 
 // Top-level nav items stay active when the user is on a child route
 // (e.g. "Projects" stays lit on /:slug/projects/:id). Pinned items keep
@@ -117,131 +92,56 @@ const EMPTY_PINS: PinnedItem[] = [];
 const EMPTY_WORKSPACES: Awaited<ReturnType<typeof api.listWorkspaces>> = [];
 const EMPTY_INVITATIONS: Awaited<ReturnType<typeof api.listMyInvitations>> = [];
 const EMPTY_INBOX: Awaited<ReturnType<typeof api.listInbox>> = [];
+const EMPTY_INBOX_SUMMARY: Awaited<ReturnType<typeof api.getInboxUnreadSummary>> = [];
 
 // Nav items reference WorkspacePaths method names so they can be resolved
 // against the current workspace slug at render time (see AppSidebar body).
 // Only parameterless paths are valid nav destinations.
 type NavKey =
   | "inbox"
+  | "chat"
   | "myIssues"
   | "issues"
   | "projects"
-  | "reconciliation"
-  | "supplyReconciliation"
-  | "inventory"
-  | "productCategories"
   | "autopilots"
-  | "org"
-  | "datasources"
-  | "agents"
-  | "runtimes"
+  | "usage"
+  | "members"
+  | "applications"
   | "skills"
-  | "settings";
+  | "settings"
+  | "connections";
 
-// Special nav keys that don't map directly to WorkspacePaths methods
-type SpecialNavKey = "tokens" | "daemon" | "mcp";
-
-// Action items open modals or palettes instead of navigating
-type ActionKey = "createIssue" | "search";
-
-// Static schema (key + icon) — labels resolved at render via useT("layout").
+// Static schema (key only) — labels resolved at render via useT("layout"),
+// icons derived from the destination path via routeIconForPath.
 type NavLabelKey =
   | "inbox"
+  | "chat"
   | "my_issues"
   | "issues"
   | "projects"
-  | "reconciliation"
-  | "supply_reconciliation"
-  | "inventory"
-  | "product_categories"
   | "autopilots"
-  | "org"
-  | "datasources"
-  | "agents"
-  | "runtimes"
-  | "mcp"
-  | "tokens"
+  | "usage"
+  | "members"
+  | "applications"
   | "skills"
   | "settings"
-  | "daemon"
-  | "workspace"
-  | "members"
-  | "repositories";
+  | "connections";
 
-type DigitalEmployeeNavItem = { key: NavKey | SpecialNavKey; labelKey: NavLabelKey; icon: typeof Inbox; desktopOnly?: boolean };
-
-type ActionLabelKey = "new_issue" | "search";
-
-type WorkspaceGroupLinkItem = {
-  type: "link";
-  key: NavKey;
-  labelKey: NavLabelKey;
-  icon: typeof Inbox;
-  moduleKey?: WorkspaceModuleKey;
-  shortcutKey?: WorkspaceShortcutNavKey;
-};
-type WorkspaceGroupActionItem = {
-  type: "action";
-  key: ActionKey;
-  shortcutKey: WorkspaceShortcutNavKey;
-  labelKey: ActionLabelKey;
-  icon: typeof Inbox;
-};
-type WorkspaceGroupNavItem = WorkspaceGroupLinkItem | WorkspaceGroupActionItem;
-
-const primaryWorkspaceNav: WorkspaceGroupNavItem[] = [
-  { type: "link", key: "inbox", shortcutKey: "inbox", labelKey: "inbox", icon: Inbox },
-  { type: "link", key: "reconciliation", moduleKey: "reconciliation", labelKey: "reconciliation", icon: CheckCircle2 },
-  { type: "link", key: "supplyReconciliation", moduleKey: "supplyReconciliation", labelKey: "supply_reconciliation", icon: Scale },
-  { type: "link", key: "inventory", moduleKey: "inventory", labelKey: "inventory", icon: Warehouse },
-  { type: "link", key: "productCategories", moduleKey: "productCategories", labelKey: "product_categories", icon: Tags },
-  { type: "link", key: "autopilots", labelKey: "autopilots", icon: Zap },
+// Page icons are derived from each destination path at render time.
+// Settings-tab shortcuts use the same icon as the corresponding tab.
+const workspaceNav: { key: NavKey; labelKey: NavLabelKey }[] = [
+  { key: "projects", labelKey: "projects" },
+  { key: "autopilots", labelKey: "autopilots" },
 ];
 
-const workspaceGroupNav: WorkspaceGroupNavItem[] = [
-  { type: "link", key: "projects", moduleKey: "projects", labelKey: "projects", icon: FolderKanban },
-  { type: "link", key: "issues", moduleKey: "issues", labelKey: "issues", icon: ListTodo },
-  { type: "link", key: "myIssues", shortcutKey: "myIssues", labelKey: "my_issues", icon: CircleUser },
-  { type: "action", key: "createIssue", shortcutKey: "createIssue", labelKey: "new_issue", icon: SquarePen },
-  { type: "action", key: "search", shortcutKey: "search", labelKey: "search", icon: Search },
-];
 
-function isWorkspaceNavItemVisible(settings: unknown, item: WorkspaceGroupNavItem): boolean {
-  const moduleVisible =
-    !("moduleKey" in item) ||
-    !item.moduleKey ||
-    isWorkspaceModuleNavVisible(settings, item.moduleKey);
-  const shortcutVisible =
-    !("shortcutKey" in item) ||
-    !item.shortcutKey ||
-    isWorkspaceShortcutNavVisible(settings, item.shortcutKey);
-
-  return moduleVisible && shortcutVisible;
-}
-
-type ConfigureNavItem = {
-  key: string;
-  labelKey: NavLabelKey;
-  icon: typeof Inbox;
-  tab?: string;
-};
-
-const configureNav: ConfigureNavItem[] = [
-  { key: "settings", labelKey: "settings", icon: User },
-  { key: "workspace_tab", labelKey: "workspace", icon: Settings, tab: "workspace" },
-  { key: "members_tab", labelKey: "members", icon: Users, tab: "members" },
-  { key: "agents_tab", labelKey: "agents", icon: Bot, tab: "agents" },
-];
-
-const digitalEmployeeNav: DigitalEmployeeNavItem[] = [
-  { key: "agents", labelKey: "agents", icon: Bot },
-  { key: "mcp", labelKey: "mcp", icon: Plug },
-  { key: "org", labelKey: "org", icon: Building2 },
-  { key: "datasources", labelKey: "datasources", icon: Database },
-  { key: "skills", labelKey: "skills", icon: BookOpenText },
-  { key: "runtimes", labelKey: "runtimes", icon: Monitor },
-  { key: "tokens", labelKey: "tokens", icon: KeyRound },
-  { key: "daemon", labelKey: "daemon", icon: Server, desktopOnly: true },
+const configureNav: { key: NavKey; labelKey: NavLabelKey }[] = [
+  { key: "skills", labelKey: "skills" },
+  { key: "applications", labelKey: "applications" },
+  { key: "connections", labelKey: "connections" },
+  { key: "usage", labelKey: "usage" },
+  { key: "members", labelKey: "members" },
+  { key: "settings", labelKey: "settings" },
 ];
 
 /**
@@ -373,7 +273,7 @@ function PinRow({
     if (issueQuery.isPending) return <PinSkeleton />;
     if (issueQuery.isError || !issueQuery.data) return null;
     const issue = issueQuery.data;
-    const label = issue.identifier ? `${issue.identifier} ${issue.title}` : issue.title;
+    const label = issue.title;
     const iconNode = (
       /* Override parent [&_svg]:size-4 — pinned items need smaller icons to match sm size */
       <StatusIcon status={issue.status} className="!size-3.5 shrink-0" />
@@ -420,13 +320,15 @@ function PinSkeleton() {
 interface AppSidebarProps {
   /** Rendered above SidebarHeader (e.g. desktop traffic light spacer) */
   topSlot?: React.ReactNode;
+  /** Rendered in the Work navigation group (e.g. search trigger) */
+  searchSlot?: React.ReactNode;
   /** Extra className for SidebarHeader */
   headerClassName?: string;
   /** Extra style for SidebarHeader */
   headerStyle?: React.CSSProperties;
 }
 
-export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebarProps = {}) {
+export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }: AppSidebarProps = {}) {
   const { t } = useT("layout");
   const { pathname, push, searchParams } = useNavigation();
   const user = useAuthStore((s) => s.user);
@@ -436,28 +338,39 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
   const p = useWorkspacePaths();
   const { data: workspaces = EMPTY_WORKSPACES } = useQuery(workspaceListOptions());
   const { data: myInvitations = EMPTY_INVITATIONS } = useQuery(myInvitationListOptions());
+  const workspaceCreationDisabled = useConfigStore((s) => s.workspaceCreationDisabled);
 
   const wsId = workspace?.id;
-  const isInboxNavVisible = isWorkspaceShortcutNavVisible(workspace?.settings, "inbox");
   const { data: inboxItems = EMPTY_INBOX } = useQuery({
     queryKey: wsId ? inboxKeys.list(wsId) : ["inbox", "disabled"],
     queryFn: () => api.listInbox(),
-    enabled: !!wsId && isInboxNavVisible,
+    enabled: !!wsId,
   });
   const unreadCount = React.useMemo(
     () => deduplicateInboxItems(inboxItems).filter((i) => !i.read).length,
     [inboxItems],
   );
-  const hasRuntimeUpdates = useMyRuntimesNeedUpdate(wsId);
-  const { isOwner } = useIsOwner(wsId ?? "");
-  const visiblePrimaryWorkspaceNav = React.useMemo(
-    () => primaryWorkspaceNav.filter((item) => isWorkspaceNavItemVisible(workspace?.settings, item)),
-    [workspace?.settings],
+  // Basic Info is the company's canonical home. The workspace switcher owns
+  // the Company identity while this route presents editable business facts.
+  const companyHref = p.root();
+  const CompanyIcon = routeIconForPath(companyHref);
+  // "Watchlist" (inbox) lives in the Work group and keeps its unread badge.
+  const inboxHref = p.inbox();
+  const InboxIcon = routeIconForPath(inboxHref);
+  // Cross-workspace unread summary backs the workspace-switcher dot. One
+  // shared cache entry across workspaces; gated on an active workspace since
+  // the endpoint resolves through the workspace-member middleware.
+  const { data: unreadSummary = EMPTY_INBOX_SUMMARY } = useQuery({
+    ...inboxUnreadSummaryOptions(),
+    enabled: !!wsId,
+  });
+  const otherWorkspaceUnread = React.useMemo(
+    () => hasOtherWorkspaceUnread(unreadSummary, wsId),
+    [unreadSummary, wsId],
   );
-  const visibleWorkspaceGroupNav = React.useMemo(
-    () => workspaceGroupNav.filter((item) => isWorkspaceNavItemVisible(workspace?.settings, item)),
-    [workspace?.settings],
-  );
+  // Which workspaces have unread, so the switcher dropdown can point at the
+  // specific one(s) rather than just the aggregate avatar dot.
+  const unreadWsIds = React.useMemo(() => unreadWorkspaceIds(unreadSummary), [unreadSummary]);
   const { data: pinnedItems = EMPTY_PINS } = useQuery({
     ...pinListOptions(wsId ?? "", userId ?? ""),
     enabled: !!wsId && !!userId,
@@ -465,18 +378,30 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
   const deletePin = useDeletePin();
   const reorderPins = useReorderPins();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sidebarScrollRef = useRef<HTMLDivElement>(null);
+  const sidebarFadeStyle = useScrollFade(sidebarScrollRef, 24);
+  const getPinHref = useCallback(
+    (pin: PinnedItem) => (pin.item_type === "issue" ? p.issueDetail(pin.item_id) : p.projectDetail(pin.item_id)),
+    [p],
+  );
 
   // Local presentational copy of pinnedItems for drop-animation stability.
   // Follows TQ at rest; frozen during a drag gesture so a mid-drag cache
   // write (our own optimistic update, or a WS refetch) cannot reorder the
   // DOM under dnd-kit while its drop animation is still interpolating.
   const [localPinned, setLocalPinned] = useState<PinnedItem[]>(pinnedItems);
+  const [localPinnedWsId, setLocalPinnedWsId] = useState<string | null>(wsId ?? null);
   const isDraggingRef = useRef(false);
   useEffect(() => {
     if (!isDraggingRef.current) {
       setLocalPinned(pinnedItems);
     }
   }, [pinnedItems]);
+  useEffect(() => {
+    setLocalPinnedWsId(wsId ?? null);
+  }, [wsId]);
+  const visiblePinned = localPinnedWsId === (wsId ?? null) ? localPinned : EMPTY_PINS;
+  const isActivePinnedRoute = visiblePinned.some((pin) => pathname === getPinHref(pin));
 
   const handleDragStart = useCallback(() => {
     isDraggingRef.current = true;
@@ -515,7 +440,7 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
         ? list.find((w) => w.id === invitation.workspace_id)
         : null;
       if (joined) {
-        push(paths.workspace(joined.slug).issues());
+        push(paths.workspace(joined.slug).root());
       }
     },
   });
@@ -525,83 +450,6 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
       queryClient.invalidateQueries({ queryKey: workspaceKeys.myInvitations() });
     },
   });
-
-  // Global "C" shortcut: opens whichever create mode the user landed on last
-  // (agent vs manual), persisted in useCreateModeStore. The mode switch lives
-  // inside both modal footers so users can flip without remembering which
-  // shortcut goes where — `c` always means "open the create flow I prefer".
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "c" && e.key !== "C") return;
-      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
-      const tag = (e.target as HTMLElement)?.tagName;
-      const isEditable =
-        tag === "INPUT" ||
-        tag === "TEXTAREA" ||
-        tag === "SELECT" ||
-        (e.target as HTMLElement)?.isContentEditable;
-      if (isEditable) return;
-      if (useModalStore.getState().modal) return;
-      e.preventDefault();
-      const lastMode = useCreateModeStore.getState().lastMode;
-      if (lastMode === "manual") {
-        // Auto-fill project when on a project detail page (manual form only —
-        // agent mode lets the agent infer project from the prompt).
-        const projectMatch = pathname.match(/^\/[^/]+\/projects\/([^/]+)$/);
-        const data = projectMatch ? { project_id: projectMatch[1] } : undefined;
-        useModalStore.getState().open("create-issue", data);
-      } else {
-        useModalStore.getState().open("quick-create-issue");
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [pathname]);
-
-  const renderWorkspaceNavItem = (item: WorkspaceGroupNavItem) => {
-    if (item.type === "action") {
-      return (
-        <SidebarMenuItem key={item.key}>
-          <SidebarMenuButton
-            className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
-            onClick={() => {
-              if (item.key === "createIssue") {
-                useModalStore.getState().open("quick-create-issue");
-              } else if (item.key === "search") {
-                useSearchStore.getState().setOpen(true);
-              }
-            }}
-          >
-            <item.icon />
-            <span>{t(($) => $.sidebar[item.labelKey])}</span>
-            {item.key === "createIssue" && (
-              <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">{t(($) => $.sidebar.new_issue_shortcut)}</kbd>
-            )}
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      );
-    }
-
-    const href = p[item.key]();
-    const isActive = isNavActive(pathname, href);
-    return (
-      <SidebarMenuItem key={item.key}>
-        <SidebarMenuButton
-          isActive={isActive}
-          render={<AppLink href={href} />}
-          className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
-        >
-          <item.icon />
-          <span>{t(($) => $.nav[item.labelKey])}</span>
-          {item.key === "inbox" && unreadCount > 0 && (
-            <span className="ml-auto text-xs">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </span>
-          )}
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
-  };
 
   return (
       <Sidebar variant="inset">
@@ -615,13 +463,17 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
                   render={
                     <SidebarMenuButton>
                       <span className="relative">
-                        <WorkspaceAvatar name={workspace?.name ?? "M"} size="sm" />
-                        {myInvitations.length > 0 && (
+                        <WorkspaceAvatar name={workspace?.name ?? "M"} avatarUrl={workspace?.avatar_url} size="sm" />
+                        {/* Shared brand dot: a pending invitation OR another
+                            workspace with unread inbox items. The active
+                            workspace's own unread stays on the Inbox nav count
+                            (below), so it is deliberately excluded here. */}
+                        {(myInvitations.length > 0 || otherWorkspaceUnread) && (
                           <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-brand ring-1 ring-sidebar" />
                         )}
                       </span>
                       <span className="flex-1 truncate font-medium">
-                        {workspace?.name ?? "Teamify"}
+                        {workspace?.name ?? "iteamify"}
                       </span>
                       <ChevronDown className="size-3 text-muted-foreground" />
                     </SidebarMenuButton>
@@ -637,8 +489,8 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
                     <ActorAvatar
                       name={user?.name ?? ""}
                       initials={(user?.name ?? "U").charAt(0).toUpperCase()}
-                      avatarUrl={user?.avatar_url}
-                      size={32}
+                      avatarUrl={resolvePublicFileUrl(user?.avatar_url)}
+                      size="lg"
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium leading-tight">
@@ -658,17 +510,25 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
                       <DropdownMenuItem
                         key={ws.id}
                         render={
-                          <AppLink href={paths.workspace(ws.slug).issues()} />
+                          <AppLink href={paths.workspace(ws.slug).root()} />
                         }
                       >
-                        <WorkspaceAvatar name={ws.name} size="sm" />
+                        <WorkspaceAvatar name={ws.name} avatarUrl={ws.avatar_url} size="sm" />
                         <span className="flex-1 truncate">{ws.name}</span>
+                        {/* Points at the specific workspace holding unread
+                            inbox items. Sits in the same right-edge slot as the
+                            active-workspace check; the active workspace is
+                            excluded (its unread is the Inbox nav count), so dot
+                            and check never collide on one row. */}
+                        {ws.id !== workspace?.id && unreadWsIds.has(ws.id) && (
+                          <span className="size-2 rounded-full bg-brand" />
+                        )}
                         {ws.id === workspace?.id && (
                           <Check className="h-3.5 w-3.5 text-primary" />
                         )}
                       </DropdownMenuItem>
                     ))}
-                    {isOwner && (
+                    {!workspaceCreationDisabled && (
                       <DropdownMenuItem
                         onClick={() =>
                           useModalStore.getState().open("create-workspace")
@@ -731,16 +591,27 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
         </SidebarHeader>
 
         {/* Navigation */}
-        <SidebarContent>
+        <SidebarContent ref={sidebarScrollRef} style={sidebarFadeStyle}>
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
-                {visiblePrimaryWorkspaceNav.map(renderWorkspaceNavItem)}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={!isActivePinnedRoute && pathname === companyHref}
+                    render={<AppLink href={companyHref} />}
+                    className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
+                  >
+                    <CompanyIcon />
+                    <span>{t(($) => $.nav.business)}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {localPinned.length > 0 && (
+          <TeamSidebarGroup key={workspace?.id ?? ""} />
+
+          {visiblePinned.length > 0 && (
             <Collapsible defaultOpen>
               <SidebarGroup className="group/pinned">
                 <SidebarGroupLabel
@@ -749,18 +620,18 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
                 >
                   <span>{t(($) => $.sidebar.pinned_label)}</span>
                   <ChevronRight className="!size-3 ml-1 stroke-[2.5] transition-transform duration-200 group-data-[panel-open]/trigger:rotate-90" />
-                  <span className="ml-auto text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover/pinned:opacity-100">{localPinned.length}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover/pinned:opacity-100">{visiblePinned.length}</span>
                 </SidebarGroupLabel>
                 <CollapsibleContent>
                   <SidebarGroupContent>
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                      <SortableContext items={localPinned.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                      <SortableContext items={visiblePinned.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                         <SidebarMenu className="gap-0.5">
-                          {localPinned.map((pin: PinnedItem) => (
+                          {visiblePinned.map((pin: PinnedItem) => (
                             <PinRow
                               key={pin.id}
                               pin={pin}
-                              href={pin.item_type === "issue" ? p.issueDetail(pin.item_id) : p.projectDetail(pin.item_id)}
+                              href={getPinHref(pin)}
                               pathname={pathname}
                               onUnpin={() => deletePin.mutate({ itemType: pin.item_type, itemId: pin.item_id })}
                               wsId={wsId ?? ""}
@@ -775,30 +646,74 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
             </Collapsible>
           )}
 
-          <SidebarChatsGroup wsId={wsId} userId={user?.id} />
-
-          {visibleWorkspaceGroupNav.length > 0 && (
+          <Collapsible defaultOpen>
             <SidebarGroup>
-              <SidebarGroupLabel>{t(($) => $.sidebar.workspace_group)}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="gap-0.5">
-                  {visibleWorkspaceGroupNav.map(renderWorkspaceNavItem)}
-                </SidebarMenu>
-              </SidebarGroupContent>
+              <SidebarGroupLabel
+                render={<CollapsibleTrigger />}
+                className="group/trigger cursor-pointer hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
+              >
+                <span>{t(($) => $.sidebar.workspace_group)}</span>
+                <ChevronRight className="!size-3 ml-1 stroke-[2.5] transition-transform duration-200 group-data-[panel-open]/trigger:rotate-90" />
+              </SidebarGroupLabel>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu className="gap-0.5">
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        isActive={!isActivePinnedRoute && isNavActive(pathname, inboxHref)}
+                        render={<AppLink href={inboxHref} />}
+                        className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
+                      >
+                        <InboxIcon />
+                        <span>{t(($) => $.nav.inbox)}</span>
+                        {unreadCount > 0 && (
+                          <CappedNumberFlow
+                            value={unreadCount}
+                            animated={false}
+                            className="ml-auto text-xs"
+                          />
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    {searchSlot && (
+                      <SidebarMenuItem>
+                        {searchSlot}
+                      </SidebarMenuItem>
+                    )}
+                    {workspaceNav.map((item) => {
+                      const href = p[item.key]();
+                      const Icon = routeIconForPath(href);
+                      const isActive = !isActivePinnedRoute && isNavActive(pathname, href);
+                      return (
+                        <SidebarMenuItem key={item.key}>
+                          <SidebarMenuButton
+                            isActive={isActive}
+                            render={<AppLink href={href} />}
+                            className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
+                          >
+                            <Icon />
+                            <span>{t(($) => $.nav[item.labelKey])}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
             </SidebarGroup>
-          )}
+          </Collapsible>
 
           <SidebarGroup>
             <SidebarGroupLabel>{t(($) => $.sidebar.configure_group)}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
                 {configureNav.map((item) => {
-                  const href = item.tab
-                    ? p.settings() + "?tab=" + item.tab
-                    : p.settings();
-                  const isActive = item.tab
-                    ? pathname === p.settings() && searchParams.get("tab") === item.tab
-                    : isNavActive(pathname, href);
+                  const href = p[item.key]();
+                  const Icon = routeIconForPath(href);
+                  const isMembersActive = pathname === p.settings() && searchParams.get("tab") === "members";
+                  const isActive = isNavActive(pathname, href) && !(item.key === "settings" && isMembersActive);
+                  const labelKey = item.labelKey;
+                  const label = t(($) => $.nav[labelKey]);
                   return (
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
@@ -806,8 +721,8 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
                         render={<AppLink href={href} />}
                         className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
                       >
-                        <item.icon />
-                        <span>{t(($) => $.nav[item.labelKey])}</span>
+                        <Icon />
+                        <span>{label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -816,43 +731,6 @@ export function AppSidebar({ topSlot, headerClassName, headerStyle }: AppSidebar
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {isOwner && (
-            <SidebarGroup>
-              <SidebarGroupLabel>{t(($) => $.sidebar.digital_employee_group)}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="gap-0.5">
-                  {digitalEmployeeNav
-                    .filter((item) => !item.desktopOnly || !!(window as unknown as { desktopAPI?: unknown }).desktopAPI)
-                    .map((item) => {
-                    // tokens, MCP, and daemon link to settings?tab=<key>.
-                    const isSpecial = item.key === "tokens" || item.key === "mcp" || item.key === "daemon";
-                    const navKey = item.key as NavKey;
-                    const href = isSpecial
-                      ? p.settings() + "?tab=" + item.key
-                      : p[navKey]();
-                    const isActive = isSpecial
-                      ? pathname === p.settings() && searchParams.get("tab") === item.key
-                      : isNavActive(pathname, p[navKey]());
-                    return (
-                      <SidebarMenuItem key={item.key}>
-                        <SidebarMenuButton
-                          isActive={isActive}
-                          render={<AppLink href={href} />}
-                          className="text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground"
-                        >
-                          <item.icon />
-                          <span>{t(($) => $.nav[item.labelKey])}</span>
-                          {item.key === "runtimes" && hasRuntimeUpdates && (
-                            <span className="ml-auto size-1.5 rounded-full bg-destructive" />
-                          )}
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          )}
         </SidebarContent>
 
         <SidebarFooter className="p-2">

@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { NewWorkspacePage } from "@teamify/views/workspace/new-workspace-page";
-import { InvitePage, InviteSignupPage } from "@teamify/views/invite";
-import { InvitationsPage } from "@teamify/views/invitations";
-import { OnboardingFlow } from "@teamify/views/onboarding";
-import { useNavigation } from "@teamify/views/navigation";
-import { useAuthStore } from "@teamify/core/auth";
-import { paths } from "@teamify/core/paths";
-import { workspaceListOptions } from "@teamify/core/workspace/queries";
+import { NewWorkspacePage } from "@iteamify/views/workspace/new-workspace-page";
+import { InvitePage } from "@iteamify/views/invite";
+import { InvitationsPage } from "@iteamify/views/invitations";
+import { OnboardingFlow } from "@iteamify/views/onboarding";
+import { useNavigation } from "@iteamify/views/navigation";
+import { paths } from "@iteamify/core/paths";
+import { workspaceListOptions } from "@iteamify/core/workspace/queries";
 import { useWindowOverlayStore } from "@/stores/window-overlay-store";
+import { useLocalRuntimesPending } from "../platform/use-local-runtimes-pending";
 
 /**
  * Window-level transition overlay: renders above the tab system when the
@@ -38,7 +38,9 @@ function WindowOverlayInner() {
   const close = useWindowOverlayStore((s) => s.close);
   const { push } = useNavigation();
   const { data: wsList = [] } = useQuery(workspaceListOptions());
-  const user = useAuthStore((s) => s.user);
+  // Live local-daemon signal for the onboarding runtime step so it doesn't
+  // flash "no runtime found" while the daemon is still probing CLI versions.
+  const runtimesPending = useLocalRuntimesPending();
 
   if (!overlay) return null;
 
@@ -55,44 +57,38 @@ function WindowOverlayInner() {
           onBack={onBack}
         />
       )}
-      {overlay.type === "invite" &&
-        (user ? (
-          <InvitePage
-            invitationId={overlay.invitationId}
-            onBack={onBack}
-          />
-        ) : (
-          <InviteSignupPage
-            invitationId={overlay.invitationId}
-            onSuccess={(slug) => {
-              close();
-              const dest = slug
-                ? paths.workspace(slug).issues()
-                : paths.root();
-              push(dest);
-            }}
-            onLoginInstead={() => {
-              // Desktop doesn't have a login URL — close overlay and
-              // let the auth flow handle it.
-              close();
-            }}
-          />
-        ))}
+      {overlay.type === "invite" && (
+        <InvitePage
+          invitationId={overlay.invitationId}
+          onBack={onBack}
+        />
+      )}
       {overlay.type === "invitations" && <InvitationsPage />}
       {overlay.type === "onboarding" && (
         <OnboardingFlow
-          onComplete={(ws) => {
+          requestedStep={overlay.step}
+          requestedWorkspaceId={overlay.workspaceId}
+          onStepChange={(step, workspaceId) => useWindowOverlayStore.getState().open({ type: "onboarding", step, workspaceId })}
+          onComplete={(ws, issueId) => {
             close();
-            // Post-onboarding landing is always the workspace issues
-            // list. The welcome-issue flow moved into a dialog that
-            // renders on that page (StarterContentPrompt), so the
-            // flow doesn't need to thread a target issue id back here.
-            if (ws) {
+            // Runtime-connected onboarding lands on its single guide
+            // issue. Runtime-less exits still land on the issues list.
+            if (ws && issueId) {
+              push(paths.workspace(ws.slug).issueDetail(issueId));
+            } else if (ws) {
               push(paths.workspace(ws.slug).issues());
             } else {
               push(paths.root());
             }
           }}
+          // Restart the bundled daemon when the user hits Refresh on
+          // Step 3. The daemon's PATH probe runs once at boot, so a
+          // newly-installed CLI (Claude / Codex / Cursor) doesn't show
+          // up until the daemon is bounced.
+          onRuntimeRefresh={async () => {
+            await window.daemonAPI?.restart?.();
+          }}
+          runtimesPending={runtimesPending}
         />
       )}
     </div>

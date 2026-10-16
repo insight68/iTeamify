@@ -1,4 +1,12 @@
-type LogLevel = "debug" | "info" | "warn" | "error";
+export type LogLevel = "debug" | "info" | "warn" | "error";
+
+const LEVEL_RANK: Record<LogLevel, number> = { debug: 0, info: 1, warn: 2, error: 3 };
+let minimumLevel: LogLevel = "warn";
+
+/** Set by the host platform; core never reads build-time environment variables. */
+export function configureLogging(level: LogLevel): void {
+  minimumLevel = level;
+}
 
 const COLORS: Record<LogLevel, string> = {
   debug: "color:#888",
@@ -25,6 +33,7 @@ export function createLogger(namespace: string): Logger {
   const make =
     (level: LogLevel) =>
     (msg: string, ...data: unknown[]) => {
+      if (LEVEL_RANK[level] < LEVEL_RANK[minimumLevel]) return;
       const ts = new Date().toISOString().slice(11, 23);
       const prefix = `%c${ts} [${namespace}]`;
       if (data.length > 0) {

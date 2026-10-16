@@ -1,0 +1,1 @@
+ALTER TABLE workspace_openagent_config ADD CONSTRAINT workspace_openagent_config_pkey PRIMARY KEY USING INDEX workspace_openagent_config_workspace_unique;

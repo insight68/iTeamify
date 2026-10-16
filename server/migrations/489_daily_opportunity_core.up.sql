@@ -1,0 +1,106 @@
+-- Immutable, human-reviewed public snapshots for the Daily Opportunities feed.
+-- Relationships are application-managed soft references: no foreign keys or cascades.
+-- Every index is created by a following single-statement CONCURRENTLY migration.
+
+CREATE TABLE daily_opportunity_edition (
+    id UUID NOT NULL DEFAULT gen_random_uuid(),
+    workspace_id UUID NOT NULL,
+    edition_date DATE NOT NULL,
+    market TEXT NOT NULL DEFAULT 'eu_us_ai_services'
+        CHECK (market = 'eu_us_ai_services'),
+    revision INTEGER NOT NULL DEFAULT 1 CHECK (revision > 0),
+    status TEXT NOT NULL DEFAULT 'draft'
+        CHECK (status IN ('draft', 'published', 'retired')),
+    source_job_id UUID,
+    published_by_user_id UUID,
+    published_at TIMESTAMPTZ,
+    retired_at TIMESTAMPTZ,
+    retire_reason TEXT NOT NULL DEFAULT '',
+    version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (char_length(retire_reason) <= 500),
+    CHECK (status <> 'published' OR (published_at IS NOT NULL AND published_by_user_id IS NOT NULL)),
+    CHECK (status <> 'retired' OR retired_at IS NOT NULL)
+);
+
+CREATE TABLE daily_opportunity_item (
+    id UUID NOT NULL DEFAULT gen_random_uuid(),
+    edition_id UUID NOT NULL,
+    public_ref TEXT NOT NULL,
+    rank INTEGER NOT NULL CHECK (rank BETWEEN 1 AND 10),
+    status TEXT NOT NULL DEFAULT 'active'
+        CHECK (status IN ('active', 'retired')),
+    organization_name TEXT NOT NULL,
+    organization_domain TEXT NOT NULL DEFAULT '',
+    website_url TEXT NOT NULL DEFAULT '',
+    country_code TEXT NOT NULL,
+    region TEXT NOT NULL DEFAULT '',
+    industry TEXT NOT NULL DEFAULT '',
+    signal_type TEXT NOT NULL
+        CHECK (signal_type IN ('rfp', 'hiring', 'integration', 'automation', 'partnership', 'modernization')),
+    service_types TEXT[] NOT NULL DEFAULT '{}',
+    title_en TEXT NOT NULL,
+    title_zh_hans TEXT NOT NULL,
+    summary_en TEXT NOT NULL,
+    summary_zh_hans TEXT NOT NULL,
+    why_now_en TEXT NOT NULL,
+    why_now_zh_hans TEXT NOT NULL,
+    suggested_offer_en TEXT NOT NULL,
+    suggested_offer_zh_hans TEXT NOT NULL,
+    buyer_role_en TEXT NOT NULL DEFAULT '',
+    buyer_role_zh_hans TEXT NOT NULL DEFAULT '',
+    budget_hint_en TEXT NOT NULL DEFAULT '',
+    budget_hint_zh_hans TEXT NOT NULL DEFAULT '',
+    evidence JSONB NOT NULL DEFAULT '[]'::jsonb,
+    source_observed_at TIMESTAMPTZ NOT NULL,
+    source_fingerprint BYTEA NOT NULL,
+    source_lead_id UUID,
+    source_assessment_id UUID,
+    method_version TEXT NOT NULL DEFAULT 'daily-opportunity-v1',
+    retired_at TIMESTAMPTZ,
+    retire_reason TEXT NOT NULL DEFAULT '',
+    version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (length(public_ref) BETWEEN 22 AND 128),
+    CHECK (char_length(organization_name) BETWEEN 2 AND 160),
+    CHECK (organization_domain = '' OR char_length(organization_domain) BETWEEN 3 AND 255),
+    CHECK (website_url = '' OR char_length(website_url) BETWEEN 8 AND 2000),
+    CHECK (country_code ~ '^[A-Z]{2}$'),
+    CHECK (char_length(region) <= 100),
+    CHECK (char_length(industry) <= 120),
+    CHECK (cardinality(service_types) BETWEEN 1 AND 8),
+    CHECK (char_length(title_en) BETWEEN 8 AND 180),
+    CHECK (char_length(title_zh_hans) BETWEEN 4 AND 100),
+    CHECK (char_length(summary_en) BETWEEN 30 AND 800),
+    CHECK (char_length(summary_zh_hans) BETWEEN 15 AND 500),
+    CHECK (char_length(why_now_en) BETWEEN 20 AND 600),
+    CHECK (char_length(why_now_zh_hans) BETWEEN 10 AND 400),
+    CHECK (char_length(suggested_offer_en) BETWEEN 20 AND 600),
+    CHECK (char_length(suggested_offer_zh_hans) BETWEEN 10 AND 400),
+    CHECK (char_length(buyer_role_en) <= 240),
+    CHECK (char_length(buyer_role_zh_hans) <= 160),
+    CHECK (char_length(budget_hint_en) <= 240),
+    CHECK (char_length(budget_hint_zh_hans) <= 160),
+    CHECK (jsonb_typeof(evidence) = 'array' AND jsonb_array_length(evidence) BETWEEN 1 AND 8),
+    CHECK (octet_length(source_fingerprint) = 32),
+    CHECK (char_length(method_version) BETWEEN 3 AND 80),
+    CHECK (char_length(retire_reason) <= 500),
+    CHECK (status <> 'retired' OR retired_at IS NOT NULL)
+);
+
+CREATE TABLE daily_opportunity_review (
+    id UUID NOT NULL DEFAULT gen_random_uuid(),
+    workspace_id UUID NOT NULL,
+    edition_id UUID NOT NULL,
+    item_id UUID,
+    actor_user_id UUID NOT NULL,
+    action TEXT NOT NULL
+        CHECK (action IN ('prepare', 'create', 'update', 'publish', 'retire_item', 'retire_edition')),
+    reason TEXT NOT NULL DEFAULT '',
+    snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (char_length(reason) <= 1000),
+    CHECK (jsonb_typeof(snapshot) = 'object')
+);

@@ -1,3 +1,3 @@
-import reactConfig from "@teamify/eslint-config/react";
+import reactConfig from "@iteamify/eslint-config/react";
 
 export default [...reactConfig];

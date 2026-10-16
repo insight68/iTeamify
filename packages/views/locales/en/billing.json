@@ -1,0 +1,119 @@
+{
+  "title": "Workspace credits",
+  "subtitle": "Recharge and review credits owned by this workspace.",
+  "access": {
+    "title": "Workspace billing",
+    "member_hint": "Ask a workspace owner or admin to recharge credits.",
+    "read_only": "Only workspace owners and admins can purchase credits."
+  },
+  "balance": {
+    "title": "Balance",
+    "credits_suffix": "credits",
+    "meta": "Updated: {{updated}}",
+    "negative_hint": "This workspace has used its available credit. New tasks may be paused until you top up.",
+    "shared_hint": "Shared by everyone in this workspace."
+  },
+  "buy": {
+    "title": "Buy credits",
+    "no_tiers": "Top-ups are not available yet. Contact an administrator.",
+    "tier_money_to_credits": "{{money}} → {{credits}} credits",
+    "tier_bonus": " + {{credits}} bonus",
+    "tier_bonus_with_expiry": " + {{credits}} bonus ({{expiry}})",
+    "tier_id": "id: {{id}}",
+    "open_portal": "Open Stripe Billing Portal",
+    "portal_hint": "400 is expected for users who haven't paid yet (no Stripe customer record exists).",
+    "toast_no_url": "Checkout URL is unavailable",
+    "toast_checkout_failed": "Checkout failed",
+    "toast_no_portal_url": "No portal URL returned",
+    "toast_portal_failed": "Portal failed",
+    "subtitle": "Choose an amount. Every option uses the same exchange rate.",
+    "options_label": "Credit amount",
+    "one_time": "One-time payment",
+    "same_rate": "Same exchange rate",
+    "redirecting": "Opening secure checkout…",
+    "pay_button": "Continue to payment",
+    "stripe_note": "Secure payment handled by Stripe."
+  },
+  "checkout": {
+    "session_label": "Checkout session {{prefix}}…",
+    "loading": "Loading order status…",
+    "fetch_failed": "Failed to fetch status: {{error}}",
+    "fetch_failed_unknown": "unknown error",
+    "final_status": "Final status: {{status}}",
+    "polling_status": "Polling status… current: {{status}}",
+    "status_unknown": "unknown",
+    "label_order": "Order",
+    "label_tier": "Tier",
+    "label_charged": "Charged",
+    "charged_value": "{{money}} · {{credits}} credits",
+    "charged_with_bonus": "{{money}} · {{credits}} credits + {{bonus}} bonus",
+    "clear_url": "Clear from URL",
+    "timeout_title": "Payment confirmation is taking longer than expected",
+    "timeout_hint": "Your payment may still complete. Check again without paying a second time.",
+    "processing": "Confirming your payment",
+    "status_hint": "This page updates automatically after Stripe confirms the payment.",
+    "fetch_failed_short": "We could not check this payment right now.",
+    "retry": "Check again",
+    "dismiss": "Dismiss"
+  },
+  "transactions": {
+    "title": "Transactions",
+    "empty": "No transactions yet.",
+    "credits_value": "{{value}} credits",
+    "row_meta": "{{date}} · balance after: {{balance}} credits · ref: {{ref}}",
+    "ref_empty": "—",
+    "reference": "Task {{ref}}",
+    "balance_after": "Balance {{balance}}"
+  },
+  "batches": {
+    "title": "Credit batches",
+    "empty": "No batches yet.",
+    "remaining_over_total": "{{remaining}} / {{total}} credits",
+    "id_suffix": "{{id}}…",
+    "consumed": "Consumed: {{value}} credits",
+    "expires_suffix": " · expires {{value}}",
+    "never_expires_suffix": " · never expires"
+  },
+  "topups": {
+    "title": "Topup orders",
+    "empty": "No topup orders yet.",
+    "amount_to_credits": "{{money}} → {{credits}} credits",
+    "amount_to_credits_with_bonus": "{{money}} → {{credits}} credits + {{bonus}} bonus",
+    "row_meta": "{{date}} · stripe: {{checkout}}",
+    "stripe_empty": "—",
+    "details": "Payment details",
+    "order_reference": "Order {{ref}}"
+  },
+  "shared": {
+    "request_failed": "Request failed",
+    "refresh": "Refresh",
+    "paging": "page {{page}} / {{totalPages}} · {{total}} total",
+    "date_dash": "—",
+    "next": "Next",
+    "previous": "Previous"
+  },
+  "labels": {
+    "pending": "Awaiting payment",
+    "credited": "Credited",
+    "canceled": "Canceled",
+    "failed": "Failed",
+    "loading": "Loading",
+    "trial": "Trial credits",
+    "topup": "Top-up",
+    "usage": "Usage",
+    "adjustment": "Adjustment",
+    "unknown": "Unknown"
+  },
+  "eyebrow": "Billing",
+  "trust": {
+    "never_expires": "Credits never expire",
+    "one_time": "One-time payment",
+    "workspace_owned": "Shared workspace balance"
+  },
+  "history": {
+    "title": "Billing history",
+    "subtitle": "Credit changes and top-up orders for this workspace.",
+    "all": "All activity",
+    "topups": "Top-ups"
+  }
+}

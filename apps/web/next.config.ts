@@ -1,12 +1,25 @@
 import type { NextConfig } from "next";
 import { config } from "dotenv";
 import { resolve } from "path";
+import { existsSync } from "fs";
+import {
+  resolveDevRemoteApiUrl,
+  resolveRemoteApiUrl,
+} from "./config/runtime-urls";
 
-// Load root .env so REMOTE_API_URL is available to next.config.ts
-config({ path: resolve(__dirname, "../../.env") });
+// Load root .env so local next.config.ts rewrites see REMOTE_API_URL.
+// Production requests use proxy.ts runtime rewrites, which read process.env
+// when the Next.js server runs instead of baking these URLs at build time.
+const repoRoot = resolve(__dirname, "../..");
+const envFile = process.env.ENV_FILE || (existsSync(resolve(repoRoot, ".env.aurocreator.local")) ? ".env.aurocreator.local" : ".env");
+config({ path: resolve(repoRoot, envFile), quiet: true });
 
-const remoteApiUrl =
-  process.env.REMOTE_API_URL || process.env.API_URL || "https://pub.niuwoai.com";
+// `next dev` falls back to the conventional localhost upstreams; builds use
+// the strict resolvers so prebuilt images keep unset upstreams unproxied.
+const isDev = process.env.NODE_ENV === "development";
+const remoteApiUrl = isDev
+  ? resolveDevRemoteApiUrl(process.env)
+  : resolveRemoteApiUrl(process.env);
 
 // Parse hostnames from CORS_ALLOWED_ORIGINS so that Next.js dev server
 // allows cross-origin HMR / webpack requests (e.g. from Tailscale IPs).
@@ -23,23 +36,17 @@ const allowedDevOrigins = process.env.CORS_ALLOWED_ORIGINS
   : undefined;
 
 const nextConfig: NextConfig = {
+  // This is an artifact identity, supplied once at build time by deployment.
+  deploymentId: process.env.NEXT_DEPLOYMENT_ID,
+  // Isolate production verification from concurrent dev/build processes.
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   ...(process.env.STANDALONE === "true" ? { output: "standalone" as const } : {}),
-  transpilePackages: ["@teamify/core", "@teamify/ui", "@teamify/views"],
-  experimental: {
-    optimizePackageImports: [
-      "lucide-react",
-      "recharts",
-      "@dnd-kit/core",
-      "@dnd-kit/sortable",
-      "@dnd-kit/utilities",
-      "@tiptap/starter-kit",
-      "cmdk",
-      "@base-ui/react",
-      "date-fns",
-      "emoji-mart",
-      "@emoji-mart/data",
-    ],
-  },
+  // Keep file tracing anchored to this monorepo. Production builds live under
+  // /opt/iteamify/build/src while an older release may still exist at
+  // /opt/iteamify; relying on automatic root detection would then trace the
+  // parent tree and emit paths such as build/src/apps/web/server.js.
+  outputFileTracingRoot: resolve(__dirname, "../.."),
+  transpilePackages: ["@iteamify/core", "@iteamify/ui", "@iteamify/views"],
   ...(allowedDevOrigins && allowedDevOrigins.length > 0
     ? { allowedDevOrigins }
     : {}),
@@ -48,31 +55,30 @@ const nextConfig: NextConfig = {
     qualities: [75, 80, 85],
   },
   async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${remoteApiUrl}/api/:path*`,
-      },
-      // In dev the WS client connects directly to the backend, bypassing
-      // this rewrite proxy (Next.js HTTP rewrites are unreliable for
-      // long-lived WebSocket connections).  Production deployments typically
-      // have nginx/caddy in front so this rule is kept as a fallback.
-      {
-        source: "/ws",
-        destination: `${remoteApiUrl}/ws`,
-      },
-      // Exclude /auth/callback (Next.js OAuth page) — only proxy API auth
-      // paths to the backend.  Top-level rewrites run before filesystem
-      // checks so Vercel's staticRoute for /auth/callback cannot interfere.
-      {
-        source: "/auth/:path((?!callback).*)",
-        destination: `${remoteApiUrl}/auth/:path*`,
-      },
-      {
-        source: "/uploads/:path*",
-        destination: `${remoteApiUrl}/uploads/:path*`,
-      },
-    ];
+    return {
+      beforeFiles: [],
+      afterFiles: remoteApiUrl
+        ? [
+            {
+              source: "/api/:path*",
+              destination: `${remoteApiUrl}/api/:path*`,
+            },
+            {
+              source: "/ws",
+              destination: `${remoteApiUrl}/ws`,
+            },
+            {
+              source: "/auth/:path*",
+              destination: `${remoteApiUrl}/auth/:path*`,
+            },
+            {
+              source: "/uploads/:path*",
+              destination: `${remoteApiUrl}/uploads/:path*`,
+            },
+          ]
+        : [],
+      fallback: [],
+    };
   },
 };
 

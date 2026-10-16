@@ -1,8 +1,8 @@
 "use client";
 
 import { use } from "react";
-import { IssueDetail } from "@teamify/views/issues/components";
-import { ErrorBoundary } from "@teamify/ui/components/common/error-boundary";
+import { IssueDetail } from "@iteamify/views/issues/components";
+import { ErrorBoundary } from "@iteamify/ui/components/common/error-boundary";
 
 export default function IssueDetailPage({
   params,

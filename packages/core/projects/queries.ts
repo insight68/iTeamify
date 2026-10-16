@@ -11,7 +11,10 @@ export const projectKeys = {
 export function projectListOptions(wsId: string) {
   return queryOptions({
     queryKey: projectKeys.list(wsId),
-    queryFn: () => api.listProjects(),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.listProjects();
+    },
     select: (data) => data.projects,
   });
 }
@@ -19,6 +22,9 @@ export function projectListOptions(wsId: string) {
 export function projectDetailOptions(wsId: string, id: string) {
   return queryOptions({
     queryKey: projectKeys.detail(wsId, id),
-    queryFn: () => api.getProject(id),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.getProject(id);
+    },
   });
 }

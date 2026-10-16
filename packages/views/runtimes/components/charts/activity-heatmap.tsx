@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import type { RuntimeUsage } from "@teamify/core/types";
-import { estimateCost, formatCny, usesFallbackPricing } from "../../utils";
+import type { RuntimeUsage } from "@iteamify/core/types";
+import { useCustomPricingStore } from "@iteamify/core/runtimes/custom-pricing-store";
+import { addDaysIso, estimateCost, todayIso, weekStartIso } from "../../utils";
 import { useT } from "../../../i18n";
 
 // 26 weeks (~6 months) gives the heatmap real presence in the wider chart
@@ -10,8 +11,11 @@ import { useT } from "../../../i18n";
 const HEATMAP_WEEKS = 26;
 const CELL_SIZE = 16;
 const CELL_GAP = 3;
-const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""];
-const WEEKDAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// Monday-first row order, matching ISO 8601 and the rest of the Weekly
+// aggregation (see #MUL-2382). Rows labelled Mon / Wed / Fri keep the
+// density readable.
+const DAY_LABELS = ["Mon", "", "Wed", "", "Fri", "", ""];
+const WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 // Cells use the brand-derived chart-1 hue with descending opacity instead
 // of a neutral foreground fade, so the heatmap reads as part of the same
@@ -24,6 +28,11 @@ function getHeatmapColor(level: number): string {
   return `color-mix(in oklch, var(--color-chart-1) ${opacities[level - 1]}, transparent)`;
 }
 
+function fmtMoney(n: number): string {
+  if (n >= 100) return `$${n.toFixed(0)}`;
+  return `$${n.toFixed(2)}`;
+}
+
 function fmtDate(iso: string): string {
   return new Date(iso + "T00:00:00").toLocaleString("en", {
     month: "short",
@@ -32,59 +41,68 @@ function fmtDate(iso: string): string {
 }
 
 interface Insights {
-  busiestDay: { date: string; cost: number; estimated: boolean } | null;
+  busiestDay: { date: string; cost: number } | null;
   busyDayName: string | null;
   busyDayAvg: number;
   quietDayName: string | null;
   quietDayAvg: number;
   totalCost: number;
   windowDays: number;
-  estimated: boolean;
 }
 
-export function ActivityHeatmap({ usage }: { usage: RuntimeUsage[] }) {
+export function ActivityHeatmap({
+  usage,
+  tz,
+}: {
+  usage: RuntimeUsage[];
+  tz: string;
+}) {
   const { t } = useT("runtimes");
+  // Memo dep — estimateCost (called inside the body below) consults the
+  // user-override store, so saving a custom rate must invalidate the cells.
+  const pricings = useCustomPricingStore((s) => s.pricings);
   const { cells, monthLabels, insights } = useMemo(() => {
     // Sum priced cost per day. Cost (not tokens) gives the colour scale a
     // financial meaning that lines up with the rest of the page — a "hot"
     // square here means the same thing as a tall bar in Daily cost.
-    const dateCost = new Map<
-      string,
-      { cost: number; estimated: boolean }
-    >();
+    const dateCost = new Map<string, number>();
     for (const u of usage) {
-      const entry = dateCost.get(u.date) ?? { cost: 0, estimated: false };
-      entry.cost += estimateCost(u);
-      entry.estimated ||= usesFallbackPricing(u.model);
-      dateCost.set(u.date, entry);
+      dateCost.set(u.date, (dateCost.get(u.date) ?? 0) + estimateCost(u));
     }
 
-    const today = new Date();
-    const todayDay = today.getDay();
-    const startOffset = todayDay + (HEATMAP_WEEKS - 1) * 7;
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() - startOffset);
+    // Anchor the grid on the Monday of the week containing "today" in the
+    // viewer's tz, then walk back HEATMAP_WEEKS-1 weeks. All dates are
+    // string-based YYYY-MM-DD so the host browser's tz can't shift a column.
+    // We stop drawing cells once we pass `today` so the in-progress week is
+    // partial (cells for "tomorrow onward" aren't rendered) — matches the
+    // Weekly chart's partial-week treatment.
+    const today = todayIso(tz);
+    const lastWeekStart = weekStartIso(today);
+    const startDate = addDaysIso(lastWeekStart, -(HEATMAP_WEEKS - 1) * 7);
+    const todayIndex = (HEATMAP_WEEKS - 1) * 7 + ((() => {
+      // Monday-based weekday of `today`: 0 = Mon ... 6 = Sun. Computed via
+      // string subtraction so the host timezone can't shift the value.
+      const [y, m, d] = today.split("-").map(Number);
+      const dt = new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1));
+      return (dt.getUTCDay() + 6) % 7;
+    })());
 
     const allCells: {
       date: string;
-      dayOfWeek: number;
+      dayOfWeek: number; // 0 = Mon ... 6 = Sun
       week: number;
       cost: number;
-      estimated: boolean;
     }[] = [];
-    const d = new Date(startDate);
-    for (let i = 0; i <= startOffset; i++) {
-      const dateStr = d.toISOString().slice(0, 10);
-      const dayOfWeek = d.getDay();
+    for (let i = 0; i <= todayIndex; i++) {
+      const dateStr = addDaysIso(startDate, i);
+      const dayOfWeek = i % 7;
       const week = Math.floor(i / 7);
       allCells.push({
         date: dateStr,
         dayOfWeek,
         week,
-        cost: dateCost.get(dateStr)?.cost ?? 0,
-        estimated: dateCost.get(dateStr)?.estimated ?? false,
+        cost: dateCost.get(dateStr) ?? 0,
       });
-      d.setDate(d.getDate() + 1);
     }
 
     const nonZero = allCells.filter((c) => c.cost > 0).map((c) => c.cost);
@@ -121,26 +139,16 @@ export function ActivityHeatmap({ usage }: { usage: RuntimeUsage[] }) {
 
     // Insights derived from the same cells so the colour scale, the busiest
     // square, and the side-panel numbers can never disagree.
-    let busiestDay: {
-      date: string;
-      cost: number;
-      estimated: boolean;
-    } | null = null;
+    let busiestDay: { date: string; cost: number } | null = null;
     let totalCost = 0;
-    let estimated = false;
     const weekdaySum = [0, 0, 0, 0, 0, 0, 0];
     const weekdayCount = [0, 0, 0, 0, 0, 0, 0];
     for (const c of allCells) {
       totalCost += c.cost;
-      estimated ||= c.estimated;
       weekdaySum[c.dayOfWeek] = (weekdaySum[c.dayOfWeek] ?? 0) + c.cost;
       weekdayCount[c.dayOfWeek] = (weekdayCount[c.dayOfWeek] ?? 0) + 1;
       if (c.cost > 0 && (!busiestDay || c.cost > busiestDay.cost)) {
-        busiestDay = {
-          date: c.date,
-          cost: c.cost,
-          estimated: c.estimated,
-        };
+        busiestDay = { date: c.date, cost: c.cost };
       }
     }
     const weekdayAvg = weekdaySum.map((s, i) => {
@@ -178,11 +186,10 @@ export function ActivityHeatmap({ usage }: { usage: RuntimeUsage[] }) {
       quietDayAvg,
       totalCost,
       windowDays: allCells.length,
-      estimated,
     };
 
     return { cells: cellsWithLevel, monthLabels: months, insights };
-  }, [usage]);
+  }, [usage, pricings, tz]);
 
   const labelWidth = 28;
   const svgWidth = labelWidth + HEATMAP_WEEKS * (CELL_SIZE + CELL_GAP);
@@ -235,9 +242,7 @@ export function ActivityHeatmap({ usage }: { usage: RuntimeUsage[] }) {
               >
                 <title>
                   {c.date}:{" "}
-                  {c.cost > 0
-                    ? formatCny(c.cost, { estimated: c.estimated })
-                    : "No activity"}
+                  {c.cost > 0 ? `$${c.cost.toFixed(2)}` : "No activity"}
                 </title>
               </rect>
             ))}
@@ -273,43 +278,25 @@ function InsightsRow({ insights }: { insights: Insights }) {
     quietDayAvg,
     totalCost,
     windowDays,
-    estimated,
   } = insights;
   return (
     <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-3 sm:grid-cols-4">
       <Insight
         label="Busiest day"
         value={busiestDay ? fmtDate(busiestDay.date) : "—"}
-        sub={
-          busiestDay
-            ? formatCny(busiestDay.cost, {
-                estimated: busiestDay.estimated,
-              })
-            : null
-        }
+        sub={busiestDay ? fmtMoney(busiestDay.cost) : null}
       />
       <Insight
         label="Most active weekday"
         value={busyDayName ?? "—"}
-        sub={
-          busyDayName
-            ? `avg ${formatCny(busyDayAvg, { estimated })}`
-            : null
-        }
+        sub={busyDayName ? `avg ${fmtMoney(busyDayAvg)}` : null}
       />
       <Insight
         label="Quietest weekday"
         value={quietDayName ?? "—"}
-        sub={
-          quietDayName
-            ? `avg ${formatCny(quietDayAvg, { estimated })}`
-            : null
-        }
+        sub={quietDayName ? `avg ${fmtMoney(quietDayAvg)}` : null}
       />
-      <Insight
-        label={`${windowDays}-day total`}
-        value={formatCny(totalCost, { estimated })}
-      />
+      <Insight label={`${windowDays}-day total`} value={fmtMoney(totalCost)} />
     </dl>
   );
 }

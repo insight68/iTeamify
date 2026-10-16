@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS direct_conversation_high_user_idx;

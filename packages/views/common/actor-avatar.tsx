@@ -1,23 +1,41 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ActorAvatar as ActorAvatarBase } from "@teamify/ui/components/common/actor-avatar";
+import { ActorAvatar as ActorAvatarBase } from "@iteamify/ui/components/common/actor-avatar";
+import { AVATAR_SIZE_PX, type AvatarSize } from "@iteamify/ui/lib/avatar-size";
 import {
   HoverCard,
   HoverCardTrigger,
   HoverCardContent,
-} from "@teamify/ui/components/ui/hover-card";
-import { useActorName } from "@teamify/core/workspace/hooks";
-import { useAgentPresenceDetail } from "@teamify/core/agents";
-import { useCurrentWorkspace } from "@teamify/core/paths";
+} from "@iteamify/ui/components/ui/hover-card";
+import { useActorName } from "@iteamify/core/workspace/hooks";
+import { useAgentPresenceDetail } from "@iteamify/core/agents";
+import { useCurrentWorkspace, useWorkspacePaths } from "@iteamify/core/paths";
 import { AgentProfileCard } from "../agents/components/agent-profile-card";
+import { AgentLivePeekCard } from "../agents/components/agent-live-peek-card";
 import { MemberProfileCard } from "../members/member-profile-card";
+import { SquadProfileCard } from "../squads/components/squad-profile-card";
 import { availabilityConfig } from "../agents/presence";
+import { useNavigation } from "../navigation";
+
+/**
+ * Selects which agent hover-card payload to render when `enableHoverCard` is
+ * on. Two surfaces, two intents:
+ * - `"profile"` (default) — static identity (description, runtime, skills,
+ *   owner). Used by 20+ "who is this agent?" surfaces (comment authors,
+ *   pickers, list rows).
+ * - `"live"` — live activity peek (workload, current issue, last activity).
+ *   Used where the user already knows the identity and wants the live state,
+ *   e.g. the squad members tab.
+ *
+ * Has no effect for non-agent actors (members always render the member card).
+ */
+export type AgentHoverCardVariant = "profile" | "live";
 
 interface ActorAvatarProps {
   actorType: string;
   actorId: string;
-  size?: number;
+  size?: AvatarSize;
   className?: string;
   /**
    * Wrap the avatar in a hover-card preview on dwell. Use for "who is this?"
@@ -33,10 +51,23 @@ interface ActorAvatarProps {
    * popover inside the dropdown.
    */
   showStatusDot?: boolean;
+  /**
+   * When `enableHoverCard` is on for an agent, choose which payload to
+   * render. See {@link AgentHoverCardVariant}. Defaults to `"profile"` so
+   * existing call sites keep their identity-card behaviour.
+   */
+  hoverCardVariant?: AgentHoverCardVariant;
+  /**
+   * Make the avatar click through to the actor page. Defaults on for members
+   * and agents, while picker/menu controls keep their own click behavior.
+   */
+  profileLink?: boolean;
 }
 
 const FOCUSABLE_ANCESTOR_SELECTOR =
   'a[href], button:not([disabled]), [role="button"]:not([aria-disabled="true"]), [tabindex]:not([tabindex="-1"])';
+const PROFILE_LINK_CONTROL_SELECTOR =
+  'button, [role^="menuitem"], [role="option"], [data-slot="dropdown-menu-item"], [data-slot="dropdown-menu-checkbox-item"], [data-slot="popover-trigger"]';
 
 export function ActorAvatar({
   actorType,
@@ -45,14 +76,19 @@ export function ActorAvatar({
   className,
   enableHoverCard,
   showStatusDot,
+  hoverCardVariant = "profile",
+  profileLink,
 }: ActorAvatarProps) {
   const { getActorName, getActorInitials, getActorAvatarUrl } = useActorName();
+  const paths = useWorkspacePaths();
   const avatar = (
     <ActorAvatarBase
       name={getActorName(actorType, actorId)}
       initials={getActorInitials(actorType, actorId)}
       avatarUrl={getActorAvatarUrl(actorType, actorId)}
       isAgent={actorType === "agent"}
+      isSystem={actorType === "system"}
+      isSquad={actorType === "squad"}
       size={size}
       className={className}
     />
@@ -71,17 +107,86 @@ export function ActorAvatar({
   ) : (
     avatar
   );
+  const shouldLinkToProfile =
+    profileLink ??
+    (actorType === "member" || actorType === "agent" || actorType === "squad");
+  const profileHref = shouldLinkToProfile
+    ? actorType === "member"
+      ? paths.memberDetail(actorId)
+      : actorType === "agent"
+        ? paths.agentDetail(actorId)
+        : actorType === "squad"
+          ? paths.squadDetail(actorId)
+          : null
+    : null;
+  const content = profileHref ? (
+    <ActorAvatarProfileLink href={profileHref}>{dotted}</ActorAvatarProfileLink>
+  ) : (
+    dotted
+  );
 
   if (!enableHoverCard) {
-    return dotted;
+    return content;
   }
   if (actorType === "agent") {
-    return <AgentAvatarHoverCard agentId={actorId}>{dotted}</AgentAvatarHoverCard>;
+    return (
+      <AgentAvatarHoverCard agentId={actorId} variant={hoverCardVariant}>
+        {content}
+      </AgentAvatarHoverCard>
+    );
   }
   if (actorType === "member") {
-    return <MemberAvatarHoverCard userId={actorId}>{dotted}</MemberAvatarHoverCard>;
+    return <MemberAvatarHoverCard userId={actorId}>{content}</MemberAvatarHoverCard>;
   }
-  return dotted;
+  if (actorType === "squad") {
+    return <SquadAvatarHoverCard squadId={actorId}>{content}</SquadAvatarHoverCard>;
+  }
+  return content;
+}
+
+function ActorAvatarProfileLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  const { push, openInNewTab } = useNavigation();
+
+  const navigate = (event: React.MouseEvent | React.KeyboardEvent) => {
+    const controlAncestor = event.currentTarget.parentElement?.closest(
+      PROFILE_LINK_CONTROL_SELECTOR,
+    );
+    if (controlAncestor) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (
+      "metaKey" in event &&
+      (event.metaKey || event.ctrlKey || event.shiftKey) &&
+      openInNewTab
+    ) {
+      openInNewTab(href);
+      return;
+    }
+    push(href);
+  };
+
+  return (
+    <span
+      role="link"
+      tabIndex={-1}
+      className="inline-flex cursor-pointer rounded-full"
+      onClick={navigate}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          navigate(event);
+        }
+      }}
+    >
+      {children}
+    </span>
+  );
 }
 
 // Small presence indicator overlaid on the bottom-right of an agent avatar.
@@ -89,18 +194,20 @@ export function ActorAvatar({
 // 14 px owner sub-avatar in agents-list rows) stay visually clean. The dot
 // scales with the avatar size — anything ≥24 px gets the standard 8 px dot,
 // smaller avatars use a 6 px dot so the indicator doesn't overwhelm them.
-function AgentStatusDot({ agentId, size }: { agentId: string; size?: number }) {
+// Exported for surfaces that render the base avatar directly (e.g. comment
+// trigger chips) but still want the standard presence dot.
+export function AgentStatusDot({ agentId, size }: { agentId: string; size?: AvatarSize }) {
   const ws = useCurrentWorkspace();
   const detail = useAgentPresenceDetail(ws?.id, agentId);
   if (detail === "loading") return null;
 
   const { dotClass, label } = availabilityConfig[detail.availability];
-  const dotSize = (size ?? 24) >= 24 ? "h-1.5 w-1.5" : "h-1 w-1";
+  const px = size ? AVATAR_SIZE_PX[size] : 24;
+  const dotSize = px >= 24 ? "h-1.5 w-1.5" : "h-1 w-1";
 
   return (
     <span
       aria-label={`Status: ${label}`}
-      title={label}
       className={`absolute bottom-0 right-0 rounded-full ring-1 ring-background ${dotClass} ${dotSize}`}
     />
   );
@@ -114,13 +221,21 @@ function AgentStatusDot({ agentId, size }: { agentId: string; size?: number }) {
  */
 function AgentAvatarHoverCard({
   agentId,
+  variant,
   children,
 }: {
   agentId: string;
+  variant: AgentHoverCardVariant;
   children: React.ReactNode;
 }) {
+  const content =
+    variant === "live" ? (
+      <AgentLivePeekCard agentId={agentId} />
+    ) : (
+      <AgentProfileCard agentId={agentId} />
+    );
   return (
-    <ActorAvatarHoverCardShell content={<AgentProfileCard agentId={agentId} />}>
+    <ActorAvatarHoverCardShell content={content}>
       {children}
     </ActorAvatarHoverCardShell>
   );
@@ -140,9 +255,35 @@ function MemberAvatarHoverCard({
   );
 }
 
+function SquadAvatarHoverCard({
+  squadId,
+  children,
+}: {
+  squadId: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <ActorAvatarHoverCardShell content={<SquadProfileCard squadId={squadId} />}>
+      {children}
+    </ActorAvatarHoverCardShell>
+  );
+}
+
 // Common chrome shared between agent and member hover cards. Keeps focus
 // behaviour and width consistent so the two surfaces feel structurally
 // parallel — content varies, frame doesn't.
+//
+// Do NOT defer-mount the HoverCard on pointerenter to save per-avatar mount
+// cost (MUL-4827). Base UI drives hover through native mouseenter/mouseleave
+// listeners on the trigger element, and installs its close path *inside* the
+// mouseleave handler — so a trigger that never received a real mouseenter can
+// neither cancel a pending open nor ever hover-close. Warming on pointerenter
+// swaps the node mid-gesture and loses exactly those events, which made
+// brushed-past avatars pop open ~600ms later and stick. This is the same
+// invariant DeferredPopup documents: deferral is only sound for events that
+// END a gesture (click/Enter), and hover starts one. Mounting the root eagerly
+// costs ~0.15ms of JS per avatar and adds zero DOM while closed (the popup
+// subtree, and its queries, stay unmounted until open).
 function ActorAvatarHoverCardShell({
   content,
   children,
@@ -160,16 +301,17 @@ function ActorAvatarHoverCardShell({
     setStandalone(!ancestor);
   }, []);
 
+  const tabIndex = standalone ? 0 : -1;
+  const className = standalone
+    ? "inline-flex cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    : "inline-flex cursor-pointer";
+
   return (
     <HoverCard>
       <HoverCardTrigger
         render={<span ref={triggerRef} />}
-        tabIndex={standalone ? 0 : -1}
-        className={
-          standalone
-            ? "inline-flex cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            : "inline-flex cursor-pointer"
-        }
+        tabIndex={tabIndex}
+        className={className}
       >
         {children}
       </HoverCardTrigger>

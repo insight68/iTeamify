@@ -1,21 +1,20 @@
 #!/usr/bin/env node
-// Builds the `teamify` CLI from server/cmd/teamify and copies the binary
+// Builds the `iteamify` CLI from server/cmd/iteamify and copies the binary
 // into apps/desktop/resources/bin/ so electron-vite (dev) and electron-
-// builder (prod) pick it up. Running this on every dev/build/package
+// builder (prod) pick it up. Running this on every dev/package
 // invocation guarantees the bundled CLI always matches the current Go
 // source — no more stale binary surprises. Go's build cache makes the
 // no-op case (nothing changed) effectively free.
 //
-// ldflags mirror `make build` so `teamify --version` reports a meaningful
+// ldflags mirror `make build` so `iteamify --version` reports a meaningful
 // version / commit / date.
 //
-// Graceful: if `go` is not installed (e.g. frontend-only contributor), we
-// skip the build and fall through to auto-install at runtime. A genuine
-// Go compile error is fatal — you want that to block dev, not hide.
+// CI and packaging require Go and a freshly built binary. Only the explicit
+// --allow-missing-go development option permits runtime bootstrapping.
 
 import { access, chmod, copyFile, mkdir, rm } from "node:fs/promises";
 import { constants } from "node:fs";
-import { execFileSync, execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -60,7 +59,7 @@ function normalizeRuntimeArch(arch) {
 }
 
 function binaryNameForPlatform(platform) {
-  return platform === "win32" ? "teamify.exe" : "teamify";
+  return platform === "win32" ? "iteamify.exe" : "iteamify";
 }
 
 const targetPlatform = normalizeRuntimePlatform(
@@ -74,9 +73,14 @@ const srcBinary = join(serverDir, "bin", `${goos}-${goarch}`, binName);
 const destDir = join(repoRoot, "apps", "desktop", "resources", "bin");
 const destBinary = join(destDir, binName);
 
-function sh(cmd) {
+// Hand git arguments straight to the binary (no shell). A match pattern like
+// `v[0-9]*` must reach git as one literal argument; routing it through a shell
+// string breaks on Windows, where cmd.exe keeps the POSIX single quotes and
+// git matches no tag — degrading the bundled CLI's version to the
+// 0.0.0-g<hash> fallback.
+function git(...args) {
   try {
-    return execSync(cmd, { encoding: "utf-8" }).trim();
+    return execFileSync("git", args, { encoding: "utf-8", cwd: repoRoot }).trim();
   } catch {
     return "";
   }
@@ -84,7 +88,7 @@ function sh(cmd) {
 
 function hasGo() {
   try {
-    execSync("go version", { stdio: "pipe" });
+    execFileSync("go", ["version"], { stdio: "pipe" });
     return true;
   } catch {
     return false;
@@ -100,20 +104,17 @@ async function exists(p) {
   }
 }
 
-// Frontend-only checkout: server/ has no Go source (no go.mod, no cmd/teamify).
-// The Go backend lives in a separate repo. In that case skip the build and
-// fall through to the runtime auto-install fallback below — same as when go
-// itself is missing. A genuine Go compile error (go.mod present but build
-// fails) is still fatal.
-async function hasGoSource() {
-  return exists(join(serverDir, "go.mod"));
-}
-
-if (hasGo() && (await hasGoSource())) {
-  const version = sh("git describe --tags --always --dirty") || "dev";
-  const commit = sh("git rev-parse --short HEAD") || "unknown";
-  const date = new Date().toISOString().replace(/\.\d+Z$/, "Z");
-  const ldflags = `-X main.version=${version} -X main.commit=${commit} -X main.date=${date}`;
+if (hasGo()) {
+  const version =
+    process.env.DESKTOP_BUILD_VERSION ||
+    git("describe", "--tags", "--match", "v[0-9]*", "--always", "--dirty") ||
+    "dev";
+  const commit = git("rev-parse", "--short", "HEAD") || "unknown";
+  const epoch = process.env.SOURCE_DATE_EPOCH || git("show", "-s", "--format=%ct", "HEAD");
+  if (!/^\d+$/.test(epoch)) throw new Error("[bundle-cli] SOURCE_DATE_EPOCH or a Git commit timestamp is required");
+  const date = new Date(Number(epoch) * 1000).toISOString().replace(/\.\d+Z$/, "Z");
+  const symbols = process.argv.includes("--allow-missing-go") ? "" : "-s -w ";
+  const ldflags = `${symbols}-X main.version=${version} -X main.commit=${commit} -X main.date=${date}`;
 
   console.log(
     `[bundle-cli] go build → ${srcBinary} (${goos}/${goarch}, version=${version} commit=${commit})`,
@@ -123,11 +124,12 @@ if (hasGo() && (await hasGoSource())) {
     "go",
     [
       "build",
+      "-trimpath",
       "-ldflags",
       ldflags,
       "-o",
       srcBinary,
-      "./cmd/teamify",
+      "./cmd/iteamify",
     ],
     {
       cwd: serverDir,
@@ -140,28 +142,18 @@ if (hasGo() && (await hasGoSource())) {
       },
     },
   );
-} else if (!hasGo()) {
-  console.warn(
-    "[bundle-cli] `go` not found in PATH — skipping CLI build. " +
-      "Desktop will use whatever is already in resources/bin/, or fall back " +
-      "to auto-installing the latest release at runtime.",
-  );
 } else {
-  console.warn(
-    `[bundle-cli] ${serverDir} has no go.mod — skipping CLI build ` +
-      "(frontend-only checkout, Go backend lives elsewhere). " +
-      "Desktop will use whatever is already in resources/bin/, or fall back " +
-      "to auto-installing the latest release at runtime.",
-  );
+  // A stale server/bin binary must never masquerade as a successful build.
+  await rm(destDir, { recursive: true, force: true });
+  if (!process.argv.includes("--allow-missing-go") || process.env.CI) {
+    throw new Error("[bundle-cli] Go is required for CI and packaging; install the version in server/go.mod");
+  }
+  console.warn("[bundle-cli] Go unavailable; development CLI bundle omitted");
+  process.exit(0);
 }
 
 if (!(await exists(srcBinary))) {
-  console.warn(
-    `[bundle-cli] ${srcBinary} not present — Desktop will fall back to ` +
-      `auto-installing the latest release at runtime.`,
-  );
-  await rm(destDir, { recursive: true, force: true });
-  process.exit(0);
+  throw new Error(`[bundle-cli] go build did not produce ${srcBinary}`);
 }
 
 await rm(destDir, { recursive: true, force: true });
@@ -171,9 +163,9 @@ await chmod(destBinary, 0o755);
 
 // macOS: ad-hoc sign so Gatekeeper doesn't complain when the parent app
 // (which itself may be unsigned in dev) spawns the child.
-if (process.platform === "darwin") {
+if (process.platform === "darwin" && targetPlatform === "darwin") {
   try {
-    execSync(`codesign -s - --force ${JSON.stringify(destBinary)}`, {
+    execFileSync("codesign", ["-s", "-", "--force", destBinary], {
       stdio: "pipe",
     });
   } catch {

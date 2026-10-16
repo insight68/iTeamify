@@ -1,0 +1,48 @@
+{
+  "role": {
+    "owner": "オーナー",
+    "admin": "管理者",
+    "member": "メンバー"
+  },
+  "card": {
+    "unavailable": "メンバーを利用できません",
+    "agents_section": "エージェント ({{count}})",
+    "detail_link": "詳細 →",
+    "more_agents_other": "他 {{count}} 件のエージェント"
+  },
+  "detail": {
+    "workspace_fallback": "ワークスペース",
+    "members_breadcrumb": "メンバー",
+    "breadcrumb_fallback": "メンバー",
+    "not_found_title": "メンバーが見つかりません",
+    "not_found_description": "このメンバーはワークスペースから退出した可能性があります。",
+    "open": "{{name}}の詳細を表示",
+    "manage": "{{name}}を管理",
+    "message": "メッセージ",
+    "tasks": "タスク",
+    "agents": "エージェント",
+    "applications": "アプリケーション",
+    "membership": "ワークスペースのメンバー情報",
+    "no_agents": "表示できる関連エージェントはありません",
+    "applications_description": "このメンバーがワークスペース内で提供するサービス。",
+    "no_applications": "追加のアプリケーションは有効になっていません",
+    "no_applications_hint": "ワークスペースのオーナーまたは管理者がサービスを設定できます。",
+    "unknown_status": "不明な状態"
+  },
+  "list": {
+    "title": "メンバー",
+    "invitations": "承認待ちの招待",
+    "search": "名前またはメールで検索…",
+    "name": "名前",
+    "email": "メール",
+    "role": "ロール",
+    "all_roles": "すべてのロール",
+    "joined": "参加日時",
+    "sort": "並べ替え",
+    "loading": "メンバーを読み込み中…",
+    "load_failed": "メンバーを読み込めませんでした",
+    "retry": "再試行",
+    "no_matches": "一致するメンバーがいません",
+    "no_invitations": "承認待ちの招待はありません"
+  }
+}

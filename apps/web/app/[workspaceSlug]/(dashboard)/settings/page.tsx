@@ -1,1 +1,5 @@
-export { SettingsPage as default } from "@teamify/views/settings";
+import { SettingsPage } from "@iteamify/views/settings";
+
+export default function Page() {
+  return <SettingsPage />;
+}

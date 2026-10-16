@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY daily_opportunity_candidate_fingerprint_idx ON daily_opportunity_candidate (workspace_id, source_fingerprint);

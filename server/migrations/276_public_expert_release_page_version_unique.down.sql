@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS public_expert_release_page_version_uidx;

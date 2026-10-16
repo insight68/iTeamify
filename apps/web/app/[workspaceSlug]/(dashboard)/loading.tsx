@@ -1,21 +1,18 @@
-import { Skeleton } from "@teamify/ui/components/ui/skeleton";
+import { Skeleton } from "@iteamify/ui/components/ui/skeleton";
 
+// Rendered by Next.js as the Suspense fallback during route transitions
+// inside the (dashboard) segment. Scoped to this segment only — auth /
+// landing keep their own full-screen fallbacks.
 export default function DashboardLoading() {
   return (
-    <div className="flex flex-1 flex-col min-h-0 p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <Skeleton className="h-7 w-40" />
-        <Skeleton className="h-7 w-24" />
+    <div className="flex h-svh w-full flex-col">
+      <div className="flex h-12 shrink-0 items-center gap-3 border-b px-4">
+        <Skeleton className="h-5 w-5 rounded-md" />
+        <Skeleton className="h-4 w-32" />
       </div>
-      <div className="space-y-3">
+      <div className="flex-1 space-y-2 p-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <Skeleton className="h-4 w-4 rounded-sm" />
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 flex-1 max-w-[300px]" />
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-5 w-5 rounded-full" />
-          </div>
+          <Skeleton key={i} className="h-9 w-full" />
         ))}
       </div>
     </div>

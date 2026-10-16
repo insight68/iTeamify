@@ -1,4 +1,3 @@
-export { LoginPage, validateCliCallback } from "./login-page";
-export { SetPasswordPage } from "./set-password-page";
-export { ResetPasswordPage } from "./reset-password-page";
+export { LoginPage, validateCliCallback, redirectToCliCallback } from "./login-page";
 export { useLogout } from "./use-logout";
+export { PasswordSetupPrompt } from "./password-setup-prompt";

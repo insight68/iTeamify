@@ -1,6 +1,8 @@
 export { createAuthStore } from "./store";
 export type { AuthStoreOptions, AuthState } from "./store";
 export { sanitizeNextUrl } from "./utils";
+export type { AuthChallenge, AuthProof, AuthPurpose, AuthVerification } from "./schemas";
+export { usePasswordStatus, usePasswordActions, passwordStatusKey } from "./password-queries";
 
 import type { createAuthStore as CreateAuthStoreFn } from "./store";
 

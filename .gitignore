@@ -9,8 +9,14 @@ node_modules
 out
 dist
 /plan
-apps/desktop/out
-apps/desktop/.turbo
 .gstack/
 .workbuddy/
 *.tsbuildinfo
+.playwright-mcp/
+.pnpm-store/
+
+# build caches & compiled artifacts (never commit)
+.chimii/
+.next-*/
+server/bin/
+server/server

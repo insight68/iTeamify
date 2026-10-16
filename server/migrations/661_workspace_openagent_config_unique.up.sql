@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY workspace_openagent_config_workspace_unique ON workspace_openagent_config (workspace_id);

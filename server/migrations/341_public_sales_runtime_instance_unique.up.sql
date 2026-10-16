@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY public_sales_runtime_instance_instance_id_uidx ON public_sales_runtime_instance (instance_id);

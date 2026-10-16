@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS idx_lead_opportunity_workspace_decision_maker;

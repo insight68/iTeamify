@@ -2,12 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useWorkspaceId } from "@teamify/core/hooks";
+import { useWorkspaceId } from "@iteamify/core/hooks";
 import {
   issueDetailOptions,
   childIssuesOptions,
-} from "@teamify/core/issues/queries";
-import { useUpdateIssue } from "@teamify/core/issues/mutations";
+} from "@iteamify/core/issues/queries";
+import { useUpdateIssue } from "@iteamify/core/issues/mutations";
 import { IssuePickerModal } from "./issue-picker-modal";
 import { useT } from "../i18n";
 
@@ -50,7 +50,14 @@ export function AddChildIssueModal({
       onSelect={(selected) => {
         updateIssue.mutate(
           { id: selected.id, parent_issue_id: issueId },
-          { onError: () => toast.error(t(($) => $.add_child.toast_failed)) },
+          {
+            onError: (err) =>
+              toast.error(
+                err instanceof Error && err.message
+                  ? err.message
+                  : t(($) => $.add_child.toast_failed),
+              ),
+          },
         );
         toast.success(t(($) => $.add_child.toast_success, { identifier: selected.identifier }));
       }}

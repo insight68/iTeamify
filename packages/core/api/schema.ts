@@ -1,5 +1,4 @@
 import type { ZodType } from "zod";
-import { z } from "zod";
 import { type Logger, noopLogger } from "../logger";
 
 // Module-level logger for schema warnings. Defaults to no-op so test
@@ -15,6 +14,8 @@ export interface ParseOptions {
   /** Endpoint identifier used in the warning log so we can grep for which
    *  contract drifted in production telemetry. */
   endpoint: string;
+  /** Never attach the response payload to logs for public/PII-bearing APIs. */
+  redactReceived?: boolean;
 }
 
 /**
@@ -49,34 +50,8 @@ export function parseWithFallback<T>(
     {
       endpoint: opts.endpoint,
       issues: result.error.issues,
-      received: data,
+      received: opts.redactReceived ? "[redacted]" : data,
     },
   );
   return fallback;
 }
-
-// Re-export invitation preview schema for the signup flow.
-export const EMPTY_INVITATION_PREVIEW: import("../types").InvitationPreview = {
-  id: "",
-  workspace_id: "",
-  invitee_email: "",
-  invitee_phone: "",
-  role: "member",
-  status: "pending",
-  expires_at: "",
-  user_exists: false,
-};
-
-export const InvitationPreviewSchema = z.object({
-  id: z.string(),
-  workspace_id: z.string(),
-  invitee_email: z.string(),
-  invitee_phone: z.string().optional(),
-  role: z.string(),
-  status: z.string(),
-  expires_at: z.string(),
-  workspace_name: z.string().optional(),
-  inviter_name: z.string().optional(),
-  inviter_email: z.string().optional(),
-  user_exists: z.boolean(),
-}).loose();

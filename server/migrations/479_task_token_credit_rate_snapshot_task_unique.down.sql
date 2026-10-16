@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS task_token_credit_rate_snapshot_task_uidx;

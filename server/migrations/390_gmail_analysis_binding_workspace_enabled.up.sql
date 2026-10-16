@@ -1,0 +1,1 @@
+CREATE INDEX CONCURRENTLY gmail_analysis_binding_workspace_enabled_idx ON gmail_analysis_binding (workspace_id, enabled);

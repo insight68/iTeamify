@@ -7,6 +7,12 @@ import type { StorageAdapter } from "../types/storage";
 // query keys and path-embedded API calls where UUID is required.
 let _currentSlug: string | null = null;
 let _currentWsId: string | null = null;
+let _requestController = new AbortController();
+
+/** Requests for the active route retire synchronously, before deferred UI updates. */
+export function getWorkspaceRequestSignal(wsId?: string | null): AbortSignal | undefined {
+  return wsId == null || wsId === _currentWsId ? _requestController.signal : undefined;
+}
 
 const _rehydrateFns: Array<() => void> = [];
 const _slugSubscribers = new Set<(slug: string | null) => void>();
@@ -35,9 +41,15 @@ export function setCurrentWorkspace(slug: string | null, wsId: string | null) {
   if (_currentSlug === slug) {
     // Slug unchanged: nothing to rehydrate, nothing to notify. Accept a
     // (possibly) updated wsId for consumers that read the UUID mirror.
-    _currentWsId = wsId;
+    if (_currentWsId !== wsId) {
+      _requestController.abort(new DOMException("Workspace changed", "AbortError"));
+      _requestController = new AbortController();
+      _currentWsId = wsId;
+    }
     return;
   }
+  _requestController.abort(new DOMException("Workspace changed", "AbortError"));
+  _requestController = new AbortController();
   _currentSlug = slug;
   _currentWsId = wsId;
 
@@ -94,14 +106,24 @@ export function registerForWorkspaceRehydration(fn: () => void) {
 /**
  * Storage that automatically namespaces keys with the current workspace slug.
  * Reads _currentSlug at call time, so it follows workspace switches dynamically.
+ *
+ * When no workspace is active (e.g. zustand persist's initial hydration before
+ * WorkspaceRouteLayout has called setCurrentWorkspace, or a setter firing from
+ * a child component's mount-effect before the parent layout's effect has run),
+ * reads return null and writes are dropped — explicitly NOT a fallback to the
+ * un-namespaced bare key, which used to leak workspace-scoped data across
+ * workspaces. Persisted stores get a real read once setCurrentWorkspace
+ * triggers their registered rehydrate fn.
  */
 export function createWorkspaceAwareStorage(adapter: StorageAdapter): StateStorage {
-  const resolve = (key: string) =>
-    _currentSlug ? `${key}:${_currentSlug}` : key;
-
   return {
-    getItem: (key) => adapter.getItem(resolve(key)),
-    setItem: (key, value) => adapter.setItem(resolve(key), value),
-    removeItem: (key) => adapter.removeItem(resolve(key)),
+    getItem: (key) =>
+      _currentSlug ? adapter.getItem(`${key}:${_currentSlug}`) : null,
+    setItem: (key, value) => {
+      if (_currentSlug) adapter.setItem(`${key}:${_currentSlug}`, value);
+    },
+    removeItem: (key) => {
+      if (_currentSlug) adapter.removeItem(`${key}:${_currentSlug}`);
+    },
   };
 }

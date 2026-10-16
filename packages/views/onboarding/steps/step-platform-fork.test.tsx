@@ -1,16 +1,15 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { AgentRuntime } from "@teamify/core/types";
-import { I18nProvider } from "@teamify/core/i18n/react";
+import type { AgentRuntime } from "@iteamify/core/types";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { I18nProvider } from "@iteamify/core/i18n/react";
 import enCommon from "../../locales/en/common.json";
 import enOnboarding from "../../locales/en/onboarding.json";
 
 const TEST_RESOURCES = { en: { common: enCommon, onboarding: enOnboarding } };
 
-// Mock the core onboarding module BEFORE the SUT imports it.
 const mocks = vi.hoisted(() => ({
-  joinCloudWaitlist: vi.fn(),
   pickerState: {
     runtimes: [] as AgentRuntime[],
     selected: null as AgentRuntime | null,
@@ -19,18 +18,6 @@ const mocks = vi.hoisted(() => ({
     hasRuntimes: false,
   },
 }));
-
-// Partial mock — preserve ONBOARDING_STEP_ORDER etc. that StepHeader
-// (rendered inside the fork) reaches for, while replacing the network
-// call we want to assert on.
-vi.mock("@teamify/core/onboarding", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@teamify/core/onboarding")>();
-  return {
-    ...actual,
-    joinCloudWaitlist: mocks.joinCloudWaitlist,
-  };
-});
 
 // Swap out the runtime picker so tests can drive runtimes / selection
 // without a real TanStack Query + WS stack.
@@ -64,14 +51,14 @@ function renderFork(
 ) {
   const onNext = vi.fn();
   render(
-    <I18nProvider locale="en" resources={TEST_RESOURCES}>
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><I18nProvider locale="en" resources={TEST_RESOURCES}>
       <StepPlatformFork
         wsId="ws_test"
         onNext={onNext}
         cliInstructions={<div data-testid="cli-instructions">install me</div>}
         {...overrides}
       />
-    </I18nProvider>,
+    </I18nProvider></QueryClientProvider>,
   );
   return { onNext };
 }
@@ -85,208 +72,51 @@ function resetPicker(patch: Partial<typeof mocks.pickerState> = {}) {
 }
 
 describe("StepPlatformFork", () => {
-  beforeEach(() => {
-    mocks.joinCloudWaitlist.mockReset();
-    resetPicker();
-    vi.restoreAllMocks();
-  });
+  beforeEach(() => { resetPicker(); vi.restoreAllMocks(); });
 
-  it("renders the three fork options at rest", () => {
+  it("offers desktop installation and an expandable terminal connection", async () => {
     renderFork();
-    expect(screen.getByText(/download the desktop app/i)).toBeInTheDocument();
-    expect(screen.getByText(/^install the cli$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^cloud runtime$/i)).toBeInTheDocument();
-    // Dialogs closed at rest → no CLI instructions, no email field.
-    expect(screen.queryByTestId("cli-instructions")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/^use this computer$/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^use a cloud computer$/i)).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByText("Other connection methods"));
+    expect(screen.getByRole("button", { name: /show steps/i })).toBeVisible();
   });
 
-  it("footer: Skip only + explanatory hint (no Continue)", () => {
-    renderFork();
-    expect(
-      screen.getByRole("button", { name: /skip for now/i }),
-    ).toBeEnabled();
-    // Continue is gone — it lived in the footer before; now advancement
-    // for the CLI path is owned by the CLI dialog's own button.
-    expect(
-      screen.queryByRole("button", { name: /^continue$/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/pick a path above — or skip and configure/i),
-    ).toBeInTheDocument();
-  });
-
-  it("Skip is always enabled and calls onNext(null)", async () => {
-    const user = userEvent.setup();
+  it("allows entering the workspace before connecting", async () => {
     const { onNext } = renderFork();
-    await user.click(screen.getByRole("button", { name: /skip for now/i }));
-    expect(onNext).toHaveBeenCalledTimes(1);
+    await userEvent.setup().click(screen.getByRole("button", { name: /enter the workspace first/i }));
     expect(onNext).toHaveBeenCalledWith(null);
   });
 
-  it("opens the download page and flips the card to a post-click state", async () => {
-    const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
-    const user = userEvent.setup();
-    renderFork();
-
-    await user.click(screen.getByText(/download the desktop app/i));
-
-    // Routes to the new /download page (not GitHub releases) so the
-    // user lands on the OS auto-detect surface.
-    expect(openSpy).toHaveBeenCalledWith(
-      "/download",
-      "_blank",
-      "noopener,noreferrer",
-    );
-    expect(
-      screen.getByText(/continuing on the download page/i),
-    ).toBeInTheDocument();
+  it("disables the exit while its request is pending", () => {
+    renderFork({ pending: true });
+    expect(screen.getByRole("button", { name: /enter the workspace first/i })).toBeDisabled();
   });
 
-  it("CLI dialog: opens with instructions + 'waiting' and a disabled Connect button", async () => {
-    const user = userEvent.setup();
+  it("explains where to continue after opening the download page", async () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
     renderFork();
+    await userEvent.setup().click(screen.getByText(/^use this computer$/i));
+    expect(open).toHaveBeenCalledWith("https://github.com/iteamify-ai/iteamify/releases", "_blank", "noopener,noreferrer");
+    expect(screen.getAllByText(/sign in with the same account/i).length).toBeGreaterThan(0);
+  });
 
+  it("shows terminal instructions while waiting for a connection", async () => {
+    renderFork();
+    const user = userEvent.setup();
+    await user.click(screen.getByText("Other connection methods"));
     await user.click(screen.getByRole("button", { name: /show steps/i }));
-
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByTestId("cli-instructions")).toBeInTheDocument();
-    expect(
-      within(dialog).getByText(/listening for your daemon/i),
-    ).toBeInTheDocument();
-    // Connect & continue stays disabled while no runtime is selected.
-    expect(
-      within(dialog).getByRole("button", { name: /connect & continue/i }),
-    ).toBeDisabled();
+    expect(within(dialog).getByRole("button", { name: /^continue$/i })).toBeDisabled();
   });
 
-  it("CLI dialog with a selected runtime: Connect enables and fires onNext(runtime)", async () => {
-    const rt = makeRuntime({ id: "rt_claude", name: "Claude Code" });
-    resetPicker({
-      runtimes: [rt],
-      selected: rt,
-      selectedId: rt.id,
-      hasRuntimes: true,
-    });
-    const user = userEvent.setup();
+  it("uses a detected online runtime without another installation choice", async () => {
+    const runtime = makeRuntime();
+    resetPicker({ runtimes: [runtime], selected: runtime, selectedId: runtime.id, hasRuntimes: true });
     const { onNext } = renderFork();
-
-    await user.click(screen.getByRole("button", { name: /show steps/i }));
-
-    const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByText(/1 runtime connected/i)).toBeInTheDocument();
-    expect(
-      within(dialog).getByText(/selected: claude code/i),
-    ).toBeInTheDocument();
-
-    const connect = within(dialog).getByRole("button", {
-      name: /connect & continue/i,
-    });
-    expect(connect).toBeEnabled();
-    await user.click(connect);
-    expect(onNext).toHaveBeenCalledTimes(1);
-    expect(onNext).toHaveBeenCalledWith(rt);
-  });
-
-  it("Cloud dialog submission does NOT advance the flow", async () => {
-    // Even with runtimes detected in the background, submitting the
-    // cloud waitlist form must not call onNext — it's pure interest
-    // capture. The user still has to hit Skip explicitly afterwards.
-    const rt = makeRuntime();
-    resetPicker({
-      runtimes: [rt],
-      selected: rt,
-      selectedId: rt.id,
-      hasRuntimes: true,
-    });
-    mocks.joinCloudWaitlist.mockResolvedValue(undefined);
-    const user = userEvent.setup();
-    const { onNext } = renderFork();
-
-    await user.click(screen.getByRole("button", { name: /^join waitlist$/i }));
-    const dialog = await screen.findByRole("dialog");
-    await user.type(within(dialog).getByLabelText(/email/i), "a@b.co");
-    await user.click(
-      within(dialog).getByRole("button", { name: /^join waitlist$/i }),
-    );
-
-    expect(mocks.joinCloudWaitlist).toHaveBeenCalled();
-    expect(onNext).not.toHaveBeenCalled();
-  });
-
-  it("Cloud submit: disables button, shows 'on the list', does NOT navigate", async () => {
-    mocks.joinCloudWaitlist.mockResolvedValue(undefined);
-    const user = userEvent.setup();
-    const { onNext } = renderFork();
-
-    await user.click(screen.getByRole("button", { name: /^join waitlist$/i }));
-    const dialog = await screen.findByRole("dialog");
-    await user.type(within(dialog).getByLabelText(/email/i), "a@b.co");
-    await user.type(
-      within(dialog).getByLabelText(/why cloud/i),
-      "running agents overnight",
-    );
-    await user.click(
-      within(dialog).getByRole("button", { name: /^join waitlist$/i }),
-    );
-
-    expect(mocks.joinCloudWaitlist).toHaveBeenCalledTimes(1);
-    expect(mocks.joinCloudWaitlist).toHaveBeenCalledWith(
-      "a@b.co",
-      "running agents overnight",
-    );
-    // Cloud submit is pure side effect — it must NOT advance the flow.
-    expect(onNext).not.toHaveBeenCalled();
-    // Form button locks out after submit.
-    expect(
-      within(dialog).getByRole("button", { name: /you're on the list/i }),
-    ).toBeDisabled();
-    // Footer hint flips to reflect submitted state.
-    expect(
-      screen.getByText(/you're on the waitlist — pick skip to keep exploring/i),
-    ).toBeInTheDocument();
-  });
-
-  it("Cloud submit: empty reason is allowed, reason forwarded as ''", async () => {
-    mocks.joinCloudWaitlist.mockResolvedValue(undefined);
-    const user = userEvent.setup();
-    renderFork();
-
-    await user.click(screen.getByRole("button", { name: /^join waitlist$/i }));
-    const dialog = await screen.findByRole("dialog");
-    await user.type(
-      within(dialog).getByLabelText(/email/i),
-      "solo@example.com",
-    );
-    await user.click(
-      within(dialog).getByRole("button", { name: /^join waitlist$/i }),
-    );
-
-    expect(mocks.joinCloudWaitlist).toHaveBeenCalledWith(
-      "solo@example.com",
-      "",
-    );
-  });
-
-  it("Cloud submit stays disabled until email is valid", async () => {
-    const user = userEvent.setup();
-    renderFork();
-
-    await user.click(screen.getByRole("button", { name: /^join waitlist$/i }));
-    const dialog = await screen.findByRole("dialog");
-    const submit = within(dialog).getByRole("button", {
-      name: /^join waitlist$/i,
-    });
-    expect(submit).toBeDisabled();
-
-    await user.type(within(dialog).getByLabelText(/email/i), "not-an-email");
-    expect(submit).toBeDisabled();
-
-    await user.clear(within(dialog).getByLabelText(/email/i));
-    await user.type(
-      within(dialog).getByLabelText(/email/i),
-      "someone@example.com",
-    );
-    expect(submit).toBeEnabled();
+    expect(screen.queryByText(/^use this computer$/i)).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole("button", { name: /^continue$/i }));
+    expect(onNext).toHaveBeenCalledWith(runtime);
   });
 });

@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS idx_service_engagement_workspace_lead;

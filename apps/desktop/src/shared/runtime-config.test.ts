@@ -8,14 +8,11 @@ import {
 
 describe("runtime config", () => {
   it("uses cloud defaults without a desktop.json file", () => {
-    // The cloud host is a single domain — apiUrl and appUrl match because
-    // `deriveAppUrl`'s `api.` stripping has no `api.` prefix to remove on
-    // `pub.niuwoai.com`.
     expect(DEFAULT_RUNTIME_CONFIG).toEqual({
       schemaVersion: 1,
-      apiUrl: "https://pub.niuwoai.com",
-      wsUrl: "wss://pub.niuwoai.com/ws",
-      appUrl: "https://pub.niuwoai.com",
+      apiUrl: "https://api.aurocreator.com",
+      wsUrl: "wss://api.aurocreator.com/ws",
+      appUrl: "https://aurocreator.com",
     });
   });
 
@@ -38,13 +35,13 @@ describe("runtime config", () => {
   it("strips the leading api. label when deriving appUrl", () => {
     expect(
       parseRuntimeConfig(
-        JSON.stringify({ schemaVersion: 1, apiUrl: "https://api.teamify.world" }),
+        JSON.stringify({ schemaVersion: 1, apiUrl: "https://api.aurocreator.com" }),
       ),
     ).toEqual({
       schemaVersion: 1,
-      apiUrl: "https://api.teamify.world",
-      wsUrl: "wss://api.teamify.world/ws",
-      appUrl: "https://teamify.world",
+      apiUrl: "https://api.aurocreator.com",
+      wsUrl: "wss://api.aurocreator.com/ws",
+      appUrl: "https://aurocreator.com",
     });
   });
 
@@ -82,7 +79,7 @@ describe("runtime config", () => {
 
   it("rejects non-http api schemes", () => {
     expect(() =>
-      parseRuntimeConfig(JSON.stringify({ schemaVersion: 1, apiUrl: "file:///tmp/teamify" })),
+      parseRuntimeConfig(JSON.stringify({ schemaVersion: 1, apiUrl: "file:///tmp/iteamify" })),
     ).toThrow(/apiUrl must use http or https/);
   });
 
@@ -125,30 +122,30 @@ describe("runtime config", () => {
   it("derives dev appUrl by stripping the leading api. label", () => {
     // When the dev renderer is pointed at a remote backend (e.g. a test
     // environment), copy-link / share URLs must reflect that environment's
-    // public web host, not the api host. Teamify's convention exposes the
+    // public web host, not the api host. iTeamify's convention exposes the
     // api at `api.<web-host>`, so stripping the leading label gives the
     // right web origin without a separate VITE_APP_URL.
     expect(
-      runtimeConfigFromDevEnv({ apiUrl: "https://api.test.teamify.world" }),
+      runtimeConfigFromDevEnv({ apiUrl: "https://api.test.aurocreator.com" }),
     ).toEqual({
       schemaVersion: 1,
-      apiUrl: "https://api.test.teamify.world",
-      wsUrl: "wss://api.test.teamify.world/ws",
-      appUrl: "https://test.teamify.world",
+      apiUrl: "https://api.test.aurocreator.com",
+      wsUrl: "wss://api.test.aurocreator.com/ws",
+      appUrl: "https://test.aurocreator.com",
     });
   });
 
   it("dev VITE_APP_URL still wins over apiUrl-derived value", () => {
     expect(
       runtimeConfigFromDevEnv({
-        apiUrl: "https://api.test.teamify.world",
-        appUrl: "https://staging.teamify.world",
+        apiUrl: "https://api.test.aurocreator.com",
+        appUrl: "https://staging.aurocreator.com",
       }),
     ).toEqual({
       schemaVersion: 1,
-      apiUrl: "https://api.test.teamify.world",
-      wsUrl: "wss://api.test.teamify.world/ws",
-      appUrl: "https://staging.teamify.world",
+      apiUrl: "https://api.test.aurocreator.com",
+      wsUrl: "wss://api.test.aurocreator.com/ws",
+      appUrl: "https://staging.aurocreator.com",
     });
   });
 });

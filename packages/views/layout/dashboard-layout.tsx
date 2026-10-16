@@ -1,16 +1,22 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { SidebarProvider, SidebarInset } from "@teamify/ui/components/ui/sidebar";
+import { SidebarProvider, SidebarInset } from "@iteamify/ui/components/ui/sidebar";
 import { ModalRegistry } from "../modals/registry";
+import { SourceBackfillModal } from "../onboarding/source-backfill-modal";
 import { AppSidebar } from "./app-sidebar";
 import { DashboardGuard } from "./dashboard-guard";
+import { NavigationProgress } from "./navigation-progress";
 import { WorkspacePresencePrefetch } from "./workspace-presence-prefetch";
+import { GlobalShortcuts } from "./global-shortcuts";
+import { PasswordSetupPrompt } from "../auth/password-setup-prompt";
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  /** Rendered inside SidebarInset (e.g. SearchCommand, StarterContentPrompt — absolute-positioned overlays) */
+  /** Rendered inside SidebarInset as absolute-positioned overlays */
   extra?: ReactNode;
+  /** Rendered inside sidebar header as a search trigger */
+  searchSlot?: ReactNode;
   /** Loading indicator */
   loadingIndicator?: ReactNode;
 }
@@ -18,22 +24,27 @@ interface DashboardLayoutProps {
 export function DashboardLayout({
   children,
   extra,
+  searchSlot,
   loadingIndicator,
 }: DashboardLayoutProps) {
   return (
     <DashboardGuard
       loadingFallback={
-        <div className="flex h-screen h-svh items-center justify-center">
+        <div className="flex h-svh items-center justify-center">
           {loadingIndicator}
         </div>
       }
     >
-      <SidebarProvider className="h-screen h-svh">
+      <SidebarProvider className="h-svh bg-app-shell">
+        <GlobalShortcuts />
         <WorkspacePresencePrefetch />
-        <AppSidebar />
+        <AppSidebar searchSlot={searchSlot} />
         <SidebarInset className="relative overflow-hidden">
+          <NavigationProgress />
+          <PasswordSetupPrompt />
           {children}
           <ModalRegistry />
+          <SourceBackfillModal />
           {extra}
         </SidebarInset>
       </SidebarProvider>

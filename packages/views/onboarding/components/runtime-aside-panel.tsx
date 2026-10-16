@@ -42,15 +42,6 @@ export function RuntimeAsidePanel() {
           />
         </div>
       </section>
-
-      <a
-        href="https://teamify.world/docs/daemon-runtimes"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="self-start text-[13px] text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
-      >
-        {t(($) => $.runtime_aside.learn_more)}
-      </a>
     </div>
   );
 }

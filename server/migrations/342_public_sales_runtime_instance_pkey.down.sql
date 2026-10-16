@@ -1,0 +1,1 @@
+ALTER TABLE public_sales_runtime_instance DROP CONSTRAINT IF EXISTS public_sales_runtime_instance_pkey;

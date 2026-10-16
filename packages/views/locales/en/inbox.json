@@ -1,7 +1,7 @@
 {
   "page": {
-    "title": "Inbox",
-    "back": "Inbox"
+    "title": "Watchlist",
+    "back": "Watchlist"
   },
   "menu": {
     "mark_all_read": "Mark all as read",
@@ -18,21 +18,27 @@
       "minutes": "{{count}}m",
       "hours": "{{count}}h",
       "days": "{{count}}d"
-    }
+    },
+    "archived_title": "Archived",
+    "archived_empty": "No archived notifications",
+    "unarchive_tooltip": "Unarchive"
   },
   "detail": {
     "select_prompt": "Select a notification to view details",
-    "empty": "Your inbox is empty",
+    "empty": "Your watchlist is empty",
     "original_input": "Original input",
     "edit_advanced": "Edit as advanced form",
-    "archive": "Archive"
+    "archive": "Archive",
+    "unarchive": "Unarchive"
   },
   "types": {
-    "issue_assigned": "已分配",
+    "issue_assigned": "Assigned",
+    "issue_subscribed": "Subscribed",
     "unassigned": "Unassigned",
     "assignee_changed": "Assignee changed",
     "status_changed": "Status changed",
     "priority_changed": "Priority changed",
+    "start_date_changed": "Start date changed",
     "due_date_changed": "Due date changed",
     "new_comment": "New comment",
     "mentioned": "Mentioned",
@@ -43,13 +49,17 @@
     "agent_completed": "Agent completed",
     "reaction_added": "Reacted",
     "quick_create_done": "Created with agent",
-    "quick_create_failed": "Create with agent failed"
+    "quick_create_failed": "Create with agent failed",
+    "quick_create_unconfirmed": "Create with agent unconfirmed",
+    "gmail_analysis": "Gmail needs attention"
   },
   "labels": {
     "set_status_to": "Set status to",
     "set_priority_to": "Set priority to",
-    "assigned_to": "已分配 to {{name}}",
+    "assigned_to": "Assigned to {{name}}",
     "removed_assignee": "Removed assignee",
+    "set_start_date_to": "Set start date to {{date}}",
+    "removed_start_date": "Removed start date",
     "set_due_date_to": "Set due date to {{date}}",
     "removed_due_date": "Removed due date",
     "reacted_to_comment": "Reacted {{emoji}} to your comment",
@@ -63,6 +73,8 @@
     "mark_all_read_failed": "Failed to mark all as read",
     "archive_all_failed": "Failed to archive all",
     "archive_all_read_failed": "Failed to archive read items",
-    "archive_completed_failed": "Failed to archive completed"
+    "archive_completed_failed": "Failed to archive completed",
+    "unarchive_failed": "Failed to unarchive",
+    "archived_load_failed": "Failed to load archived notifications"
   }
 }

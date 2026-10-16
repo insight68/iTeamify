@@ -7,40 +7,43 @@ import {
   ArrowDown,
   ArrowUp,
   Calendar,
+  CalendarClock,
   FolderOpen,
   Link2,
-  MoreHorizontal,
+  Network,
   Pin,
   PinOff,
   Plus,
   Trash2,
+  Unlink,
   UserMinus,
 } from "lucide-react";
-import type { AgentTask, Issue } from "@teamify/core/types";
-import { api } from "@teamify/core/api";
+import type { AgentTask, Issue } from "@iteamify/core/types";
+import { todayDateOnly, addDaysDateOnly } from "@iteamify/core/issues/date";
+import { api } from "@iteamify/core/api";
 import {
   ALL_STATUSES,
   PRIORITY_ORDER,
   PRIORITY_CONFIG,
-} from "@teamify/core/issues/config";
-import { issueKeys } from "@teamify/core/issues/queries";
+} from "@iteamify/core/issues/config";
+import { issueKeys } from "@iteamify/core/issues/queries";
 import { StatusIcon } from "../components/status-icon";
 import { PriorityIcon } from "../components/priority-icon";
-import { ActorAvatar } from "../../common/actor-avatar";
 import {
   DropdownMenuItem,
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
   DropdownMenuSeparator,
-} from "@teamify/ui/components/ui/dropdown-menu";
+} from "@iteamify/ui/components/ui/dropdown-menu";
 import {
   ContextMenuItem,
   ContextMenuSub,
   ContextMenuSubTrigger,
   ContextMenuSubContent,
   ContextMenuSeparator,
-} from "@teamify/ui/components/ui/context-menu";
+} from "@iteamify/ui/components/ui/context-menu";
+import { copyText } from "@iteamify/ui/lib/clipboard";
 import type { UseIssueActionsResult } from "./use-issue-actions";
 import { useT } from "../../i18n";
 
@@ -78,36 +81,37 @@ interface IssueActionsMenuItemsProps {
   issue: Issue;
   actions: UseIssueActionsResult;
   primitives: MenuPrimitives;
-  /** If set, navigate here after the issue is deleted (used by the detail page). */
-  onDeletedNavigateTo?: string;
+  /** Called when the user clicks the Assignee menu item. The parent should
+   *  close the surrounding menu and open the shared `AssigneePicker` popover.
+   *  Decoupled this way so the same item can drive both the dropdown
+   *  (3-dot button) and the context menu (right-click) wrappers. */
+  onOpenAssignee: () => void;
+  /** If set, leave the page after the issue is deleted (used by the detail
+   *  page, which renders the issue being deleted). The delete modal goes back
+   *  to the list the user came from and only falls back to this path when
+   *  there is no in-app history. List surfaces leave it unset and stay put. */
+  onDeletedFallbackPath?: string;
 }
 
 export function IssueActionsMenuItems({
   issue,
   actions,
   primitives: P,
-  onDeletedNavigateTo,
+  onOpenAssignee,
+  onDeletedFallbackPath,
 }: IssueActionsMenuItemsProps) {
   const { t } = useT("issues");
   const {
-    members,
-    agents,
     isPinned,
     updateField,
     togglePin,
     copyLink,
     openCreateSubIssue,
     openSetParent,
+    removeParent,
     openAddChild,
     openDeleteConfirm,
   } = actions;
-
-  const now = () => new Date();
-  const inDays = (days: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    return d.toISOString();
-  };
 
   // Subscribe to the issue's task list so the cache is warm by the time the
   // user clicks "Copy local workdir path". The query only fires while the
@@ -134,10 +138,10 @@ export function IssueActionsMenuItems({
       toast.error(t(($) => $.detail.workdir_path_unavailable));
       return;
     }
-    navigator.clipboard.writeText(latestWorkDir).then(
-      () => toast.success(t(($) => $.detail.workdir_path_copied)),
-      () => toast.error(t(($) => $.detail.workdir_path_copy_failed)),
-    );
+    void copyText(latestWorkDir).then((ok) => {
+      if (ok) toast.success(t(($) => $.detail.workdir_path_copied));
+      else toast.error(t(($) => $.detail.workdir_path_copy_failed));
+    });
   }, [tasks, t]);
 
   return (
@@ -184,53 +188,40 @@ export function IssueActionsMenuItems({
         </P.SubContent>
       </P.Sub>
 
-      {/* Assignee */}
+      {/* Assignee — closes this menu and hands off to the shared
+          AssigneePicker (members + agents + squads, with search and
+          permission checks). Keeps a single source of truth for the
+          assignee UX across detail sidebar, board cards, and right-click /
+          3-dot menus. */}
+      <P.Item onClick={onOpenAssignee}>
+        <UserMinus className="h-3.5 w-3.5" />
+        {t(($) => $.actions.assignee)}
+      </P.Item>
+
+      {/* Start date */}
       <P.Sub>
         <P.SubTrigger>
-          <UserMinus className="h-3.5 w-3.5" />
-          {t(($) => $.actions.assignee)}
+          <CalendarClock className="h-3.5 w-3.5" />
+          {t(($) => $.actions.start_date)}
         </P.SubTrigger>
         <P.SubContent>
-          <P.Item
-            onClick={() =>
-              updateField({ assignee_type: null, assignee_id: null })
-            }
-          >
-            <UserMinus className="h-3.5 w-3.5 text-muted-foreground" />
-            {t(($) => $.actions.unassigned)}
-            {!issue.assignee_type && (
-              <span className="ml-auto text-xs text-muted-foreground">{"✓"}</span>
-            )}
+          <P.Item onClick={() => updateField({ start_date: todayDateOnly() })}>
+            {t(($) => $.actions.start_today)}
           </P.Item>
-          {members.map((m) => (
-            <P.Item
-              key={m.user_id}
-              onClick={() =>
-                updateField({ assignee_type: "member", assignee_id: m.user_id })
-              }
-            >
-              <ActorAvatar actorType="member" actorId={m.user_id} size={16} />
-              {m.name}
-              {issue.assignee_type === "member" &&
-                issue.assignee_id === m.user_id && (
-                  <span className="ml-auto text-xs text-muted-foreground">{"✓"}</span>
-                )}
-            </P.Item>
-          ))}
-          {agents.map((a) => (
-            <P.Item
-              key={a.id}
-              onClick={() =>
-                updateField({ assignee_type: "agent", assignee_id: a.id })
-              }
-            >
-              <ActorAvatar actorType="agent" actorId={a.id} size={16} />
-              {a.name}
-              {issue.assignee_type === "agent" && issue.assignee_id === a.id && (
-                <span className="ml-auto text-xs text-muted-foreground">{"✓"}</span>
-              )}
-            </P.Item>
-          ))}
+          <P.Item onClick={() => updateField({ start_date: addDaysDateOnly(1) })}>
+            {t(($) => $.actions.start_tomorrow)}
+          </P.Item>
+          <P.Item onClick={() => updateField({ start_date: addDaysDateOnly(7) })}>
+            {t(($) => $.actions.start_next_week)}
+          </P.Item>
+          {issue.start_date && (
+            <>
+              <P.Separator />
+              <P.Item onClick={() => updateField({ start_date: null })}>
+                {t(($) => $.actions.start_clear)}
+              </P.Item>
+            </>
+          )}
         </P.SubContent>
       </P.Sub>
 
@@ -241,13 +232,13 @@ export function IssueActionsMenuItems({
           {t(($) => $.actions.due_date)}
         </P.SubTrigger>
         <P.SubContent>
-          <P.Item onClick={() => updateField({ due_date: now().toISOString() })}>
+          <P.Item onClick={() => updateField({ due_date: todayDateOnly() })}>
             {t(($) => $.actions.due_today)}
           </P.Item>
-          <P.Item onClick={() => updateField({ due_date: inDays(1) })}>
+          <P.Item onClick={() => updateField({ due_date: addDaysDateOnly(1) })}>
             {t(($) => $.actions.due_tomorrow)}
           </P.Item>
-          <P.Item onClick={() => updateField({ due_date: inDays(7) })}>
+          <P.Item onClick={() => updateField({ due_date: addDaysDateOnly(7) })}>
             {t(($) => $.actions.due_next_week)}
           </P.Item>
           {issue.due_date && (
@@ -282,12 +273,14 @@ export function IssueActionsMenuItems({
 
       <P.Separator />
 
-      {/* Relationship actions live under "More" — they're lower-frequency and
-          will grow (blocks, duplicates, related) as we add more relation types. */}
+      {/* Relationship actions live under "Relations" — a semantically explicit
+          label (unlike the old "More") so the first level tells you what the
+          submenu does. Holds parent/sub-issue links today, and will grow
+          (blocks, duplicates, related) as we add more relation types. */}
       <P.Sub>
         <P.SubTrigger>
-          <MoreHorizontal className="h-3.5 w-3.5" />
-          {t(($) => $.actions.more)}
+          <Network className="h-3.5 w-3.5" />
+          {t(($) => $.actions.relations)}
         </P.SubTrigger>
         <P.SubContent>
           <P.Item onClick={openCreateSubIssue}>
@@ -298,6 +291,12 @@ export function IssueActionsMenuItems({
             <ArrowUp className="h-3.5 w-3.5" />
             {t(($) => $.actions.set_parent_issue)}
           </P.Item>
+          {issue.parent_issue_id && (
+            <P.Item onClick={removeParent}>
+              <Unlink className="h-3.5 w-3.5" />
+              {t(($) => $.actions.remove_parent_issue)}
+            </P.Item>
+          )}
           <P.Item onClick={openAddChild}>
             <ArrowDown className="h-3.5 w-3.5" />
             {t(($) => $.actions.add_sub_issue)}
@@ -309,7 +308,7 @@ export function IssueActionsMenuItems({
 
       <P.Item
         variant="destructive"
-        onClick={() => openDeleteConfirm({ onDeletedNavigateTo })}
+        onClick={() => openDeleteConfirm({ onDeletedFallbackPath })}
       >
         <Trash2 className="h-3.5 w-3.5" />
         {t(($) => $.actions.delete_issue)}

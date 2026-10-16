@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import { render as rtlRender, screen, type RenderOptions } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { I18nProvider } from "@teamify/core/i18n/react";
+import { I18nProvider } from "@iteamify/core/i18n/react";
 import enCommon from "../../locales/en/common.json";
 import enSettings from "../../locales/en/settings.json";
 
@@ -25,7 +25,7 @@ function render(ui: React.ReactElement, options?: RenderOptions) {
 // The shared Dialog is a Base UI portal that's awkward to test — strip it to
 // simple pass-through wrappers. The typed-confirmation logic lives in the
 // dialog body, not in Base UI, so this doesn't reduce coverage.
-vi.mock("@teamify/ui/components/ui/dialog", () => ({
+vi.mock("@iteamify/ui/components/ui/dialog", () => ({
   Dialog: ({ children, open }: { children: ReactNode; open: boolean }) =>
     open ? <div>{children}</div> : null,
   DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -51,7 +51,7 @@ describe("DeleteWorkspaceDialog", () => {
         onConfirm={vi.fn()}
       />,
     );
-    expect(screen.getByRole("button", { name: "Delete workspace" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Delete company" })).toBeDisabled();
   });
 
   it("keeps Delete disabled when input doesn't match (case-sensitive)", async () => {
@@ -66,11 +66,11 @@ describe("DeleteWorkspaceDialog", () => {
     );
 
     await user.type(screen.getByRole("textbox"), "ACME"); // wrong case
-    expect(screen.getByRole("button", { name: "Delete workspace" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Delete company" })).toBeDisabled();
 
     await user.clear(screen.getByRole("textbox"));
     await user.type(screen.getByRole("textbox"), "acme "); // trailing space
-    expect(screen.getByRole("button", { name: "Delete workspace" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Delete company" })).toBeDisabled();
   });
 
   it("enables Delete on exact match and calls onConfirm when clicked", async () => {
@@ -86,7 +86,7 @@ describe("DeleteWorkspaceDialog", () => {
     );
 
     await user.type(screen.getByRole("textbox"), "acme");
-    const deleteBtn = screen.getByRole("button", { name: "Delete workspace" });
+    const deleteBtn = screen.getByRole("button", { name: "Delete company" });
     expect(deleteBtn).toBeEnabled();
 
     await user.click(deleteBtn);
@@ -158,8 +158,8 @@ describe("DeleteWorkspaceDialog", () => {
     );
     const input = screen.getByRole("textbox");
     await user.type(input, "My 团队 🚀");
-    expect(screen.getByRole("button", { name: "Delete workspace" })).toBeEnabled();
-    await user.click(screen.getByRole("button", { name: "Delete workspace" }));
+    expect(screen.getByRole("button", { name: "Delete company" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Delete company" }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 

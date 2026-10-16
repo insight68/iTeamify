@@ -1,0 +1,2 @@
+ALTER TABLE managed_mcp_credential_seed ADD CONSTRAINT managed_mcp_credential_seed_pkey PRIMARY KEY USING INDEX managed_mcp_credential_seed_release_unique;
+ALTER TABLE workspace_managed_mcp_binding ADD CONSTRAINT workspace_managed_mcp_binding_pkey PRIMARY KEY USING INDEX workspace_managed_mcp_binding_unique;

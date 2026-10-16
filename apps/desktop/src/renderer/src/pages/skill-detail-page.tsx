@@ -1,8 +1,8 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { SkillDetailPage as SharedSkillDetailPage } from "@teamify/views/skills";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { skillDetailOptions } from "@teamify/core/workspace/queries";
+import { SkillDetailPage as SharedSkillDetailPage } from "@iteamify/views/skills";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { skillDetailOptions } from "@iteamify/core/workspace/queries";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 
 export function SkillDetailPage() {

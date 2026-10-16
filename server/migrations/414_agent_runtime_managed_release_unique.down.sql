@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS agent_runtime_managed_release_uidx;

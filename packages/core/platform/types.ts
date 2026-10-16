@@ -4,6 +4,7 @@ import type {
   SupportedLocale,
 } from "../i18n";
 import type { StorageAdapter } from "../types/storage";
+import type { LogLevel } from "../logger";
 
 /** Identifies the calling client to the server. Threaded through to
  *  ApiClient and WSClient so all HTTP requests and WS connections from
@@ -13,7 +14,7 @@ export interface ClientIdentity {
   platform?: string;
   /** Client/app version string (e.g. "0.1.0"). */
   version?: string;
-  /** Operating system: "macos" | "windows" | "linux". */
+  /** Coarse operating-system bucket (for example "macos", "windows", or "linux"). */
   os?: string;
 }
 
@@ -31,8 +32,11 @@ export interface CoreProviderProps {
   onLogin?: () => void;
   /** Called after logout (e.g. clear cookie). */
   onLogout?: () => void;
+  onSessionExpired?: () => void;
   /** Identifies the calling client (web/desktop + version + os) to the server. */
   identity?: ClientIdentity;
+  /** Host-selected logging threshold. Production defaults to warnings and errors. */
+  logLevel?: LogLevel;
   /** Active locale, determined server-side (web) or at app boot (desktop). */
   locale: SupportedLocale;
   /** i18next resources, server-preloaded for the active locale. */
@@ -40,4 +44,10 @@ export interface CoreProviderProps {
   /** Locale adapter for persisting user choice (used by Settings switcher).
    *  Optional because some shells (e.g. CLI auth pages) don't need switching. */
   localeAdapter?: LocaleAdapter;
+  /**
+   * Mount authenticated session boot, usage reporting, and member WebSocket.
+   * Public capability routes set this to false while retaining API, i18n,
+   * React Query, and navigation plumbing. Default: true.
+   */
+  sessionEnabled?: boolean;
 }

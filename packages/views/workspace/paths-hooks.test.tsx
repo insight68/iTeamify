@@ -5,11 +5,11 @@ import {
   WorkspaceSlugProvider,
   useWorkspaceSlug,
   useCurrentWorkspace,
-} from "@teamify/core/paths";
-import { workspaceKeys } from "@teamify/core/workspace/queries";
-import type { Workspace } from "@teamify/core/types";
+} from "@iteamify/core/paths";
+import { workspaceKeys } from "@iteamify/core/workspace/queries";
+import type { Workspace } from "@iteamify/core/types";
 
-// Hook tests for @teamify/core/paths live here because packages/core/ runs
+// Hook tests for @iteamify/core/paths live here because packages/core/ runs
 // Vitest in node environment (no jsdom). packages/views/ already has jsdom +
 // @testing-library/react configured, so it's the correct home per CLAUDE.md
 // testing rules ("shared UI components live in packages/views/*.test.tsx").
@@ -24,6 +24,7 @@ function makeWorkspace(over: Partial<Workspace>): Workspace {
     settings: {},
     repos: [],
     issue_prefix: "DEF",
+    avatar_url: null,
     created_at: "",
     updated_at: "",
     ...over,

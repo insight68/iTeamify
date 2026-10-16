@@ -9,6 +9,9 @@ export const pinKeys = {
 export function pinListOptions(wsId: string, userId: string) {
   return queryOptions({
     queryKey: pinKeys.list(wsId, userId),
-    queryFn: () => api.listPins(),
+    queryFn: ({ signal }) => {
+      const requestApi = api.withRequestContext({ workspaceId: wsId, signal });
+      return requestApi.listPins();
+    },
   });
 }

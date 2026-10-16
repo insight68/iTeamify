@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { Issue } from "@teamify/core/types";
-import { api } from "@teamify/core/api";
+import type { Issue } from "@iteamify/core/types";
+import { api } from "@iteamify/core/api";
 import {
   Command,
   CommandDialog,
@@ -11,7 +11,7 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
-} from "@teamify/ui/components/ui/command";
+} from "@iteamify/ui/components/ui/command";
 import { StatusIcon } from "../issues/components/status-icon";
 import { useT } from "../i18n";
 

@@ -14,33 +14,34 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { api } from "@teamify/core/api";
-import type { Skill } from "@teamify/core/types";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { isImeComposing } from "@teamify/core/utils";
+import { api } from "@iteamify/core/api";
+import type { Skill } from "@iteamify/core/types";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { isImeComposing } from "@iteamify/core/utils";
 import {
   skillDetailOptions,
   workspaceKeys,
-} from "@teamify/core/workspace/queries";
+} from "@iteamify/core/workspace/queries";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
-} from "@teamify/ui/components/ui/dialog";
+} from "@iteamify/ui/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@teamify/ui/components/ui/tooltip";
-import { Button } from "@teamify/ui/components/ui/button";
-import { Input } from "@teamify/ui/components/ui/input";
-import { Label } from "@teamify/ui/components/ui/label";
-import { Textarea } from "@teamify/ui/components/ui/textarea";
-import { useScrollFade } from "@teamify/ui/hooks/use-scroll-fade";
-import { cn } from "@teamify/ui/lib/utils";
+} from "@iteamify/ui/components/ui/tooltip";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { Input } from "@iteamify/ui/components/ui/input";
+import { Label } from "@iteamify/ui/components/ui/label";
+import { Textarea } from "@iteamify/ui/components/ui/textarea";
+import { useScrollFade } from "@iteamify/ui/hooks/use-scroll-fade";
+import { cn } from "@iteamify/ui/lib/utils";
 import { openExternal } from "../../platform";
 import { RuntimeLocalSkillImportPanel } from "./runtime-local-skill-import-panel";
 import { useT } from "../../i18n";
+import { isNameConflictError } from "../lib/utils";
 
 type Method = "chooser" | "manual" | "url" | "runtime";
 
@@ -52,10 +53,6 @@ function seedAfterCreate(
   qc.setQueryData(skillDetailOptions(wsId, skill.id).queryKey, skill);
   qc.invalidateQueries({ queryKey: workspaceKeys.skills(wsId) });
   qc.invalidateQueries({ queryKey: workspaceKeys.agents(wsId) });
-}
-
-function isNameConflictError(msg: string): boolean {
-  return /\b(409|conflict|already exists|unique constraint)\b/i.test(msg);
 }
 
 // ---------------------------------------------------------------------------
@@ -517,7 +514,10 @@ export function CreateSkillDialog({
           />
         )}
         {method === "runtime" && (
-          <RuntimeLocalSkillImportPanel onImported={handleCreated} />
+          <RuntimeLocalSkillImportPanel
+            onImported={handleCreated}
+            onBulkDone={onClose}
+          />
         )}
       </DialogContent>
     </Dialog>

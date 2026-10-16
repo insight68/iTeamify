@@ -5,9 +5,44 @@
     "member": "成员"
   },
   "card": {
-    "unavailable": "成员信息不可用",
+    "unavailable": "无法查看成员信息",
     "agents_section": "智能体（{{count}}）",
     "detail_link": "详情 →",
     "more_agents_other": "另有 {{count}} 个智能体"
+  },
+  "detail": {
+    "workspace_fallback": "工作区",
+    "members_breadcrumb": "成员",
+    "breadcrumb_fallback": "成员",
+    "not_found_title": "未找到成员",
+    "not_found_description": "这位成员可能已离开工作区。",
+    "open": "查看{{name}}的详情",
+    "manage": "管理{{name}}",
+    "message": "发消息",
+    "tasks": "任务",
+    "agents": "关联助手",
+    "applications": "应用",
+    "membership": "工作区成员信息",
+    "no_agents": "暂无可查看的关联助手",
+    "applications_description": "这位成员在当前工作区提供的服务。",
+    "no_applications": "暂未启用其他应用",
+    "no_applications_hint": "工作区所有者或管理员可以为这位成员配置服务。",
+    "unknown_status": "未知状态"
+  },
+  "list": {
+    "title": "成员",
+    "invitations": "待接受邀请",
+    "search": "搜索姓名或邮箱…",
+    "name": "姓名",
+    "email": "邮箱",
+    "role": "角色",
+    "all_roles": "全部角色",
+    "joined": "加入时间",
+    "sort": "成员排序",
+    "loading": "正在加载成员…",
+    "load_failed": "无法加载成员",
+    "retry": "重试",
+    "no_matches": "没有匹配的成员",
+    "no_invitations": "暂无待接受邀请"
   }
 }

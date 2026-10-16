@@ -1,0 +1,18 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "pkg/db/queries/"
+    schema: "migrations/"
+    gen:
+      go:
+        package: "db"
+        out: "pkg/db/generated"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_empty_slices: true
+        # The product brand is written "iTeamify", so sqlc's default
+        # Title-casing of `iteamify_user_id` produces `IteamifyUserID`, which
+        # neither matches the brand nor the hand-written call sites. Pin the
+        # generated field to the Go-exported brand spelling instead.
+        rename:
+          iteamify_user_id: "ITeamifyUserID"

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY public_quote_acceptance_evidence_pkey ON public_quote_acceptance_evidence (id);

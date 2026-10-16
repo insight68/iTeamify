@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS agent_task_managed_probe_unique_idx;

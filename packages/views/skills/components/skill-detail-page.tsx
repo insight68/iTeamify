@@ -5,7 +5,6 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowLeft,
-  ChevronRight,
   HardDrive,
   Loader2,
   Lock,
@@ -14,6 +13,7 @@ import {
   Save,
   Sparkles,
   Trash2,
+  UserPlus,
 } from "lucide-react";
 import type {
   Agent,
@@ -22,23 +22,29 @@ import type {
   Skill,
   SkillFile,
   UpdateSkillRequest,
-} from "@teamify/core/types";
+} from "@iteamify/core/types";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@teamify/core/api";
-import { timeAgo } from "@teamify/core/utils";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { useWorkspacePaths } from "@teamify/core/paths";
+import { api } from "@iteamify/core/api";
+import { useAuthStore } from "@iteamify/core/auth";
+import { useTimeAgo } from "../../i18n";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { useWorkspacePaths } from "@iteamify/core/paths";
 import {
   agentListOptions,
   memberListOptions,
   selectSkillAssignments,
   skillDetailOptions,
   workspaceKeys,
-} from "@teamify/core/workspace/queries";
-import { runtimeListOptions } from "@teamify/core/runtimes";
-import { ActorAvatar } from "@teamify/ui/components/common/actor-avatar";
-import { Button, buttonVariants } from "@teamify/ui/components/ui/button";
+} from "@iteamify/core/workspace/queries";
+import { resolvePublicFileUrl } from "@iteamify/core/workspace/avatar-url";
+import {
+  runtimeDisplayLabel,
+  runtimeDisplayName,
+  runtimeListOptions,
+} from "@iteamify/core/runtimes";
+import { ActorAvatar } from "@iteamify/ui/components/common/actor-avatar";
+import { Button, buttonVariants } from "@iteamify/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -46,24 +52,30 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@teamify/ui/components/ui/dialog";
-import { Input } from "@teamify/ui/components/ui/input";
-import { Label } from "@teamify/ui/components/ui/label";
-import { Skeleton } from "@teamify/ui/components/ui/skeleton";
-import { Textarea } from "@teamify/ui/components/ui/textarea";
+} from "@iteamify/ui/components/ui/dialog";
+import { Input } from "@iteamify/ui/components/ui/input";
+import { Label } from "@iteamify/ui/components/ui/label";
+import { Skeleton } from "@iteamify/ui/components/ui/skeleton";
+import { Textarea } from "@iteamify/ui/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@teamify/ui/components/ui/tooltip";
+} from "@iteamify/ui/components/ui/tooltip";
 import { AppLink, useNavigation } from "../../navigation";
+import { BreadcrumbHeader } from "../../layout/breadcrumb-header";
 import { useCanEditSkill } from "../hooks/use-can-edit-skill";
-import { useSkillPermissions } from "@teamify/core/permissions";
-import { CapabilityBanner } from "@teamify/ui/components/common/capability-banner";
+import { useSkillPermissions } from "@iteamify/core/permissions";
+import { CapabilityBanner } from "@iteamify/ui/components/common/capability-banner";
 import { readOrigin, totalFileCount, type OriginInfo } from "../lib/origin";
 import { FileTree } from "./file-tree";
 import { FileViewer } from "./file-viewer";
+import {
+  AddToAgentDialog,
+  type SkillActionsContext,
+} from "./skill-list-actions";
 import { useT } from "../../i18n";
+import { ResourceLabelPicker } from "../../labels/resource-label-picker";
 
 const SKILL_MD = "SKILL.md";
 
@@ -165,9 +177,9 @@ function UsedBySection({ agents }: { agents: Agent[] }) {
           <ActorAvatar
             name={a.name}
             initials={a.name.slice(0, 2).toUpperCase()}
-            avatarUrl={a.avatar_url}
+            avatarUrl={resolvePublicFileUrl(a.avatar_url)}
             isAgent
-            size={22}
+            size="md"
           />
           <div className="min-w-0 flex-1">
             <div className="truncate text-xs font-medium">{a.name}</div>
@@ -215,7 +227,7 @@ function OriginSidebarCard({
       </div>
       {runtime && (
         <div className="mt-1 break-all text-xs text-foreground">
-          {runtime.name}
+          {runtimeDisplayName(runtime)}
         </div>
       )}
       {origin.source_path && (
@@ -243,10 +255,12 @@ function OriginSidebarCard({
 
 export function SkillDetailPage({ skillId }: { skillId: string }) {
   const { t } = useT("skills");
+  const timeAgo = useTimeAgo();
   const wsId = useWorkspaceId();
   const qc = useQueryClient();
   const paths = useWorkspacePaths();
   const navigation = useNavigation();
+  const currentUserId = useAuthStore((s) => s.user?.id ?? null);
 
   const {
     data: skill,
@@ -271,6 +285,19 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
   const canEdit = useCanEditSkill(skill, wsId);
   const skillPermissions = useSkillPermissions(skill ?? null, wsId);
 
+  // Context for the shared "Add to agent" dialog (also used by the skills
+  // list). Members see their own agents; workspace owners/admins see all.
+  const myRole = useMemo(
+    () => members.find((m) => m.user_id === currentUserId)?.role ?? null,
+    [members, currentUserId],
+  );
+  const actionsCtx: SkillActionsContext = {
+    wsId,
+    agents,
+    currentUserId,
+    isAdmin: myRole === "owner" || myRole === "admin",
+  };
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
@@ -279,6 +306,7 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showAddToAgents, setShowAddToAgents] = useState(false);
   const [addingFile, setAddingFile] = useState(false);
   const [conflictPending, setConflictPending] = useState(false);
 
@@ -510,6 +538,7 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
             variant="ghost"
             size="xs"
             render={<AppLink href={paths.skills()} />}
+            nativeButton={false}
           >
             <ArrowLeft className="h-3 w-3" />
             {t(($) => $.detail.all_skills)}
@@ -537,7 +566,9 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
     if (!origin) return null;
     if (origin.type === "runtime_local") {
       return originRuntime
-        ? t(($) => $.detail.subline.origin_runtime_named, { name: originRuntime.name })
+        ? t(($) => $.detail.subline.origin_runtime_named, {
+            name: runtimeDisplayLabel(originRuntime),
+          })
         : origin.provider
           ? t(($) => $.detail.subline.origin_runtime_provider, { provider: origin.provider })
           : t(($) => $.detail.subline.origin_runtime_unknown);
@@ -550,47 +581,42 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
 
   return (
     <div className="flex flex-1 min-h-0 flex-col">
-      {/* Topbar */}
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
-        <Button
-          variant="ghost"
-          size="xs"
-          render={<AppLink href={paths.skills()} />}
-        >
-          <ArrowLeft className="h-3 w-3" />
-          {t(($) => $.detail.all_skills)}
-        </Button>
-        <ChevronRight className="h-3 w-3 text-muted-foreground" />
-        <span className="truncate font-mono text-xs text-foreground">
-          {skill.name}
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          {!canEdit && (
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Lock className="h-3 w-3" />
-              {t(($) => $.detail.read_only)}
-            </span>
-          )}
-          {canEdit && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => setConfirmDelete(true)}
-                    className="text-muted-foreground hover:text-destructive"
-                    aria-label={t(($) => $.detail.delete_aria)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                }
-              />
-              <TooltipContent>{t(($) => $.detail.delete_tooltip)}</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      </div>
+      <BreadcrumbHeader
+        segments={[{ href: paths.skills(), label: t(($) => $.page.title) }]}
+        leaf={
+          <span className="truncate font-mono text-xs text-foreground">
+            {skill.name}
+          </span>
+        }
+        actions={
+          <>
+            {!canEdit && (
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <Lock className="h-3 w-3" />
+                {t(($) => $.detail.read_only)}
+              </span>
+            )}
+            {canEdit && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => setConfirmDelete(true)}
+                      className="text-muted-foreground hover:text-destructive"
+                      aria-label={t(($) => $.detail.delete_aria)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  }
+                />
+                <TooltipContent>{t(($) => $.detail.delete_tooltip)}</TooltipContent>
+              </Tooltip>
+            )}
+          </>
+        }
+      />
 
       {!canEdit && (
         <div className="px-4 pt-3">
@@ -613,9 +639,9 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
       )}
 
       {/* Body: file tree | editor | sidebar */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
         {/* File tree */}
-        <aside className="flex w-56 shrink-0 flex-col border-r">
+        <aside className="flex max-h-44 w-full shrink-0 flex-col border-b md:max-h-none md:w-56 md:border-b-0 md:border-r">
           <div className="flex h-10 shrink-0 items-center justify-between border-b px-3">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {t(($) => $.detail.files_label, { count: totalFileCount(skill) })}
@@ -671,15 +697,15 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
         </aside>
 
         {/* Editor */}
-        <section className="flex min-w-0 flex-1 flex-col">
+        <section className="flex min-h-[32rem] min-w-0 shrink-0 flex-col md:min-h-0 md:flex-1 md:shrink">
           {/* Name + description + subline */}
-          <div className="space-y-2 border-b px-5 py-4">
+          <div className="space-y-2 border-b px-4 py-4 sm:px-5">
             <Input
               value={name}
               readOnly={!canEdit}
               onChange={(e) => setName(e.target.value)}
               placeholder={t(($) => $.detail.name_placeholder)}
-              className="h-9 border-0 bg-transparent px-0 text-lg font-semibold shadow-none focus-visible:ring-0 read-only:cursor-default"
+              className="h-9 border-0 bg-transparent px-0 text-lg font-semibold shadow-none focus-visible:ring-0 read-only:cursor-default dark:bg-transparent"
               aria-label={t(($) => $.detail.name_aria)}
             />
             <div className="space-y-1">
@@ -700,6 +726,11 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
                 className="resize-none text-sm read-only:cursor-default"
               />
             </div>
+            <ResourceLabelPicker
+              resourceType="skill"
+              resourceId={skill.id}
+              canEdit={canEdit}
+            />
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
               {originLabel && (
                 <span className="inline-flex items-center gap-1">
@@ -726,8 +757,8 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
                     <ActorAvatar
                       name={creator.name}
                       initials={creator.name.slice(0, 2).toUpperCase()}
-                      avatarUrl={creator.avatar_url}
-                      size={14}
+                      avatarUrl={resolvePublicFileUrl(creator.avatar_url)}
+                      size="xs"
                     />
                     {t(($) => $.detail.subline.by_creator, { name: creator.name })}
                   </span>
@@ -770,7 +801,7 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
             <div
               role="status"
               aria-live="polite"
-              className="flex items-center gap-2 border-t bg-muted/30 px-4 py-2"
+              className="flex flex-wrap items-center gap-2 border-t bg-muted/30 px-4 py-2"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
               <span className="text-xs text-muted-foreground">
@@ -809,7 +840,7 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
         </section>
 
         {/* Sidebar */}
-        <aside className="flex w-72 shrink-0 flex-col gap-4 overflow-y-auto border-l bg-muted/20 px-4 py-4">
+        <aside className="flex w-full shrink-0 flex-col gap-4 border-t bg-muted/20 px-4 py-4 md:w-72 md:overflow-y-auto md:border-l md:border-t-0">
           <div>
             <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {t(($) => $.detail.sidebar.metadata)}
@@ -869,9 +900,20 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
           )}
 
           <div>
-            <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {t(($) => $.detail.sidebar.used_by, { count: skillAgents.length })}
-            </h3>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="min-w-0 truncate text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {t(($) => $.detail.sidebar.used_by, { count: skillAgents.length })}
+              </h3>
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => setShowAddToAgents(true)}
+                className="h-6 shrink-0 gap-1"
+              >
+                <UserPlus className="h-3 w-3" />
+                {t(($) => $.actions.add_to_agent)}
+              </Button>
+            </div>
             <UsedBySection agents={skillAgents} />
           </div>
 
@@ -944,6 +986,13 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AddToAgentDialog
+        skills={[skill]}
+        ctx={actionsCtx}
+        open={showAddToAgents}
+        onOpenChange={setShowAddToAgents}
+      />
     </div>
   );
 }

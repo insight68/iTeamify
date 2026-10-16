@@ -41,7 +41,7 @@ export async function loadRuntimeConfig(options: {
 }
 
 export function desktopConfigPath(): string {
-  return join(app.getPath("home"), ".teamify", "desktop.json");
+  return join(app.getPath("home"), ".iteamify", "desktop.json");
 }
 
 function isMissingFileError(err: unknown): boolean {

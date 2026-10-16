@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY task_token_credit_rate_snapshot_task_uidx ON task_token_credit_rate_snapshot (task_id);

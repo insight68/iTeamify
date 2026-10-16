@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS managed_mcp_credential_seed_release_unique;

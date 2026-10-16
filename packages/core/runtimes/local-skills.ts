@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
+import { pollDelay } from "./poll-delay";
 import type {
   CreateRuntimeLocalSkillImportRequest,
   RuntimeLocalSkillImportResult,
@@ -14,11 +15,24 @@ export const runtimeLocalSkillsKeys = {
 
 const POLL_INTERVAL_MS = 500;
 const POLL_TIMEOUT_MS = 30_000;
+// Import timeout is longer than discovery because old daemons (pre-batch) pop
+// only one import per heartbeat cycle (~15s). With 10 queued imports the 10th
+// can wait up to 150s in pending before being claimed, plus up to 60s for
+// the daemon to actually run the import.
+//
+// Timeout invariant: IMPORT_POLL_TIMEOUT_MS must exceed
+// runtimeLocalSkillPendingTimeout + runtimeLocalSkillRunningTimeout
+// (server/internal/handler/runtime_local_skills.go).
+// See also IMPORT_CONCURRENCY in packages/views/.../runtime-local-skill-import-panel.tsx
+// and maxLocalSkillImportBatch in server/internal/handler/daemon.go.
+const IMPORT_POLL_TIMEOUT_MS = 4 * 60_000; // 4 minutes
 
 export async function resolveRuntimeLocalSkills(
   runtimeId: string,
+  signal?: AbortSignal,
 ): Promise<RuntimeLocalSkillsResult> {
-  const initial = await api.initiateListLocalSkills(runtimeId);
+  const client = api.withRequestContext({ signal });
+  const initial = await client.initiateListLocalSkills(runtimeId);
   const start = Date.now();
   let current = initial;
 
@@ -26,8 +40,8 @@ export async function resolveRuntimeLocalSkills(
     if (Date.now() - start > POLL_TIMEOUT_MS) {
       throw new Error("runtime local skill discovery timed out");
     }
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    current = await api.getListLocalSkillsResult(runtimeId, initial.id);
+    await pollDelay(POLL_INTERVAL_MS, signal);
+    current = await client.getListLocalSkillsResult(runtimeId, initial.id);
   }
 
   if (current.status === "failed" || current.status === "timeout") {
@@ -37,6 +51,8 @@ export async function resolveRuntimeLocalSkills(
   return {
     skills: current.skills ?? [],
     supported: current.supported,
+	mcpServers: current.mcp_servers ?? [],
+	mcpSupported: current.mcp_supported === true,
   };
 }
 
@@ -49,11 +65,21 @@ export async function resolveRuntimeLocalSkillImport(
   let current = initial;
 
   while (current.status === "pending" || current.status === "running") {
-    if (Date.now() - start > POLL_TIMEOUT_MS) {
+    if (Date.now() - start > IMPORT_POLL_TIMEOUT_MS) {
       throw new Error("runtime local skill import timed out");
     }
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
     current = await api.getImportLocalSkillResult(runtimeId, initial.id);
+  }
+
+  if (current.status === "conflict") {
+    if (!current.conflict) {
+      throw new Error("runtime local skill import conflict missing details");
+    }
+    return {
+      status: "conflict",
+      conflict: current.conflict,
+    };
   }
 
   if (current.status === "failed" || current.status === "timeout") {
@@ -63,7 +89,10 @@ export async function resolveRuntimeLocalSkillImport(
     throw new Error("runtime local skill import did not return a skill");
   }
 
-  return { skill: current.skill };
+  return {
+    status: current.action === "overwrite" ? "updated" : "created",
+    skill: current.skill,
+  };
 }
 
 export function runtimeLocalSkillsOptions(runtimeId: string | null | undefined) {
@@ -71,9 +100,14 @@ export function runtimeLocalSkillsOptions(runtimeId: string | null | undefined) 
     queryKey: runtimeId
       ? runtimeLocalSkillsKeys.forRuntime(runtimeId)
       : runtimeLocalSkillsKeys.all(),
-    queryFn: () => resolveRuntimeLocalSkills(runtimeId as string),
+    queryFn: ({ signal }) => resolveRuntimeLocalSkills(runtimeId as string, signal),
     enabled: Boolean(runtimeId),
     staleTime: 30_000,
     retry: false,
   });
 }
+
+// The daemon returns both local skills and a redacted MCP inventory from the
+// same round trip. Keep the original export for import flows and use this
+// capability-oriented alias on Agent detail surfaces.
+export const runtimeCapabilitiesOptions = runtimeLocalSkillsOptions;

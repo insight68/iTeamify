@@ -1,11 +1,27 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "@teamify/core/api";
+import { ApiError } from "@iteamify/core/api";
 import { AppSidebar } from "./app-sidebar";
 
-const { detail, deletePin, pins, workspaceRef } = vi.hoisted(() => ({
+const {
+  detail,
+  deletePin,
+  inboxItems,
+  navigation,
+  pins,
+  summary,
+  workspaces,
+  currentWorkspace,
+  assistantAgents,
+} = vi.hoisted(() => ({
   detail: { current: { isPending: false, isError: false, data: null as unknown, error: null as unknown } },
   deletePin: vi.fn(),
+  inboxItems: { current: [] as { id: string; read: boolean }[] },
+  navigation: { current: { pathname: "/acme/issues", search: "" } },
+  summary: { current: [] as { workspace_id: string; count: number }[] },
+  workspaces: {
+    current: [] as { id: string; name: string; slug: string; avatar_url: string | null }[],
+  },
   pins: {
     current: [
       {
@@ -19,13 +35,17 @@ const { detail, deletePin, pins, workspaceRef } = vi.hoisted(() => ({
       },
     ],
   },
-  workspaceRef: {
-    current: {
-      id: "ws-1",
-      name: "Acme",
-      slug: "acme",
-      settings: {} as Record<string, unknown>,
-    },
+  currentWorkspace: {
+    current: { id: "ws-1", name: "Acme", slug: "acme" },
+  },
+  // "我的助手" group source — controlled per test via the agentListOptions mock.
+  assistantAgents: {
+    current: [] as {
+      id: string;
+      name: string;
+      avatar_url: string | null;
+      archived_at?: string | null;
+    }[],
   },
 }));
 
@@ -42,155 +62,148 @@ vi.mock("@dnd-kit/sortable", () => ({
   verticalListSortingStrategy: vi.fn(),
 }));
 vi.mock("@dnd-kit/utilities", () => ({ CSS: { Transform: { toString: () => undefined } } }));
-vi.mock("@teamify/ui/components/ui/sidebar", () => ({
+vi.mock("@iteamify/ui/components/ui/sidebar", () => ({
   Sidebar: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SidebarContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SidebarFooter: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SidebarGroup: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SidebarGroupContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SidebarGroupLabel: ({ children }: { children: React.ReactNode }) => <div data-testid="sidebar-group-label">{children}</div>,
+  SidebarGroup: ({ children }: { children: React.ReactNode }) => (
+    <section data-sidebar-group>{children}</section>
+  ),
+  SidebarGroupContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SidebarGroupLabel: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SidebarHeader: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SidebarMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SidebarMenuButton: ({ children }: { children: React.ReactNode }) => <button type="button">{children}</button>,
+  SidebarMenuButton: ({
+    children,
+    isActive,
+    render,
+  }: {
+    children: React.ReactNode;
+    isActive?: boolean;
+    render?: React.ReactElement<{ href?: string }>;
+  }) => (
+    <button type="button" data-active={isActive ? "true" : undefined} data-href={render?.props.href}>
+      {children}
+    </button>
+  ),
   SidebarMenuItem: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SidebarRail: () => null,
 }));
-vi.mock("@teamify/ui/components/ui/dropdown-menu", () => ({
+vi.mock("@iteamify/ui/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DropdownMenuContent: () => null,
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DropdownMenuGroup: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DropdownMenuItem: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DropdownMenuLabel: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DropdownMenuSeparator: () => null,
   DropdownMenuTrigger: ({ render }: { render: React.ReactNode }) => <>{render}</>,
 }));
-vi.mock("@teamify/ui/components/ui/collapsible", () => ({
+vi.mock("@iteamify/ui/components/ui/collapsible", () => ({
   Collapsible: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   CollapsibleContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   CollapsibleTrigger: () => <button type="button" />,
 }));
-vi.mock("@teamify/ui/components/ui/tooltip", () => ({
+vi.mock("@iteamify/ui/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ children }: { children: React.ReactNode }) => <button type="button">{children}</button>,
 }));
 vi.mock("./help-launcher", () => ({ HelpLauncher: () => null }));
+vi.mock("./wechat-card", () => ({
+  WechatCard: () => <div data-testid="wechat-sidebar-card" />,
+}));
 vi.mock("../auth", () => ({ useLogout: () => vi.fn() }));
 vi.mock("../issues/components/status-icon", () => ({ StatusIcon: () => <span /> }));
 vi.mock("../navigation", () => ({
   AppLink: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
-  useNavigation: () => ({ pathname: "/acme/issues", push: vi.fn() }),
+  useNavigation: () => ({
+    pathname: navigation.current.pathname,
+    push: vi.fn(),
+    searchParams: new URLSearchParams(navigation.current.search ?? ""),
+  }),
 }));
 vi.mock("../projects/components/project-icon", () => ({ ProjectIcon: () => <span /> }));
 vi.mock("../workspace/workspace-avatar", () => ({ WorkspaceAvatar: () => <span /> }));
-vi.mock("@teamify/ui/components/common/actor-avatar", () => ({ ActorAvatar: () => <span /> }));
-vi.mock("../i18n", () => ({
-  useT: () => ({
-    t: (selector: (resources: {
-      nav: Record<string, string>;
-      sidebar: Record<string, string>;
-    }) => string) =>
-      selector({
-        nav: {
-          inbox: "Inbox",
-          my_issues: "My Issues",
-          issues: "Issues",
-          projects: "Projects",
-          reconciliation: "Reconciliation",
-          supply_reconciliation: "Supply Fee Reconciliation",
-          inventory: "Inventory",
-          product_categories: "Product Categories",
-          autopilots: "Autopilot",
-          org: "Org",
-          datasources: "Data Sources",
-          agents: "Agents",
-          mcp: "MCP",
-          runtimes: "Runtimes",
-          tokens: "Tokens",
-          skills: "Skills",
-          settings: "Settings",
-          daemon: "Daemon",
-          workspace: "Workspace",
-          members: "Members",
-        },
-        sidebar: {
-          unpin_tooltip: "Unpin",
-          workspaces_label: "Workspaces",
-          create_workspace: "Create workspace",
-          pending_invitations_label: "Pending invitations",
-          invitation_workspace_fallback: "Workspace",
-          invitation_join: "Join",
-          invitation_decline: "Decline",
-          log_out: "Log out",
-          new_issue: "New Issue",
-          search: "Search",
-          new_issue_shortcut: "C",
-          pinned_label: "Pinned",
-          chats_group_label: "Chats",
-          chats_empty: "No agents yet",
-          workspace_group: "Workspace",
-          configure_group: "Settings",
-          digital_employee_group: "Digital Employees",
-        },
-      }),
-  }),
-}));
+vi.mock("@iteamify/ui/components/common/actor-avatar", () => ({ ActorAvatar: () => <span /> }));
 
-vi.mock("@teamify/core/auth", () => ({
+vi.mock("@iteamify/core/auth", () => ({
   useAuthStore: (selector: (state: { user: { id: string } }) => unknown) => selector({ user: { id: "user-1" } }),
 }));
-vi.mock("@teamify/core/paths", () => ({
-  paths: { workspace: (slug: string) => ({ issues: () => `/${slug}/issues` }) },
-  useCurrentWorkspace: () => workspaceRef.current,
-  useWorkspacePaths: () => ({
-    inbox: () => "/acme/inbox",
-    myIssues: () => "/acme/my-issues",
-    issues: () => "/acme/issues",
-    projects: () => "/acme/projects",
-    reconciliation: () => "/acme/reconciliation",
-    reconciliationDetail: (batchNo: string) => `/acme/reconciliation/${batchNo}`,
-    supplyReconciliation: () => "/acme/supply-reconciliation",
-    supplyReconciliationBills: () => "/acme/supply-reconciliation/bills",
-    supplyReconciliationResults: () => "/acme/supply-reconciliation/results",
-    supplyReconciliationResult: (resultId: string) => `/acme/supply-reconciliation/results/${resultId}`,
-    inventory: () => "/acme/inventory",
-    productCategories: () => "/acme/product-categories",
-    autopilots: () => "/acme/autopilots",
-    org: () => "/acme/org",
-    datasources: () => "/acme/datasources",
-    agents: () => "/acme/agents",
-    runtimes: () => "/acme/runtimes",
-    skills: () => "/acme/skills",
-    settings: () => "/acme/settings",
-    chats: () => "/acme/chats",
-    chatsWithAgent: (id: string) => `/acme/chats?agent=${id}`,
-    chatsWithSession: (id: string) => `/acme/chats/${id}`,
-    issueDetail: (id: string) => `/acme/issues/${id}`,
-    projectDetail: (id: string) => `/acme/projects/${id}`,
-  }),
+vi.mock("@iteamify/core/paths", async (importOriginal) => ({
+  // Spread the real module so pure helpers (resolveRouteIconName, used by the
+  // nav to derive each item's icon from its href) stay intact; only the
+  // workspace/context hooks below are stubbed to control routes in tests.
+  ...(await importOriginal<typeof import("@iteamify/core/paths")>()),
+  paths: {
+    workspace: (slug: string) => ({
+      root: () => `/${slug}`,
+      issues: () => `/${slug}/issues`,
+    }),
+  },
+  useCurrentWorkspace: () => currentWorkspace.current,
+  useWorkspacePaths: () => {
+    const slug = currentWorkspace.current.slug;
+    return {
+      root: () => `/${slug}`,
+      inbox: () => `/${slug}/inbox`,
+      chat: () => `/${slug}/chat`,
+      myIssues: () => `/${slug}/my-issues`,
+      issues: () => `/${slug}/issues`,
+      projects: () => `/${slug}/projects`,
+      autopilots: () => `/${slug}/autopilots`,
+      agents: () => `/${slug}/agents`,
+      members: () => `/${slug}/members`,
+      memberDetail: (id: string) => `/${slug}/members/${id}`,
+      applications: () => `/${slug}/applications`,
+      squads: () => `/${slug}/squads`,
+      usage: () => `/${slug}/usage`,
+      runtimes: () => `/${slug}/runtimes`,
+      skills: () => `/${slug}/skills`,
+      settings: () => `/${slug}/settings`,
+      connections: () => `/${slug}/connections`,
+      issueDetail: (id: string) => `/${slug}/issues/${id}`,
+      projectDetail: (id: string) => `/${slug}/projects/${id}`,
+    };
+  },
 }));
-vi.mock("@teamify/core/api", async (importOriginal) => ({ ...(await importOriginal<typeof import("@teamify/core/api")>()), api: {} }));
-vi.mock("@teamify/core/inbox/queries", () => ({ deduplicateInboxItems: (items: unknown[]) => items, inboxKeys: { list: () => ["inbox"] } }));
-vi.mock("@teamify/core/issues/queries", () => ({ issueDetailOptions: () => ({ queryKey: ["issue"] }) }));
-vi.mock("@teamify/core/issues/stores/create-mode-store", () => ({ useCreateModeStore: { getState: () => ({ lastMode: "agent" }) } }));
-vi.mock("@teamify/core/issues/stores/draft-store", () => ({ useIssueDraftStore: () => false }));
-vi.mock("@teamify/core/modals", () => ({ useModalStore: { getState: () => ({ modal: null, open: vi.fn() }) } }));
-vi.mock("@teamify/core/pins/mutations", () => ({ useDeletePin: () => ({ mutate: deletePin }), useReorderPins: () => ({ mutate: vi.fn() }) }));
-vi.mock("@teamify/core/pins/queries", () => ({ pinListOptions: () => ({ queryKey: ["pins"] }) }));
-vi.mock("@teamify/core/projects/queries", () => ({ projectDetailOptions: () => ({ queryKey: ["project"] }) }));
-vi.mock("@teamify/core/runtimes/hooks", () => ({ useMyRuntimesNeedUpdate: () => false }));
-vi.mock("@teamify/core/workspace/queries", () => ({
+vi.mock("@iteamify/core/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@iteamify/core/api")>();
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      getBaseUrl: () => "http://127.0.0.1:8080",
+    },
+  };
+});
+vi.mock("@iteamify/core/inbox/queries", () => ({
+  deduplicateInboxItems: (items: unknown[]) => items,
+  inboxKeys: { list: () => ["inbox"], unreadSummary: () => ["inbox", "unread-summary"] },
+  inboxUnreadSummaryOptions: () => ({ queryKey: ["inbox", "unread-summary"] }),
+  hasOtherWorkspaceUnread: (
+    entries: { workspace_id: string; count: number }[],
+    currentWsId: string | null,
+  ) => entries.some((s) => s.workspace_id !== currentWsId && s.count > 0),
+  unreadWorkspaceIds: (entries: { workspace_id: string; count: number }[]) =>
+    new Set(entries.filter((s) => s.count > 0).map((s) => s.workspace_id)),
+}));
+vi.mock("@iteamify/core/issues/queries", () => ({ issueDetailOptions: () => ({ queryKey: ["issue"] }) }));
+vi.mock("@iteamify/core/issues/stores/create-mode-store", () => ({
+  useCreateModeStore: { getState: () => ({ lastMode: "agent" }) },
+  openCreateIssueWithPreference: vi.fn(),
+}));
+vi.mock("@iteamify/core/issues/stores/draft-store", () => ({ useIssueDraftStore: () => false }));
+vi.mock("@iteamify/core/modals", () => ({ useModalStore: { getState: () => ({ modal: null, open: vi.fn() }) } }));
+vi.mock("@iteamify/core/pins/mutations", () => ({ useDeletePin: () => ({ mutate: deletePin }), useReorderPins: () => ({ mutate: vi.fn() }) }));
+vi.mock("@iteamify/core/pins/queries", () => ({ pinListOptions: () => ({ queryKey: ["pins"] }) }));
+vi.mock("@iteamify/core/projects/queries", () => ({ projectDetailOptions: () => ({ queryKey: ["project"] }) }));
+vi.mock("@iteamify/core/workspace/queries", () => ({
+  // Controlled so the "我的助手" group renders predictably in tests.
+  agentListOptions: () => ({ queryKey: ["agents"] }),
+  memberListOptions: () => ({ queryKey: ["members"] }),
   myInvitationListOptions: () => ({ queryKey: ["invitations"] }),
   workspaceKeys: { myInvitations: () => ["invitations"] },
   workspaceListOptions: () => ({ queryKey: ["workspaces"] }),
-  agentListOptions: () => ({ queryKey: ["agents"] }),
-  memberListOptions: () => ({ queryKey: ["members"] }),
-}));
-vi.mock("@teamify/core/chat/queries", () => ({
-  chatSessionsOptions: () => ({ queryKey: ["chatSessions"] }),
-}));
-vi.mock("@teamify/core/agents/use-agent-presence", () => ({
-  useWorkspacePresenceMap: () => ({ byAgent: new Map() }),
 }));
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
@@ -198,46 +211,56 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
   useQuery: ({ queryKey }: { queryKey: readonly unknown[] }) => {
     if (queryKey[0] === "pins") return { data: pins.current };
     if (queryKey[0] === "issue") return detail.current;
-    if (queryKey[0] === "agents") {
-      return {
-        data: [
-          {
-            id: "agent-1",
-            name: "Helper",
-            avatar_url: null,
-            archived_at: null,
-            owner_id: null,
-            visibility: "workspace",
-          },
-        ],
-      };
-    }
-    if (queryKey[0] === "members") return { data: [{ user_id: "user-1", role: "member" }] };
-    if (queryKey[0] === "chatSessions") return { data: [] };
+    if (queryKey[0] === "inbox" && queryKey[1] === "unread-summary") return { data: summary.current };
+    if (queryKey[0] === "inbox") return { data: inboxItems.current };
+    if (queryKey[0] === "workspaces") return { data: workspaces.current };
+    if (queryKey[0] === "agents") return { data: assistantAgents.current.map((a) => ({ ...a, owner_id: "user-1", permission_mode: "private", invocation_targets: [] })) };
     return { data: [] };
   },
   useQueryClient: () => ({ fetchQuery: vi.fn(), invalidateQueries: vi.fn() }),
 }));
 
-function getSidebarGroupLabel(text: string): HTMLElement {
-  const label = screen
-    .getAllByTestId("sidebar-group-label")
-    .find((element) => element.textContent?.includes(text));
+beforeEach(() => {
+  assistantAgents.current = [];
+  currentWorkspace.current = { id: "ws-1", name: "Acme", slug: "acme" };
+});
 
-  expect(label).toBeTruthy();
-  return label as HTMLElement;
-}
+describe("hidden workspace routes", () => {
+  it("does not show the WeChat follow card in the workspace sidebar", () => {
+    render(<AppSidebar />);
+    expect(screen.queryByTestId("wechat-sidebar-card")).not.toBeInTheDocument();
+  });
+
+  it("does not expose the Prospector entry", () => {
+    const { container } = render(<AppSidebar />);
+    expect(
+      container.querySelector('button[data-href="/acme/prospects"]'),
+    ).toBeNull();
+  });
+
+  it("does not expose the Runtimes entry", () => {
+    const { container } = render(<AppSidebar />);
+    expect(
+      container.querySelector('button[data-href="/acme/runtimes"]'),
+    ).toBeNull();
+  });
+});
+
+describe("navigation groups", () => {
+  it("keeps project navigation and workspace search available", () => {
+    const { container } = render(<AppSidebar searchSlot={<button data-testid="search-trigger">Search</button>} />);
+    expect(container.querySelector('button[data-href="/acme/projects"]')).not.toBeNull();
+    expect(screen.getByTestId("search-trigger")).toBeInTheDocument();
+  });
+});
 
 describe("PinRow", () => {
   beforeEach(() => {
     deletePin.mockReset();
+    navigation.current.pathname = "/acme/issues";
     detail.current = { isPending: false, isError: false, data: null, error: null };
-    workspaceRef.current = {
-      id: "ws-1",
-      name: "Acme",
-      slug: "acme",
-      settings: {},
-    };
+    summary.current = [];
+    workspaces.current = [];
   });
 
   it("unpins missing details", async () => {
@@ -255,200 +278,149 @@ describe("PinRow", () => {
   it("renders loaded details", async () => {
     detail.current = { isPending: false, isError: false, data: { identifier: "MUL-123", title: "Keep this pin", status: "todo" }, error: null };
     render(<AppSidebar />);
-    expect(await screen.findByText("MUL-123 Keep this pin")).toBeInTheDocument();
+    expect(await screen.findByText("Keep this pin")).toBeInTheDocument();
+    expect(screen.queryByText("MUL-123 Keep this pin")).not.toBeInTheDocument();
   });
 
-  it("orders workspace group defaults", () => {
-    render(<AppSidebar />);
-    const inbox = screen.getByText("Inbox");
-    const autopilot = screen.getByText("Autopilot");
-    const pinnedGroup = getSidebarGroupLabel("Pinned");
-    const chatsGroup = getSidebarGroupLabel("Chats");
-    const workspaceGroup = getSidebarGroupLabel("Workspace");
-    const projects = screen.getByText("Projects");
-    const issues = screen.getByText("Issues");
+  it("does not also highlight the parent workspace nav for an active pin", async () => {
+    navigation.current.pathname = "/acme/issues/issue-1";
+    detail.current = {
+      isPending: false,
+      isError: false,
+      data: { identifier: "MUL-123", title: "Keep this pin", status: "todo" },
+      error: null,
+    };
 
-    expect(inbox).toBeInTheDocument();
-    expect(autopilot).toBeInTheDocument();
-    expect(projects).toBeInTheDocument();
-    expect(issues).toBeInTheDocument();
-    expect(screen.queryByText("Reconciliation")).not.toBeInTheDocument();
-    expect(screen.queryByText("Product Categories")).not.toBeInTheDocument();
-    expect(screen.queryByText("My Issues")).not.toBeInTheDocument();
-    expect(screen.queryByText("New Issue")).not.toBeInTheDocument();
-    expect(screen.queryByText("Search")).not.toBeInTheDocument();
-    expect(
-      inbox.compareDocumentPosition(autopilot) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      autopilot.compareDocumentPosition(pinnedGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      pinnedGroup.compareDocumentPosition(chatsGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      chatsGroup.compareDocumentPosition(workspaceGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      workspaceGroup.compareDocumentPosition(projects) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      projects.compareDocumentPosition(issues) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    const { container } = render(<AppSidebar />);
+
+    expect((await screen.findByText("Keep this pin")).closest("button")).toHaveAttribute(
+      "data-active",
+      "true",
+    );
+    // Issues nav is hidden by default now; assert against a still-visible
+    // workspace nav item to keep checking that an active pin does not also
+    // light up the workspace nav group.
+    expect(container.querySelector('button[data-href="/acme/projects"]')).not.toHaveAttribute("data-active");
+  });
+});
+
+describe("workspace-switcher unread dot", () => {
+  beforeEach(() => {
+    summary.current = [];
+    workspaces.current = [];
   });
 
-  it("hides issues and projects when workspace settings disable them", () => {
-    workspaceRef.current = {
-      ...workspaceRef.current,
-      settings: {
-        modules: {
-          issues: { nav_visible: false },
-          projects: { nav_visible: false },
-        },
+  // The aggregate switcher dot is the only `.ring-sidebar` span in the tree
+  // (DraftDot is null when there's no draft, and there are no invitations).
+  const dot = (container: HTMLElement) => container.querySelector("span.bg-brand.ring-sidebar");
+
+  it("shows a dot when another workspace has unread inbox items", () => {
+    summary.current = [{ workspace_id: "ws-2", count: 3 }];
+    const { container } = render(<AppSidebar />);
+    expect(dot(container)).not.toBeNull();
+  });
+
+  it("does not show a dot when only the active workspace has unread", () => {
+    // Active workspace is ws-1 (see useCurrentWorkspace mock).
+    summary.current = [{ workspace_id: "ws-1", count: 3 }];
+    const { container } = render(<AppSidebar />);
+    expect(dot(container)).toBeNull();
+  });
+
+  it("does not show a dot when no workspace has unread", () => {
+    summary.current = [];
+    const { container } = render(<AppSidebar />);
+    expect(dot(container)).toBeNull();
+  });
+});
+
+describe("workspace-switcher dropdown per-workspace dot", () => {
+  beforeEach(() => {
+    summary.current = [];
+    // Active workspace is ws-1 (see useCurrentWorkspace mock); "Other" is ws-2.
+    workspaces.current = [
+      { id: "ws-1", name: "Active WS", slug: "active", avatar_url: null },
+      { id: "ws-2", name: "Other WS", slug: "other", avatar_url: null },
+    ];
+  });
+
+  // Row dots are brand dots WITHOUT the aggregate avatar dot's `ring-sidebar`.
+  const rowDots = (container: HTMLElement) =>
+    container.querySelectorAll("span.bg-brand:not(.ring-sidebar)");
+
+  it("dots the specific other workspace that has unread", () => {
+    summary.current = [{ workspace_id: "ws-2", count: 3 }];
+    const { container } = render(<AppSidebar />);
+    // Exactly one row dot, sitting right after the "Other WS" name; the active
+    // row shows the check, not a dot.
+    expect(rowDots(container)).toHaveLength(1);
+    expect(screen.getByText("Other WS").nextElementSibling?.className).toContain("bg-brand");
+    expect(screen.getByText("Active WS").nextElementSibling?.className ?? "").not.toContain("bg-brand");
+  });
+
+  it("does not dot a workspace whose unread count is zero", () => {
+    summary.current = [{ workspace_id: "ws-2", count: 0 }];
+    const { container } = render(<AppSidebar />);
+    expect(rowDots(container)).toHaveLength(0);
+  });
+
+  it("never dots the active workspace even when it has unread", () => {
+    summary.current = [{ workspace_id: "ws-1", count: 5 }];
+    const { container } = render(<AppSidebar />);
+    expect(rowDots(container)).toHaveLength(0);
+  });
+});
+
+describe("company navigation", () => {
+  it("uses the bare company root as the single Basic Info entry", () => {
+    const { container } = render(<AppSidebar />);
+    expect(container.querySelector('button[data-href="/acme"]')).not.toBeNull();
+    expect(container.querySelector('button[data-href="/acme/business"]')).toBeNull();
+    expect(container.querySelector('button[data-href="/acme/knowledge"]')).toBeNull();
+  });
+});
+
+describe("我的助手 group", () => {
+  it("renders one chat deep link per agent and keeps member management available when there are no agents", () => {
+    const { container } = render(<AppSidebar />);
+    // No agents by default → group (and its agent links) are absent.
+    expect(container.querySelectorAll('button[data-href*="?agent="]')).toHaveLength(0);
+
+    assistantAgents.current = [
+      { id: "agent-1", name: "Alpha", avatar_url: null },
+      { id: "agent-2", name: "Beta", avatar_url: null },
+    ];
+    const { container: container2 } = render(<AppSidebar />);
+    const links = container2.querySelectorAll('button[data-href*="?agent="]');
+    expect(links).toHaveLength(2);
+    expect(links[0]!.getAttribute("data-href")).toBe("/acme/chat?agent=agent-1");
+    expect(links[1]!.getAttribute("data-href")).toBe("/acme/chat?agent=agent-2");
+  });
+
+  it("hides archived agents from the sidebar", () => {
+    assistantAgents.current = [
+      {
+        id: "agent-active",
+        name: "Active Assistant",
+        avatar_url: null,
+        archived_at: null,
       },
-    };
-    render(<AppSidebar />);
-    expect(screen.queryByText("Issues")).not.toBeInTheDocument();
-    expect(screen.queryByText("Projects")).not.toBeInTheDocument();
-    expect(screen.getByText("Autopilot")).toBeInTheDocument();
-  });
-
-  it("shows reconciliation when module settings enable it", () => {
-    workspaceRef.current = {
-      ...workspaceRef.current,
-      settings: { modules: { reconciliation: { nav_visible: true } } },
-    };
-    render(<AppSidebar />);
-    const inbox = screen.getByText("Inbox");
-    const reconciliation = screen.getByText("Reconciliation");
-    const autopilot = screen.getByText("Autopilot");
-    const pinnedGroup = getSidebarGroupLabel("Pinned");
-    const chatsGroup = getSidebarGroupLabel("Chats");
-    const workspaceGroup = getSidebarGroupLabel("Workspace");
-
-    expect(reconciliation).toBeInTheDocument();
-    expect(
-      inbox.compareDocumentPosition(reconciliation) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      reconciliation.compareDocumentPosition(autopilot) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      autopilot.compareDocumentPosition(pinnedGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      pinnedGroup.compareDocumentPosition(chatsGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      chatsGroup.compareDocumentPosition(workspaceGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-  });
-
-  it("shows product categories below inventory when workspace settings enable it", () => {
-    workspaceRef.current = {
-      ...workspaceRef.current,
-      settings: {
-        modules: {
-          inventory: { nav_visible: true },
-          productCategories: { nav_visible: true },
-        },
+      {
+        id: "agent-archived",
+        name: "Archived CRM Assistant",
+        avatar_url: null,
+        archived_at: "2026-08-29T00:00:00Z",
       },
-    };
+    ];
 
-    render(<AppSidebar />);
+    const { container } = render(<AppSidebar />);
 
-    const inventory = screen.getByText("Inventory");
-    const productCategories = screen.getByText("Product Categories");
-    const autopilot = screen.getByText("Autopilot");
     expect(
-      inventory.compareDocumentPosition(productCategories) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+      container.querySelector('button[data-href="/acme/chat?agent=agent-active"]'),
+    ).not.toBeNull();
     expect(
-      productCategories.compareDocumentPosition(autopilot) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-  });
-
-  it("shows the independent supply fee module when workspace settings enable it", () => {
-    workspaceRef.current = {
-      ...workspaceRef.current,
-      settings: {
-        modules: {
-          reconciliation: { nav_visible: true },
-          supplyReconciliation: { nav_visible: true },
-          inventory: { nav_visible: true },
-        },
-      },
-    };
-
-    render(<AppSidebar />);
-
-    const reconciliation = screen.getByText("Reconciliation");
-    const supply = screen.getByText("Supply Fee Reconciliation");
-    const inventory = screen.getByText("Inventory");
-    expect(
-      reconciliation.compareDocumentPosition(supply) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      supply.compareDocumentPosition(inventory) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-  });
-
-  it("shows shortcut nav items when workspace settings enable them", () => {
-    workspaceRef.current = {
-      ...workspaceRef.current,
-      settings: {
-        navigation: {
-          sidebar: {
-            myIssues: { nav_visible: true },
-            createIssue: { nav_visible: true },
-            search: { nav_visible: true },
-          },
-        },
-      },
-    };
-    render(<AppSidebar />);
-    const pinnedGroup = getSidebarGroupLabel("Pinned");
-    const chatsGroup = getSidebarGroupLabel("Chats");
-    const workspaceGroup = getSidebarGroupLabel("Workspace");
-    const projects = screen.getByText("Projects");
-    const issues = screen.getByText("Issues");
-    const myIssues = screen.getByText("My Issues");
-    const newIssue = screen.getByText("New Issue");
-    const search = screen.getByText("Search");
-
-    expect(screen.getByText("Inbox")).toBeInTheDocument();
-    expect(myIssues).toBeInTheDocument();
-    expect(newIssue).toBeInTheDocument();
-    expect(search).toBeInTheDocument();
-    expect(
-      pinnedGroup.compareDocumentPosition(chatsGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      chatsGroup.compareDocumentPosition(workspaceGroup) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      workspaceGroup.compareDocumentPosition(projects) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      projects.compareDocumentPosition(issues) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      issues.compareDocumentPosition(myIssues) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      myIssues.compareDocumentPosition(newIssue) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      newIssue.compareDocumentPosition(search) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-  });
-
-  it("supports legacy reconciliation visibility", () => {
-    workspaceRef.current = {
-      ...workspaceRef.current,
-      settings: { reconciliation: { nav_visible: true } },
-    };
-    render(<AppSidebar />);
-    expect(screen.getByText("Reconciliation")).toBeInTheDocument();
+      container.querySelector('button[data-href="/acme/chat?agent=agent-archived"]'),
+    ).toBeNull();
+    expect(screen.queryByText("Archived CRM Assistant")).not.toBeInTheDocument();
   });
 });

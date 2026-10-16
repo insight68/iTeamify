@@ -16,15 +16,19 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@teamify/ui/components/ui/button";
-import { Input } from "@teamify/ui/components/ui/input";
-import { Label } from "@teamify/ui/components/ui/label";
-import { useScrollFade } from "@teamify/ui/hooks/use-scroll-fade";
-import { cn } from "@teamify/ui/lib/utils";
-import { useCreateWorkspace } from "@teamify/core/workspace/mutations";
-import type { Workspace } from "@teamify/core/types";
-import { isImeComposing } from "@teamify/core/utils";
-import { DragStrip } from "@teamify/views/platform";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { Input } from "@iteamify/ui/components/ui/input";
+import { Label } from "@iteamify/ui/components/ui/label";
+import { useScrollFade } from "@iteamify/ui/hooks/use-scroll-fade";
+import { cn } from "@iteamify/ui/lib/utils";
+import { useCreateWorkspace } from "@iteamify/core/workspace/mutations";
+import type { OnboardingDraft } from "@iteamify/core/onboarding";
+import type { Workspace } from "@iteamify/core/types";
+import { isImeComposing } from "@iteamify/core/utils";
+import { useConfigStore } from "@iteamify/core/config";
+import { workspaceUrlHost } from "@iteamify/core/workspace/workspace-url";
+import { DragStrip } from "@iteamify/views/platform";
+import { useLogout } from "../../auth";
 import { StepHeader } from "../components/step-header";
 import { RadioMark } from "../components/option-card";
 import { WorkspaceAvatar } from "../../workspace/workspace-avatar";
@@ -34,7 +38,7 @@ import {
   isWorkspaceSlugConflict,
   nameToWorkspaceSlug,
 } from "../../workspace/slug";
-import { isReservedSlug } from "@teamify/core/paths";
+import { isReservedSlug } from "@iteamify/core/paths";
 
 /**
  * Step 2 — create your first workspace, or continue with one set up in
@@ -48,56 +52,61 @@ import { isReservedSlug } from "@teamify/core/paths";
  * because the footer-driven interaction needs externalized submit; the
  * shared form's own button would fight the footer CTA.
  *
- * The create-fields block doubles as a pedagogical preview: the URL is
- * rendered as a `teamify.world/[slug]` pill, and a live `Issues will look
- * like ACME-123` line shows the user what their issue IDs will read
- * like before they've created anything.
+ * The name is the primary field. Its generated slug remains editable
+ * under the collapsed workspace-address details.
  *
- * Resume path ships two picker cards (existing + create-new) and the
- * user toggles between them. No-existing path just shows the create
- * fields directly.
+ * Existing workspaces are selected by default. Users can choose another
+ * existing workspace or create a new one when creation is allowed.
  */
-
-function issuePrefix(slug: string): string {
-  // Mirrors the server's default prefix derivation — first 4 chars of
-  // the slug, uppercased. Falls back to "WS" when the slug is empty so
-  // the preview line never collapses to a single dangling "-".
-  const head = slug.trim().replace(/[^a-z0-9]/g, "").slice(0, 4);
-  return (head || "ws").toUpperCase();
-}
 
 export function StepWorkspace({
   existing,
   onCreated,
   onBack,
+  draft,
+  onDraftChange,
+  workspaces,
+  onWorkspaceSelected,
 }: {
   existing?: Workspace | null;
   onCreated: (workspace: Workspace) => void | Promise<void>;
   onBack?: () => void;
+  draft?: OnboardingDraft;
+  onDraftChange?: (patch: Partial<OnboardingDraft>) => void;
+  workspaces?: Workspace[];
+  onWorkspaceSelected?: (workspace: Workspace) => void;
 }) {
   const { t } = useT("onboarding");
   const mainRef = useRef<HTMLElement>(null);
   const fadeStyle = useScrollFade(mainRef);
+  const workspaceCreationDisabled = useConfigStore((s) => s.workspaceCreationDisabled);
+  const urlHost = workspaceUrlHost(useConfigStore((s) => s.daemonAppUrl));
+  // Single source of truth for "can the user reach the create path on this
+  // instance?" — drives the resume-mode picker, the eyebrow/headline/lede
+  // copy, the side panel, and the footer CTA so the disabled state can't
+  // leak a clickable create affordance even if /api/config arrives late
+  // (#3433 review feedback).
+  const workspaceCreationAllowed = !workspaceCreationDisabled;
+  const logout = useLogout();
 
   const reusing = existing ?? null;
-  // Resume path only: user picks which card. `null` = neither yet, so
-  // the footer CTA stays disabled. Clicking either card toggles — a
-  // second click on the same card deselects it. No-existing path
-  // ignores this state entirely.
-  const [mode, setMode] = useState<"existing" | "create" | null>(null);
+  // Existing workspaces can be used immediately without another selection.
+  const [mode, setMode] = useState<"existing" | "create" | null>(() =>
+    existing ? "existing" : null,
+  );
   const pickExisting = () =>
-    setMode((m) => (m === "existing" ? null : "existing"));
+    setMode("existing");
   const pickCreate = () =>
-    setMode((m) => (m === "create" ? null : "create"));
+    setMode("create");
 
   // Form state for the create path. Mirrors CreateWorkspaceForm's
   // internals: slug auto-fills from name until the user manually edits
   // it; server-side slug conflicts show inline. Kept at this level so
   // the footer CTA can read `canCreate` and trigger `handleCreate`.
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
+  const [name, setName] = useState(draft?.workspaceName ?? "");
+  const [slug, setSlug] = useState(draft?.workspaceSlug ?? "");
   const [slugServerError, setSlugServerError] = useState<string | null>(null);
-  const slugTouched = useRef(false);
+  const slugTouched = useRef(draft?.workspaceSlugTouched ?? false);
 
   const slugValidationError =
     slug.length > 0 && !WORKSPACE_SLUG_REGEX.test(slug)
@@ -113,6 +122,7 @@ export function StepWorkspace({
 
   const handleNameChange = (value: string) => {
     setName(value);
+    onDraftChange?.({ workspaceName: value, workspaceSlug: slugTouched.current ? slug : nameToWorkspaceSlug(value), workspaceSlugTouched: slugTouched.current });
     if (!slugTouched.current) {
       setSlug(nameToWorkspaceSlug(value));
       setSlugServerError(null);
@@ -122,6 +132,7 @@ export function StepWorkspace({
   const handleSlugChange = (value: string) => {
     slugTouched.current = true;
     setSlug(value);
+    onDraftChange?.({ workspaceSlug: value, workspaceSlugTouched: true });
     setSlugServerError(null);
   };
 
@@ -139,7 +150,11 @@ export function StepWorkspace({
             toast.error(t(($) => $.step_workspace.slug_conflict_toast));
             return;
           }
-          toast.error(t(($) => $.step_workspace.create_failed_toast));
+          toast.error(
+            error instanceof Error && error.message
+              ? error.message
+              : t(($) => $.step_workspace.create_failed_toast),
+          );
         },
       },
     );
@@ -148,9 +163,13 @@ export function StepWorkspace({
   // Compute the footer CTA from whichever path the user is on. `null`
   // is only reachable in the resume path; `existing` is only valid
   // when we actually have a `reusing` workspace; everything else
-  // (including the no-existing path) funnels through `create`.
+  // (including the no-existing path) funnels through `create` — except
+  // when this instance has DISABLE_WORKSPACE_CREATION=true, in which
+  // case the create path is unreachable and a no-reusing user falls
+  // through to the disabled notice (rendered separately below).
   const isCreating = createWorkspace.isPending;
-  const creatingActive = !reusing || mode === "create";
+  const creatingActive =
+    workspaceCreationAllowed && (!reusing || mode === "create");
   const existingActive = Boolean(reusing) && mode === "existing";
 
   let hint: string;
@@ -211,6 +230,9 @@ export function StepWorkspace({
           }}
         />
       </div>
+      <details open={!!slugError || undefined} className="text-sm">
+        <summary className="cursor-pointer text-muted-foreground">{t(($) => $.step_workspace.url_label)}</summary>
+        <div className="mt-3">
       <div className="flex flex-col gap-1.5">
         <Label
           htmlFor="ws-slug"
@@ -220,7 +242,7 @@ export function StepWorkspace({
         </Label>
         <div className="flex items-center rounded-md border bg-muted transition-colors focus-within:border-foreground">
           <span className="select-none pl-3 font-mono text-sm text-muted-foreground">
-            {"teamify.world/"}
+            {`${urlHost}/`}
           </span>
           <Input
             id="ws-slug"
@@ -237,18 +259,8 @@ export function StepWorkspace({
         </div>
         {slugError && <p className="text-xs text-destructive">{slugError}</p>}
       </div>
-      <div className="flex flex-col gap-1.5">
-        <div className="text-xs font-medium text-muted-foreground">
-          {t(($) => $.step_workspace.issue_prefix_label)}
         </div>
-        <div className="text-sm leading-[1.55] text-muted-foreground">
-          {t(($) => $.step_workspace.issue_prefix_prefix)}
-          <span className="font-mono text-foreground">
-            {issuePrefix(slug)}-123
-          </span>
-          {t(($) => $.step_workspace.issue_prefix_suffix)}
-        </div>
-      </div>
+      </details>
     </div>
   );
 
@@ -284,51 +296,77 @@ export function StepWorkspace({
           <div className="mx-auto w-full max-w-[620px] px-6 py-10 sm:px-10 md:px-14 lg:px-0 lg:py-14">
             <div className="mb-2 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
               {reusing
-                ? t(($) => $.step_workspace.eyebrow_resume)
-                : t(($) => $.step_workspace.eyebrow_first)}
+                ? workspaceCreationAllowed
+                  ? t(($) => $.step_workspace.eyebrow_resume)
+                  : t(($) => $.step_workspace.creation_disabled_eyebrow_resume)
+                : workspaceCreationAllowed
+                  ? t(($) => $.step_workspace.eyebrow_first)
+                  : t(($) => $.step_workspace.creation_disabled_eyebrow)}
             </div>
             <h1 className="text-balance font-serif text-[36px] font-medium leading-[1.1] tracking-tight text-foreground">
               {reusing
-                ? t(($) => $.step_workspace.headline_resume, { name: reusing.name })
-                : t(($) => $.step_workspace.headline_first)}
+                ? workspaceCreationAllowed
+                  ? t(($) => $.step_workspace.headline_resume, { name: reusing.name })
+                  : t(($) => $.step_workspace.creation_disabled_headline_resume, { name: reusing.name })
+                : workspaceCreationAllowed
+                  ? t(($) => $.step_workspace.headline_first)
+                  : t(($) => $.step_workspace.creation_disabled_headline)}
             </h1>
             <p className="mt-4 text-[15.5px] leading-[1.55] text-foreground/80">
               {reusing
-                ? t(($) => $.step_workspace.lede_resume)
-                : t(($) => $.step_workspace.lede_first)}
+                ? workspaceCreationAllowed
+                  ? t(($) => $.step_workspace.lede_resume)
+                  : t(($) => $.step_workspace.creation_disabled_lede_resume)
+                : workspaceCreationAllowed
+                  ? t(($) => $.step_workspace.lede_first)
+                  : t(($) => $.step_workspace.creation_disabled_lede)}
             </p>
 
             <div className="mt-10">
               {reusing ? (
                 <div className="flex flex-col gap-3">
-                  <ExistingWorkspaceCard
-                    workspace={reusing}
-                    selected={mode === "existing"}
-                    onSelect={pickExisting}
-                  />
-                  <CreateNewWorkspaceCard
-                    selected={mode === "create"}
-                    onSelect={pickCreate}
-                  >
-                    {createFields}
-                  </CreateNewWorkspaceCard>
+                  {(workspaces?.length ? workspaces : [reusing]).map((entry) => <ExistingWorkspaceCard
+                    key={entry.id}
+                    workspace={entry}
+                    selected={mode === "existing" && entry.id === reusing.id}
+                    onSelect={() => { pickExisting(); onWorkspaceSelected?.(entry); }}
+                  />)}
+                  {/* Hide the create-new card entirely when the self-host
+                      gate (DISABLE_WORKSPACE_CREATION) is on (#3433) — the
+                      backend would 403 the POST and the user would be stuck
+                      with a useless form. */}
+                  {!workspaceCreationDisabled && (
+                    <CreateNewWorkspaceCard
+                      selected={mode === "create"}
+                      onSelect={pickCreate}
+                    >
+                      {createFields}
+                    </CreateNewWorkspaceCard>
+                  )}
                 </div>
+              ) : workspaceCreationDisabled ? (
+                <CreationDisabledNotice onLogout={logout} />
               ) : (
                 createFields
               )}
             </div>
+
+            {!(workspaceCreationDisabled && !reusing) && (
+              <div className="mt-8 flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+                <span
+                  aria-live="polite"
+                  className="mr-auto text-xs text-muted-foreground"
+                >
+                  {hint}
+                </span>
+                <Button size="lg" disabled={continueDisabled} onClick={onContinue}>
+                  {continueLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </main>
-
-        <footer className="flex shrink-0 items-center justify-end gap-4 bg-background px-6 py-4 sm:px-10 md:px-14 lg:px-16">
-          <span aria-live="polite" className="text-xs text-muted-foreground">
-            {hint}
-          </span>
-          <Button size="lg" disabled={continueDisabled} onClick={onContinue}>
-            {continueLabel}
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </footer>
       </div>
 
       {/* Right — side panel.
@@ -351,6 +389,24 @@ export function StepWorkspace({
   );
 }
 
+/**
+ * Onboarding-step notice rendered when the operator has set
+ * DISABLE_WORKSPACE_CREATION=true (#3433) AND the user has no existing
+ * workspace yet. The headline / lede above this block already carry the
+ * messaging; this component only provides the logout escape so a user who
+ * landed here without an invitation is not trapped.
+ */
+function CreationDisabledNotice({ onLogout }: { onLogout: () => void }) {
+  const { t } = useT("onboarding");
+  return (
+    <div className="flex flex-col gap-3">
+      <Button variant="outline" size="lg" onClick={onLogout}>
+        {t(($) => $.step_workspace.creation_disabled_logout)}
+      </Button>
+    </div>
+  );
+}
+
 function ExistingWorkspaceCard({
   workspace,
   selected,
@@ -360,6 +416,7 @@ function ExistingWorkspaceCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const urlHost = workspaceUrlHost(useConfigStore((s) => s.daemonAppUrl));
   return (
     <button
       type="button"
@@ -373,13 +430,13 @@ function ExistingWorkspaceCard({
           : "hover:border-foreground/20 hover:bg-accent/30",
       )}
     >
-      <WorkspaceAvatar name={workspace.name} size="lg" />
+      <WorkspaceAvatar name={workspace.name} avatarUrl={workspace.avatar_url} size="lg" />
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="truncate text-[14.5px] font-medium text-foreground">
           {workspace.name}
         </div>
         <div className="truncate font-mono text-xs text-muted-foreground">
-          {`teamify.world/${workspace.slug}`}
+          {`${urlHost}/${workspace.slug}`}
         </div>
       </div>
       <RadioMark selected={selected} />
@@ -506,6 +563,7 @@ function WorkspacePreviewCard({
   slug: string;
 }) {
   const { t } = useT("onboarding");
+  const urlHost = workspaceUrlHost(useConfigStore((s) => s.daemonAppUrl));
   return (
     <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
       <div className="flex items-center gap-3 border-b px-4 py-3.5">
@@ -515,7 +573,7 @@ function WorkspacePreviewCard({
             {name}
           </div>
           <div className="truncate font-mono text-[11.5px] text-muted-foreground">
-            {`teamify.world/${slug}`}
+            {`${urlHost}/${slug}`}
           </div>
         </div>
         <Lock

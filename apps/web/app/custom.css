@@ -1,0 +1,88 @@
+/* =============================================================================
+ * iteamify Web — Custom styles (non-shadcn, web-only)
+ * Shared styles (shiki, entrance-spin, sidebar, sonner, scrollbar) are in
+ * @iteamify/ui/styles/base.css
+ * ============================================================================= */
+
+/* The landing route tree is intentionally using a custom dark shell to keep
+ * high-contrast visuals. Shared components rendered inside (for example
+ * CloudWaitlistExpand on /download) need explicit token values so they don't
+ * drift under nested theme wrappers. */
+.landing-light,
+.landing-light * {
+    color-scheme: dark;
+}
+.landing-light {
+    --app-shell: oklch(0.21 0.025 266);
+    --page-canvas: oklch(0.17 0.028 266);
+    --surface: oklch(0.22 0.03 266);
+    --surface-foreground: oklch(0.96 0.01 266);
+    --surface-raised: oklch(0.2 0.028 266);
+    --surface-hover: oklch(0.24 0.028 266);
+    --surface-selected: oklch(0.25 0.03 266);
+    --surface-selected-foreground: oklch(0.96 0.01 266);
+    --surface-border: oklch(0.45 0.038 266);
+    --surface-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 1px rgb(15 23 42 / 0.03);
+    --floating-shadow: 0 16px 44px rgb(2 6 23 / 0.65), 0 3px 12px rgb(15 23 42 / 0.6);
+    --menu-shadow: 0 8px 24px rgb(15 23 42 / 0.6), 0 2px 6px rgb(15 23 42 / 0.4);
+    --background: oklch(0.17 0.028 266);
+    --foreground: oklch(0.97 0.009 266);
+    --card: oklch(0.2 0.028 266);
+    --card-foreground: oklch(0.97 0.009 266);
+    --popover: oklch(0.2 0.028 266);
+    --popover-foreground: oklch(0.97 0.009 266);
+    --primary: oklch(0.7 0.17 220);
+    --primary-foreground: oklch(0.15 0.005 266);
+    --secondary: oklch(0.24 0.022 260);
+    --secondary-foreground: oklch(0.96 0.009 266);
+    --muted: oklch(0.23 0.02 260);
+    --muted-foreground: oklch(0.72 0.01 266);
+    --accent: oklch(0.26 0.03 252);
+    --accent-foreground: oklch(0.95 0.01 266);
+    --destructive: oklch(0.6 0.2 25);
+    --border: oklch(0.42 0.03 266);
+    --input: oklch(0.42 0.03 266);
+    --ring: oklch(0.62 0.15 250);
+    --brand: oklch(0.7 0.16 255);
+    --brand-foreground: oklch(0.985 0 0);
+    --success: oklch(0.65 0.2 145);
+    --warning: oklch(0.75 0.16 85);
+    --info: oklch(0.7 0.18 250);
+    --scrollbar-thumb: oklch(0 0 0 / 10%);
+    --scrollbar-thumb-hover: oklch(0 0 0 / 18%);
+    --scrollbar-track: oklch(0.17 0.028 266);
+}
+
+.landing-light .iteamify-glass {
+    background: linear-gradient(
+      130deg,
+      rgb(248, 250, 252, 0.06),
+      rgb(248, 250, 252, 0.01)
+    );
+}
+
+/* The login route uses the marketing shell but embeds token-based form
+   primitives. Pin a light brand palette here so a stored dark app preference
+   cannot make form text or borders disappear against the intentional white
+   authentication surface. */
+.iteamify-auth-light,
+.iteamify-auth-light * {
+    color-scheme: light;
+}
+.iteamify-auth-light {
+    --background: oklch(0.97 0.008 75);
+    --foreground: oklch(0.2 0.025 275);
+    --surface: oklch(1 0 0);
+    --surface-foreground: oklch(0.2 0.025 275);
+    --surface-border: oklch(0.86 0.012 275);
+    --surface-hover: oklch(0.965 0.01 275);
+    --surface-shadow: 0 1px 2px rgb(20 23 36 / 0.04);
+    --muted: oklch(0.95 0.01 275);
+    --muted-foreground: oklch(0.51 0.025 275);
+    --primary: oklch(0.58 0.17 272);
+    --primary-foreground: oklch(0.99 0 0);
+    --border: oklch(0.86 0.012 275);
+    --input: oklch(0.83 0.016 275);
+    --ring: oklch(0.58 0.17 272);
+    --destructive: oklch(0.58 0.2 28);
+}

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY managed_mcp_credential_seed_release_unique ON managed_mcp_credential_seed (mcp_profile_release_id);

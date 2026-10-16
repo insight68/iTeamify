@@ -1,0 +1,74 @@
+{
+  "nav": {
+    "inbox": "注目アイテム",
+    "chat": "チャット",
+    "my_issues": "マイイシュー",
+    "issues": "イシュー",
+    "projects": "プロジェクト",
+    "autopilots": "自動化",
+    "agents": "エージェント",
+    "squads": "スクワッド",
+    "usage": "使用量",
+    "runtimes": "ランタイム",
+    "skills": "スキル",
+    "settings": "設定",
+    "connections": "接続",
+    "knowledge": "ナレッジ",
+    "business": "基本情報",
+    "applications": "アプリ",
+    "members": "メンバー"
+  },
+  "tab": {
+    "issue": "イシュー",
+    "project": "プロジェクト",
+    "autopilot": "自動化",
+    "agent": "エージェント",
+    "member": "メンバー",
+    "squad": "スクワッド",
+    "skill": "スキル",
+    "machine": "マシン",
+    "runtime": "ランタイム",
+    "attachment": "添付ファイル",
+    "create_agent": "エージェントを作成",
+    "unknown": "不明なページ"
+  },
+  "help": {
+    "trigger": "ヘルプ",
+    "wechat": "WeChat公式アカウント",
+    "feedback": "フィードバック",
+    "server_version": "サーバーバージョン {{version}}"
+  },
+  "workspace_loader": {
+    "loading_workspace": "会社を読み込み中…",
+    "loading_named_prefix": "読み込み中"
+  },
+  "sidebar": {
+    "unpin_tooltip": "ピン留めを解除",
+    "workspaces_label": "会社",
+    "create_workspace": "会社を作成",
+    "pending_invitations_label": "保留中の招待",
+    "invitation_workspace_fallback": "会社",
+    "invitation_join": "参加",
+    "invitation_decline": "辞退",
+    "log_out": "ログアウト",
+    "platform_admin": "プラットフォーム管理",
+    "new_issue": "新規イシュー",
+    "new_issue_shortcut": "C",
+    "pinned_label": "ピン留め済み",
+    "workspace_group": "業務",
+    "configure_group": "設定",
+    "crm_group": "顧客と営業",
+    "global_business_group": "グローバル業務管理",
+    "unread_overflow": "99+",
+    "wechat_card": {
+      "title": "WeChat公式アカウントをフォロー",
+      "description": "スキャンしてフォロー、最新情報とヘルプを。",
+      "dismiss": "閉じる"
+    },
+    "team_group": "マイチーム",
+    "team_search": "チームを検索…",
+    "team_unread": "未読メッセージ",
+    "team_retry": "チームを再読み込み",
+    "team_message": "{{name}}にメッセージ"
+  }
+}

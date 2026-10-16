@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS billing_settings_idx;

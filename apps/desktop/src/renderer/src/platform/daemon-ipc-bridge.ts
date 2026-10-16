@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { runtimeKeys } from "@teamify/core/runtimes";
-import type { AgentRuntime } from "@teamify/core/types";
+import { runtimeKeys } from "@iteamify/core/runtimes";
+import type { AgentRuntime } from "@iteamify/core/types";
 
 /**
  * DesktopAPI exposes a richer DaemonStatus shape than the public AgentRuntime
@@ -11,7 +11,15 @@ import type { AgentRuntime } from "@teamify/core/types";
  * to the desktop preload typings (which live in apps/desktop/src/preload).
  */
 interface DaemonStatusLike {
-  state: "running" | "stopped" | "starting" | "stopping" | "installing_cli" | "cli_not_found";
+  state:
+    | "running"
+    | "stopped"
+    | "recovery_paused"
+    | "starting"
+    | "stopping"
+    | "installing_cli"
+    | "cli_not_found"
+    | "auth_expired";
   daemonId?: string;
 }
 
@@ -25,7 +33,12 @@ interface DaemonStatusLike {
  * within 75s.
  */
 function mergeDaemonStatus(rt: AgentRuntime, status: DaemonStatusLike): AgentRuntime {
-  if (status.state === "stopped" || status.state === "stopping") {
+  if (
+    status.state === "stopped" ||
+    status.state === "recovery_paused" ||
+    status.state === "stopping" ||
+    status.state === "auth_expired"
+  ) {
     return { ...rt, status: "offline" };
   }
   if (status.state === "running") {

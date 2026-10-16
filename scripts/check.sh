@@ -2,13 +2,47 @@
 set -euo pipefail
 
 # ==========================================================================
-# Frontend verification pipeline: tooling tests → typecheck → unit tests → lint
+# Full verification pipeline: typecheck → unit tests → Go tests → E2E
 # Usage: bash scripts/check.sh
 # ==========================================================================
 
+ENV_FILE="${ENV_FILE:-$(if [ -f .env.aurocreator.local ]; then echo .env.aurocreator.local; elif [ -f .env.worktree ]; then echo .env.worktree; else echo .env; fi)}"
+if [ ! -f "$ENV_FILE" ]; then
+  echo "Missing env file: $ENV_FILE"
+  echo "Create .env from .env.example, or run 'make worktree-env' and use .env.worktree."
+  exit 1
+fi
+export ENV_FILE
+
+set -a
+# shellcheck disable=SC1090
+. "$ENV_FILE"
+set +a
+
+# shellcheck disable=SC1091
+. scripts/local-env.sh
+bash scripts/local-service.sh verify "$PORT"
+bash scripts/local-service.sh verify "$FRONTEND_PORT"
+
+BACKEND_PID=""
+FRONTEND_PID=""
+STARTED_BACKEND=false
+STARTED_FRONTEND=false
 EXIT_CODE=0
 
+# --------------------------------------------------------------------------
+# Cleanup: kill only services this script started
+# --------------------------------------------------------------------------
 cleanup() {
+  echo ""
+  if [ "$STARTED_BACKEND" = true ] && [ -n "$BACKEND_PID" ]; then
+    kill "$BACKEND_PID" 2>/dev/null && wait "$BACKEND_PID" 2>/dev/null || true
+    echo "    Stopped backend (PID $BACKEND_PID)"
+  fi
+  if [ "$STARTED_FRONTEND" = true ] && [ -n "$FRONTEND_PID" ]; then
+    kill "$FRONTEND_PID" 2>/dev/null && wait "$FRONTEND_PID" 2>/dev/null || true
+    echo "    Stopped frontend (PID $FRONTEND_PID)"
+  fi
   echo ""
   if [ "$EXIT_CODE" -eq 0 ]; then
     echo "✓ All checks passed."
@@ -20,28 +54,93 @@ cleanup() {
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------
-# Step 1: Repository tooling tests
+# Utility: wait until a port responds
 # --------------------------------------------------------------------------
-echo "==> [1/4] Repository tooling tests..."
-bash scripts/sync-teamify-frontend.test.sh || { EXIT_CODE=1; exit 1; }
+wait_for_port() {
+  local port=$1 name=$2 max_wait=${3:-60} path=${4:-/}
+  local elapsed=0
+  echo "    Waiting for $name on :$port..."
+  while ! curl -sf "http://localhost:${port}${path}" > /dev/null 2>&1; do
+    sleep 1
+    elapsed=$((elapsed + 1))
+    if [ "$elapsed" -ge "$max_wait" ]; then
+      echo "    ERROR: $name did not start within ${max_wait}s"
+      EXIT_CODE=1
+      exit 1
+    fi
+  done
+  echo "    $name ready (${elapsed}s)"
+}
 
 # --------------------------------------------------------------------------
-# Step 2: TypeScript typecheck
+# Step 0: Ensure DB
+# --------------------------------------------------------------------------
+echo "==> Using env file: $ENV_FILE"
+echo "==> Checking PostgreSQL..."
+bash scripts/ensure-postgres.sh "$ENV_FILE"
+
+# --------------------------------------------------------------------------
+# Step 1: TypeScript typecheck
 # --------------------------------------------------------------------------
 echo ""
-echo "==> [2/4] TypeScript typecheck..."
+echo "==> [1/5] TypeScript typecheck..."
 pnpm typecheck || { EXIT_CODE=1; exit 1; }
 
 # --------------------------------------------------------------------------
-# Step 3: TypeScript unit tests (Vitest)
+# Step 2: TypeScript unit tests (Vitest)
 # --------------------------------------------------------------------------
 echo ""
-echo "==> [3/4] TypeScript unit tests..."
+echo "==> [2/5] TypeScript unit tests..."
 pnpm test || { EXIT_CODE=1; exit 1; }
 
 # --------------------------------------------------------------------------
-# Step 4: Lint
+# Step 3: Go tests
 # --------------------------------------------------------------------------
 echo ""
-echo "==> [4/4] Lint..."
-pnpm lint || { EXIT_CODE=1; exit 1; }
+echo "==> [3/5] Go tests..."
+echo "==> Verifying Go test wrapper..."
+bash scripts/test-go.test.sh || { EXIT_CODE=1; exit 1; }
+echo "==> Running database migrations..."
+(cd server && go run ./cmd/migrate up) || { EXIT_CODE=1; exit 1; }
+bash scripts/test-go.sh || { EXIT_CODE=1; exit 1; }
+
+# --------------------------------------------------------------------------
+# Step 4: Start services for E2E (only if not already running)
+# --------------------------------------------------------------------------
+echo ""
+echo "==> [4/5] Starting services for E2E..."
+
+if curl -sf "http://localhost:${PORT}/health" > /dev/null 2>&1; then
+  if [ -n "${ITEAMIFY_PROJECT_ID:-}" ]; then
+    python3 scripts/check-service-identity.py "$PORT" || { EXIT_CODE=1; exit 1; }
+  fi
+  echo "    Backend already running on :$PORT"
+else
+  echo "    Starting backend..."
+  server_version="$(git describe --tags --match 'v[0-9]*' --always --dirty 2>/dev/null || echo dev)"
+  server_commit="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+  (cd server && go run -ldflags "-X main.version=$server_version -X main.commit=$server_commit" ./cmd/server) > /tmp/iteamify-check-backend.log 2>&1 &
+  BACKEND_PID=$!
+  STARTED_BACKEND=true
+  wait_for_port "$PORT" "Backend" 90 "/health"
+  if [ -n "${ITEAMIFY_PROJECT_ID:-}" ]; then
+    python3 scripts/check-service-identity.py "$PORT" || { EXIT_CODE=1; exit 1; }
+  fi
+fi
+
+if curl -sf "http://localhost:${FRONTEND_PORT}" > /dev/null 2>&1; then
+  echo "    Frontend already running on :$FRONTEND_PORT"
+else
+  echo "    Starting frontend..."
+  pnpm dev:web > /tmp/iteamify-check-frontend.log 2>&1 &
+  FRONTEND_PID=$!
+  STARTED_FRONTEND=true
+  wait_for_port "$FRONTEND_PORT" "Frontend" 120 "/"
+fi
+
+# --------------------------------------------------------------------------
+# Step 5: E2E tests (Playwright)
+# --------------------------------------------------------------------------
+echo ""
+echo "==> [5/5] E2E tests (Playwright)..."
+pnpm exec playwright test || { EXIT_CODE=1; exit 1; }

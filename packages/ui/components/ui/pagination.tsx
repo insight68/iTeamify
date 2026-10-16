@@ -1,7 +1,8 @@
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 
-import { cn } from "@teamify/ui/lib/utils"
-import { Button } from "@teamify/ui/components/ui/button"
+import { cn } from "@iteamify/ui/lib/utils"
+import { Button } from "@iteamify/ui/components/ui/button"
 import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
@@ -67,9 +68,10 @@ function PaginationPrevious({
   text = "Previous",
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  const { t } = useTranslation("ui")
   return (
     <PaginationLink
-      aria-label="Go to previous page"
+      aria-label={t(($) => $.pagination_previous)}
       size="default"
       className={cn("pl-1.5!", className)}
       {...props}
@@ -85,9 +87,10 @@ function PaginationNext({
   text = "Next",
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  const { t } = useTranslation("ui")
   return (
     <PaginationLink
-      aria-label="Go to next page"
+      aria-label={t(($) => $.pagination_next)}
       size="default"
       className={cn("pr-1.5!", className)}
       {...props}

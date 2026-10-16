@@ -1,0 +1,74 @@
+{
+  "nav": {
+    "inbox": "관심 사항",
+    "chat": "채팅",
+    "my_issues": "내 이슈",
+    "issues": "이슈",
+    "projects": "프로젝트",
+    "autopilots": "자동화",
+    "agents": "에이전트",
+    "squads": "스쿼드",
+    "usage": "사용량",
+    "runtimes": "런타임",
+    "skills": "스킬",
+    "settings": "설정",
+    "connections": "연결",
+    "knowledge": "지식 베이스",
+    "business": "기본 정보",
+    "applications": "앱",
+    "members": "멤버"
+  },
+  "tab": {
+    "issue": "이슈",
+    "project": "프로젝트",
+    "autopilot": "자동화",
+    "agent": "에이전트",
+    "member": "멤버",
+    "squad": "스쿼드",
+    "skill": "스킬",
+    "machine": "머신",
+    "runtime": "런타임",
+    "attachment": "첨부파일",
+    "create_agent": "에이전트 만들기",
+    "unknown": "알 수 없는 페이지"
+  },
+  "help": {
+    "trigger": "도움말",
+    "wechat": "위챗 공식 계정",
+    "feedback": "피드백",
+    "server_version": "서버 버전 {{version}}"
+  },
+  "workspace_loader": {
+    "loading_workspace": "회사 로딩 중...",
+    "loading_named_prefix": "로딩 중"
+  },
+  "sidebar": {
+    "unpin_tooltip": "고정 해제",
+    "workspaces_label": "회사",
+    "create_workspace": "회사 만들기",
+    "pending_invitations_label": "대기 중인 초대",
+    "invitation_workspace_fallback": "회사",
+    "invitation_join": "참가",
+    "invitation_decline": "거절",
+    "log_out": "로그아웃",
+    "platform_admin": "플랫폼 관리",
+    "new_issue": "새 이슈",
+    "new_issue_shortcut": "C",
+    "pinned_label": "고정됨",
+    "workspace_group": "업무",
+    "configure_group": "설정",
+    "crm_group": "고객 및 영업",
+    "global_business_group": "글로벌 비즈니스 관리",
+    "unread_overflow": "99+",
+    "wechat_card": {
+      "title": "위챗 공식 계정 팔로우",
+      "description": "스캔하여 팔로우하고 최신 소식과 도움을 받으세요.",
+      "dismiss": "닫기"
+    },
+    "team_group": "내 팀",
+    "team_search": "팀 검색…",
+    "team_unread": "읽지 않은 메시지",
+    "team_retry": "팀 다시 불러오기",
+    "team_message": "{{name}}에게 메시지"
+  }
+}

@@ -2,7 +2,7 @@
 
 import {
   createContext,
-  useContext,
+  use,
   useEffect,
   useState,
   useCallback,
@@ -21,7 +21,7 @@ import {
 import { createLogger } from "../logger";
 import { useRealtimeSync, type RealtimeSyncStores } from "./use-realtime-sync";
 
-type EventHandler = (payload: unknown, actorId?: string) => void;
+type EventHandler = (payload: unknown, actorId?: string, actorType?: string) => void;
 
 interface WSContextValue {
   subscribe: (event: WSEventType, handler: EventHandler) => () => void;
@@ -81,7 +81,7 @@ export function WSProvider({
 
     // In token mode we need a token from storage; in cookie mode the HttpOnly
     // cookie is sent automatically with the WS upgrade request.
-    const token = cookieAuth ? null : storage.getItem("teamify_token");
+    const token = cookieAuth ? null : storage.getItem("iteamify_token");
     if (!cookieAuth && !token) return;
 
     const ws = new WSClient(wsUrl, {
@@ -123,7 +123,7 @@ export function WSProvider({
   const subscribe = useCallback(
     (event: WSEventType, handler: EventHandler) => {
       if (!wsClient) return () => {};
-      return wsClient.onUntyped(event, handler);
+      return wsClient.on(event, handler);
     },
     [wsClient],
   );
@@ -144,7 +144,7 @@ export function WSProvider({
 }
 
 export function useWS() {
-  const ctx = useContext(WSContext);
+  const ctx = use(WSContext);
   if (!ctx) throw new Error("useWS must be used within WSProvider");
   return ctx;
 }

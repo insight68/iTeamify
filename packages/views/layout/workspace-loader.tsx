@@ -1,6 +1,6 @@
 "use client";
 
-import { TeamifyIcon } from "@teamify/ui/components/common/teamify-icon";
+import { ITeamifyIcon } from "@iteamify/ui/components/common/iteamify-icon";
 import { useT } from "../i18n";
 
 /**
@@ -22,7 +22,7 @@ export function WorkspaceLoader({ name }: { name?: string | null }) {
       role="status"
     >
       <div className="flex flex-col items-center gap-4">
-        <TeamifyIcon className="size-8 animate-pulse" />
+        <ITeamifyIcon className="size-8 animate-pulse" />
         {name ? (
           <p className="text-sm text-muted-foreground">
             {t(($) => $.workspace_loader.loading_named_prefix)}{" "}

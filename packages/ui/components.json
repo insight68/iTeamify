@@ -12,10 +12,10 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@teamify/ui/components",
-    "ui": "@teamify/ui/components/ui",
-    "hooks": "@teamify/ui/hooks",
-    "lib": "@teamify/ui/lib",
-    "utils": "@teamify/ui/lib/utils"
+    "components": "@iteamify/ui/components",
+    "ui": "@iteamify/ui/components/ui",
+    "hooks": "@iteamify/ui/hooks",
+    "lib": "@iteamify/ui/lib",
+    "utils": "@iteamify/ui/lib/utils"
   }
 }

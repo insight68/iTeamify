@@ -1,6 +1,6 @@
-import type { LocaleAdapter, SupportedLocale } from "@teamify/core/i18n";
+import type { LocaleAdapter, SupportedLocale } from "@iteamify/core/i18n";
 
-const STORAGE_KEY = "teamify-locale";
+const STORAGE_KEY = "iteamify-locale";
 
 // Desktop adapter:
 //   - User choice: localStorage (set by Settings switcher).

@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS idx_lead_assessment_workspace_lead;

@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { ProjectDetail } from "@teamify/views/projects/components";
+import { ProjectDetail } from "@iteamify/views/projects/components";
 
 export default function ProjectDetailPage({
   params,

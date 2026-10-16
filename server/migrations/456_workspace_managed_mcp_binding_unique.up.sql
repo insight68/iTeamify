@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY workspace_managed_mcp_binding_unique ON workspace_managed_mcp_binding (workspace_id, mcp_profile_release_id);

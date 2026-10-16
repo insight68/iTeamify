@@ -9,14 +9,17 @@
 //
 // Configuration comes from the backend's `/api/config` response (populated
 // from POSTHOG_API_KEY on the server), NOT from NEXT_PUBLIC_* envs. That
-// keeps self-hosted backends from leaking our project key — their `/api/config`
-// response uses an empty key and this module stays inert.
+// keeps self-hosted Docker images from leaking our project key — their
+// backend returns an empty key and this module stays inert.
 
 import posthog from "posthog-js";
+import { redactExceptionProperties } from "./redact-exception";
+import { shouldDropException } from "./exception-dedupe";
+import { isBenignException } from "./benign-exceptions";
 
 export const EVENT_SCHEMA_VERSION = 2;
 
-const SIGNUP_SOURCE_COOKIE = "teamify_signup_source";
+const SIGNUP_SOURCE_COOKIE = "iteamify_signup_source";
 // Per-value cap keeps a long utm_content from blowing the budget. We drop
 // the entire cookie if the JSON still exceeds the overall limit — partial
 // JSON is worse than no attribution because PostHog can't parse it.
@@ -38,40 +41,26 @@ let initialized = false;
 let pendingIdentify: { userId: string; props?: Record<string, unknown> } | null = null;
 let currentUserId: string | null = null;
 let analyticsEnvironment = "dev";
-// Likewise pageviews: the initial "/" pageview is the anchor of the
-// acquisition funnel, and the Next.js router fires it on mount before the
-// config fetch resolves. We keep the first pending pageview so that step
-// doesn't silently drop.
-let pendingPageview: string | undefined | null = null;
 // Frontend-emitted events (captureEvent) and person-property updates
 // (setPersonProperties) can also arrive before init — same config-race as
 // identify/pageview. We replay them in order once init succeeds. These
 // only ever carry user-triggered signals on identified users, so the
 // buffer stays small (~one step-transition worth).
 type PendingOp =
-  | { kind: "event"; name: string; props?: Record<string, unknown> }
+  | {
+      kind: "event";
+      name: string;
+      props?: Record<string, unknown>;
+      options?: CaptureEventOptions;
+    }
   | { kind: "set"; props: Record<string, unknown> }
-  | { kind: "exception"; props: Record<string, unknown> };
+  | { kind: "exception"; error: unknown; props?: Record<string, unknown> };
 const pendingOps: PendingOp[] = [];
 // Cached super-properties so resetAnalytics() can re-register them after
 // posthog.reset() wipes the persisted set. Without this, logout / account
 // switch silently drops client_type + app_version from every subsequent
 // event until a full reload.
 let superProperties: Record<string, unknown> = {};
-
-export {
-  captureDownloadIntent,
-  captureDownloadPageViewed,
-  captureDownloadInitiated,
-  type DownloadIntentSource,
-  type DownloadDetectPayload,
-  type DownloadInitiatedPayload,
-} from "./download";
-
-export {
-  captureFeedbackOpened,
-  type FeedbackOpenedSource,
-} from "./feedback";
 
 export interface AnalyticsConfig {
   key: string;
@@ -127,23 +116,47 @@ export function initAnalytics(config: AnalyticsConfig | null | undefined): boole
     // the billed events until they actually identify, which aligns with how
     // our funnel is set up: signup is the first real funnel step.
     person_profiles: "identified_only",
-    // Turn off the on-by-default auto-capture surfaces that generate noise.
-    // Our funnel is narrow and explicit (the events in docs/analytics.md + a
-    // manual $pageview). Autocapture floods the Activity view with anonymous
-    // "clicked button" / "clicked link" noise, burns the billed event budget,
-    // and risks capturing user-typed content in input values. Turn things
-    // back on deliberately if we ever want them.
-    //
-    // EXCEPTION: capture_exceptions stays ON. Unhandled errors and rejections
-    // are signal, not noise — for installed desktop builds that can't hotfix,
-    // an invisible crash from API contract drift is the worst failure mode.
-    // The error boundaries also report via captureException() for React
-    // render crashes the global handler can't see.
+    // Turn off every on-by-default auto-capture surface. Our funnel is
+    // narrow and explicit (the events in docs/analytics.md + a manual
+    // $pageview). Autocapture floods the Activity view with anonymous
+    // "clicked button" / "clicked link" noise, burns the billed event
+    // budget, and risks capturing user-typed content in input values.
+    // Turn things back on deliberately if we ever want them.
     capture_pageview: false,
     autocapture: false,
     capture_heatmaps: false,
     capture_dead_clicks: false,
+    // Exception autocapture IS on: posthog-js attaches window.onerror +
+    // unhandledrejection handlers and sends `$exception` events with the
+    // error's stack. Unlike the click/heatmap autocapture above, this is
+    // explicit failure signal (not behavioral noise) and is the one PostHog
+    // surface that natively handles thrown JS errors — see the failure-tier
+    // split in packages/core/diagnostics. (Production builds are minified;
+    // upload source maps to PostHog to de-minify the stacks.)
+    //
+    // Error messages can interpolate user input (a validation error with the
+    // typed value, a URL with a token), so `before_send` scrubs the message
+    // and `$exception_list[].value` before the event leaves the client. Stack
+    // frames (code locations) are kept. See redact-exception.ts.
+    //
+    // After scrubbing, a session-level fuse drops repeats of the same error so
+    // a render loop or a polling fetch that keeps throwing can't emit 100+
+    // identical `$exception` events per session (MUL-3331). The fingerprint is
+    // built only from the already-redacted fields, so no PII reaches storage.
+    // Order matters: redact first, then fingerprint the redacted shape.
     capture_exceptions: true,
+    before_send: (event) => {
+      if (event && event.event === "$exception") {
+        // Drop known-benign browser noise (e.g. ResizeObserver loop) entirely
+        // — checked on the raw message before redaction. These dominate the
+        // stream and carry no signal, so they skip both redaction and the
+        // dedupe fuse. See benign-exceptions.ts.
+        if (isBenignException(event.properties)) return null;
+        redactExceptionProperties(event.properties);
+        if (shouldDropException(event.properties)) return null;
+      }
+      return event;
+    },
     disable_session_recording: true,
     disable_surveys: true,
   });
@@ -171,11 +184,6 @@ export function initAnalytics(config: AnalyticsConfig | null | undefined): boole
     posthog.identify(pendingIdentify.userId, pendingIdentify.props);
     pendingIdentify = null;
   }
-  // And any first pageview we captured while config was loading.
-  if (pendingPageview !== null) {
-    posthog.capture("$pageview", pendingPageview ? { $current_url: pendingPageview } : undefined);
-    pendingPageview = null;
-  }
   // Replay buffered events / person-property updates in their original
   // order — funnel correctness depends on sequence (e.g. a user submits
   // the questionnaire and then finishes onboarding within the same
@@ -183,9 +191,9 @@ export function initAnalytics(config: AnalyticsConfig | null | undefined): boole
   while (pendingOps.length > 0) {
     const op = pendingOps.shift()!;
     if (op.kind === "event") {
-      posthog.capture(op.name, withClientEventProperties(op.props));
+      captureNow(op.name, op.props, op.options);
     } else if (op.kind === "exception") {
-      posthog.capture("$exception", op.props);
+      posthog.captureException(op.error, withClientEventProperties(op.props));
     } else {
       capturePersonSet(op.props);
     }
@@ -218,7 +226,6 @@ export function identify(userId: string, userProperties?: Record<string, unknown
 export function resetAnalytics(): void {
   currentUserId = null;
   pendingIdentify = null;
-  pendingPageview = null;
   pendingOps.length = 0;
   if (!initialized) return;
   posthog.reset();
@@ -240,45 +247,78 @@ export function resetAnalytics(): void {
  * Calls before initAnalytics() buffer in order so a late-arriving config
  * doesn't silently swallow a step transition.
  */
+export interface CaptureEventOptions {
+  /**
+   * Bypass posthog-js's batching timer and put the event on the wire now.
+   * Batching is a JS timer in the same thread that is about to freeze or be
+   * killed, so a failure report queued normally can be lost exactly when it
+   * matters (MUL-4115: three deterministic hangs, zero events delivered).
+   * Reserve this for failure telemetry — routine events should batch.
+   */
+  sendInstantly?: boolean;
+  /**
+   * Fired once the event has been handed to posthog.capture.
+   *
+   * This is HAND-OFF, not delivery: the request may still be in flight, and
+   * posthog-js exposes no delivery callback to wait on. Never treat it as
+   * permission to discard the only copy of something — a caller that deletes
+   * persisted state here loses it whenever the app dies between hand-off and
+   * the wire (see freeze-flush.ts, which waits out a grace window instead).
+   *
+   * It also never fires on a build with analytics disabled, so anything
+   * waiting on it needs an expiry path of its own.
+   */
+  onCaptured?: () => void;
+}
+
 export function captureEvent(
   name: string,
   props?: Record<string, unknown>,
+  options?: CaptureEventOptions,
 ): void {
   if (!initialized) {
-    pendingOps.push({ kind: "event", name, props });
+    pendingOps.push({ kind: "event", name, props, options });
     return;
   }
-  posthog.capture(name, withClientEventProperties(props));
+  captureNow(name, props, options);
+}
+
+function captureNow(
+  name: string,
+  props?: Record<string, unknown>,
+  options?: CaptureEventOptions,
+): void {
+  posthog.capture(
+    name,
+    withClientEventProperties(props),
+    options?.sendInstantly ? { send_instantly: true } : undefined,
+  );
+  options?.onCaptured?.();
 }
 
 /**
- * Report a caught exception to telemetry. Used by the web/desktop Error
- * Boundaries and the schema-validation logger so a render crash or a drifted
- * API contract surfaces in PostHog instead of dying silently in the console —
- * critical for installed desktop builds that can't ship a hotfix in minutes.
+ * Report a caught exception that never reached `window.onerror` — a React
+ * render-phase error swallowed by an error boundary. Global uncaught errors
+ * and unhandled rejections are already captured automatically by posthog-js
+ * (`capture_exceptions: true`); this wrapper is for the boundary case those
+ * handlers can't see.
  *
- * The payload follows PostHog's `$exception` convention (`$exception_message`,
- * `$exception_type`, `$exception_stack_trace_raw`) and carries the client
- * super-properties so crashes can be split by desktop/web and app version.
+ * Currently called by the web route-level `global-error`. Section-level
+ * `@iteamify/ui` ErrorBoundary can opt in by passing `onError={captureException}`
+ * at its call sites; it is not wired app-wide (those failures already degrade
+ * gracefully with fallback UI).
  *
- * Calls before initAnalytics() buffer in order, matching captureEvent.
+ * Calls before initAnalytics() buffer in order, same as captureEvent.
  */
 export function captureException(
   error: unknown,
-  context?: Record<string, unknown>,
+  props?: Record<string, unknown>,
 ): void {
-  const props = withClientEventProperties({
-    ...(context ?? {}),
-    $exception_message: error instanceof Error ? error.message : String(error),
-    $exception_type: error instanceof Error ? error.name : "Error",
-    $exception_stack_trace_raw:
-      error instanceof Error ? error.stack : undefined,
-  });
   if (!initialized) {
-    pendingOps.push({ kind: "exception", props });
+    pendingOps.push({ kind: "exception", error, props });
     return;
   }
-  posthog.capture("$exception", props);
+  posthog.captureException(error, withClientEventProperties(props));
 }
 
 /**
@@ -344,26 +384,7 @@ function normalizeEnvironment(value: string | undefined): string {
 }
 
 /**
- * Capture a page view. Call once per client-side navigation. We disable
- * posthog's automatic pageview tracking in init() so this module owns the
- * event shape — that makes it trivial to add properties (e.g. workspace
- * slug) without fighting the SDK.
- *
- * Calls before initAnalytics() buffer the most-recent path so the first
- * pageview isn't dropped on slow /api/config fetches. Subsequent pre-init
- * pageviews overwrite the buffer; after init flushes, every navigation
- * captures synchronously as expected.
- */
-export function capturePageview(path?: string): void {
-  if (!initialized) {
-    pendingPageview = path ?? "";
-    return;
-  }
-  posthog.capture("$pageview", path ? { $current_url: path } : undefined);
-}
-
-/**
- * On the very first anonymous pageview in a browser session, read UTM +
+ * On the very first anonymous page load in a browser session, read UTM +
  * referrer and stash them in a cookie that the backend reads during signup.
  *
  * Never use raw `document.referrer` as attribution — it can leak OAuth

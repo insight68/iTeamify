@@ -42,29 +42,77 @@ export function canEditAgent(agent: Agent, ctx: PermissionContext): Decision {
 }
 
 /**
- * Assign an agent to an issue. Workspace-visibility agents are assignable by
- * any workspace member; private agents are restricted to their owner plus
- * workspace admins/owners. Mirrors `issue.go:1471-1490`.
+ * Invoke an agent — assign it to an issue, @mention it, chat with it, or
+ * otherwise trigger a run. Mirrors the MUL-3963 backend invocation gate,
+ * which reads `permission_mode` + `invocation_targets` (NOT the derived
+ * `visibility` field):
+ *
+ *   - owner: always
+ *   - permission_mode "private": ONLY the owner. This is the key behavior
+ *     change — workspace admins NO LONGER bypass a private agent.
+ *   - permission_mode "public_to" + workspace target: any workspace member
+ *   - permission_mode "public_to" + member target: only the matching user
+ *   - team target: reserved, INERT in v1 (never grants)
  */
 export function canAssignAgentToIssue(
   agent: Agent,
   ctx: PermissionContext,
 ): Decision {
-  if (ctx.userId === null) {
-    return deny("not_authenticated", "Sign in to assign agents.");
+  if (agent.execution_surface === "chat_only") {
+    return deny(
+      "managed_chat_only",
+      "This managed agent is available in Chat only.",
+    );
   }
-  if (agent.visibility === "workspace") {
+  return canInvokeAgent(agent, ctx);
+}
+
+/** Invocation permission without imposing a product execution surface. */
+export function canInvokeAgent(
+  agent: Pick<Agent, "owner_id" | "permission_mode" | "invocation_targets">,
+  ctx: PermissionContext,
+): Decision {
+  if (ctx.userId === null) {
+    return deny("not_authenticated", "Sign in to use agents.");
+  }
+
+  // The owner may always invoke their own agent, regardless of mode.
+  if (agent.owner_id !== null && agent.owner_id === ctx.userId) {
+    return ALLOW;
+  }
+
+  if (agent.permission_mode === "private") {
+    return deny(
+      "private_visibility",
+      "Personal agent — only the owner can use it.",
+    );
+  }
+
+  // permission_mode === "public_to": resolve the invocation grants. A
+  // workspace grant opens invocation to any workspace member. The `?? []`
+  // guards against legacy self-host backends / stale caches that omit the
+  // field even though the type says required-array (GH #4915).
+  const targets = agent.invocation_targets ?? [];
+  if (targets.some((t) => t.target_type === "workspace")) {
     if (ctx.role === null) {
-      return deny("not_member", "Join this workspace to assign agents.");
+      return deny("not_member", "Join this workspace to use agents.");
     }
     return ALLOW;
   }
-  // visibility === "private"
-  if (isAdminLike(ctx.role)) return ALLOW;
-  if (agent.owner_id !== null && agent.owner_id === ctx.userId) return ALLOW;
+
+  // A member grant opens invocation to exactly the targeted user. Team
+  // targets are reserved and INERT in v1 — they never grant.
+  if (
+    targets.some(
+      (t) => t.target_type === "member" && t.target_id === ctx.userId,
+    )
+  ) {
+    return ALLOW;
+  }
+
   return deny(
     "private_visibility",
-    "Personal agent — only the owner and workspace admins can assign work.",
+    "Restricted agent — you don't have access to use it.",
   );
 }
 
@@ -152,10 +200,10 @@ export function canDeleteRuntime(
 // ---- Workspace -------------------------------------------------------------
 
 export function canUpdateWorkspaceSettings(ctx: PermissionContext): Decision {
-  if (ctx.role === "owner") return ALLOW;
+  if (isAdminLike(ctx.role)) return ALLOW;
   return deny(
-    "not_owner_role",
-    "Only workspace owners can update workspace settings.",
+    "not_admin_role",
+    "Only workspace owners and admins can update workspace settings.",
   );
 }
 

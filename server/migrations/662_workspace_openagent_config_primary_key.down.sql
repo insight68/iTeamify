@@ -1,0 +1,1 @@
+ALTER TABLE workspace_openagent_config DROP CONSTRAINT IF EXISTS workspace_openagent_config_pkey;

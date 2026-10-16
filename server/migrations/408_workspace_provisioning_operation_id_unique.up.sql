@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY workspace_provisioning_operation_id_uidx ON workspace_provisioning_operation (id);

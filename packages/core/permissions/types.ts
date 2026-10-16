@@ -27,6 +27,7 @@ export type DecisionReason =
   | "not_resource_owner"
   | "last_owner"
   | "private_visibility"
+  | "managed_chat_only"
   | "unknown";
 
 export interface Decision {

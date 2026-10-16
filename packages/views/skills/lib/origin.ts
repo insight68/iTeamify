@@ -1,4 +1,4 @@
-import type { Skill, SkillSummary } from "@teamify/core/types";
+import type { Skill, SkillSummary } from "@iteamify/core/types";
 
 /**
  * Discriminated view over `Skill.config.origin` — the JSONB blob the backend

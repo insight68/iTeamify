@@ -1,6 +1,6 @@
 "use client";
 
-import type { ProjectStatus, ProjectPriority } from "@teamify/core/types";
+import type { ProjectStatus, ProjectPriority } from "@iteamify/core/types";
 import { useT } from "../../i18n";
 
 // Hooks returning the i18n-aware label maps for project status / priority.

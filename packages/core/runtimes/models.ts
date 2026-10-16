@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
+import { pollDelay } from "./poll-delay";
 import type { RuntimeModelsResult } from "../types/agent";
 
 export const runtimeModelsKeys = {
@@ -20,21 +21,27 @@ const POLL_TIMEOUT_MS = 30_000;
 // wouldn't be honoured at runtime.
 export async function resolveRuntimeModels(
   runtimeId: string,
+  signal?: AbortSignal,
 ): Promise<RuntimeModelsResult> {
-  const initial = await api.initiateListModels(runtimeId);
+  const client = api.withRequestContext({ signal });
+  const initial = await client.initiateListModels(runtimeId);
   const start = Date.now();
   let current = initial;
   while (current.status === "pending" || current.status === "running") {
     if (Date.now() - start > POLL_TIMEOUT_MS) {
       throw new Error("model discovery timed out");
     }
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    current = await api.getListModelsResult(runtimeId, initial.id);
+    await pollDelay(POLL_INTERVAL_MS, signal);
+    current = await client.getListModelsResult(runtimeId, initial.id);
   }
   if (current.status === "failed" || current.status === "timeout") {
     throw new Error(current.error || "model discovery failed");
   }
-  return { models: current.models ?? [], supported: current.supported };
+  return {
+    models: current.models ?? [],
+    supported: current.supported,
+    selection_mode: current.selection_mode ?? "custom",
+  };
 }
 
 export function runtimeModelsOptions(runtimeId: string | null | undefined) {
@@ -42,7 +49,7 @@ export function runtimeModelsOptions(runtimeId: string | null | undefined) {
     queryKey: runtimeId
       ? runtimeModelsKeys.forRuntime(runtimeId)
       : runtimeModelsKeys.all(),
-    queryFn: () => resolveRuntimeModels(runtimeId as string),
+    queryFn: ({ signal }) => resolveRuntimeModels(runtimeId as string, signal),
     enabled: Boolean(runtimeId),
     // Models rarely change; cache for 60s to match the server-side
     // cache in agent.ListModels.

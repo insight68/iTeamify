@@ -1,28 +1,21 @@
 import type { MetadataRoute } from "next";
+import { SITE_CONFIG } from "@/config/site";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://www.teamify.world";
-
   return {
     rules: [
       {
         userAgent: "*",
-        allow: ["/"],
+        allow: "/",
         disallow: [
           "/api/",
           "/ws",
           "/auth/",
-          "/issues",
-          "/board",
-          "/inbox",
-          "/agents",
-          "/settings",
-          "/my-issues",
-          "/runtimes",
-          "/skills",
+          "/uploads/",
         ],
       },
     ],
-    sitemap: [`${baseUrl}/sitemap.xml`, `${baseUrl}/docs/sitemap.xml`],
+    sitemap: `${SITE_CONFIG.origin}/sitemap.xml`,
+    host: SITE_CONFIG.origin,
   };
 }

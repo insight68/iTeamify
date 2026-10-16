@@ -1,8 +1,8 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ProjectDetail } from "@teamify/views/projects/components";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { projectDetailOptions } from "@teamify/core/projects/queries";
+import { ProjectDetail } from "@iteamify/views/projects/components";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { projectDetailOptions } from "@iteamify/core/projects/queries";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 
 export function ProjectDetailPage() {
@@ -10,7 +10,9 @@ export function ProjectDetailPage() {
   const wsId = useWorkspaceId();
   const { data: project } = useQuery(projectDetailOptions(wsId, id!));
 
-  useDocumentTitle(project ? `${project.icon || "📁"} ${project.title}` : "Project");
+  // Plain text only — the project's icon is shown by the tab's leading visual,
+  // not concatenated into the title (MUL-4370).
+  useDocumentTitle(project ? project.title : "Project");
 
   if (!id) return null;
   return <ProjectDetail projectId={id} />;

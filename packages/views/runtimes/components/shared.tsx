@@ -1,6 +1,6 @@
 import { Cloud, Monitor, Wifi, WifiHigh, WifiOff } from "lucide-react";
-import { Badge } from "@teamify/ui/components/ui/badge";
-import type { RuntimeHealth } from "@teamify/core/runtimes";
+import { Badge } from "@iteamify/ui/components/ui/badge";
+import type { RuntimeHealth } from "@iteamify/core/runtimes";
 import { ProviderLogo } from "./provider-logo";
 import { useT } from "../../i18n";
 
@@ -179,7 +179,7 @@ export function KpiCard({
   accent,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   hint?: React.ReactNode;
   accent?: "brand" | "success" | "default";
 }) {

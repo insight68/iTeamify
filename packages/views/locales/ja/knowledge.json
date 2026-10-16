@@ -1,0 +1,9 @@
+{
+  "page": { "title": "ナレッジ", "description": "チームとAIエージェントが共有する管理された信頼できる情報源" },
+  "hero": { "shared_truth": "共有ナレッジ層", "production_version": "本番 v{{version}}", "not_published": "本番版は未公開", "title": "ビジネスの知識を、すべてのエージェントが安全に使える文脈へ。", "description": "人またはAIが下書きを作り、変更を確認して不変の版を公開します。本番ワークフローは承認済みスナップショットだけを使います。" },
+  "business": { "title": "ビジネス情報", "description": "ポジショニング、サービス、ICP、購買ペルソナ、除外条件、実績、公式ソース。", "readiness": "準備度 {{percent}}%", "completeness": "本番準備度", "offers": "サービス", "audiences": "対象顧客", "personas": "ペルソナ", "evidence": "根拠", "draft_policy": "下書きの変更は本番エージェントに届きません" },
+  "contract": { "title": "ナレッジ利用契約", "description": "共有文脈が会話から本番へ移る仕組み", "propose_title": "編集または提案", "propose_description": "人は直接編集し、AIはレビュー可能な構造化提案を送ります。", "review_title": "版に基づくレビュー", "review_description": "変更を適用する前に同時編集を検出します。", "publish_title": "本番版を公開", "publish_description": "OwnerまたはAdminが不変のスナップショットを作成します。", "consume_title": "エージェントが利用", "consume_description": "エージェントは公開済みのビジネス情報を利用します。" },
+  "signals": { "releases_title": "公開版", "releases_empty": "最初の承認済みビジネス情報を公開してください。", "proposals_title": "保留中の提案", "proposals_description": "AI提案は人が承認または却下するまで待機します。", "sources_title": "実績とソース", "sources_description": "根拠によりポジショニングとターゲティング判断を追跡できます。" },
+  "actions": { "open_business": "ビジネス情報を開く", "manage_business": "ビジネス情報を管理", "retry": "再試行" },
+  "error": { "title": "ナレッジを利用できません", "description": "接続を確認して再試行してください。" }
+}

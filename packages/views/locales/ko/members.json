@@ -1,0 +1,48 @@
+{
+  "role": {
+    "owner": "소유자",
+    "admin": "관리자",
+    "member": "멤버"
+  },
+  "card": {
+    "unavailable": "멤버를 사용할 수 없습니다",
+    "agents_section": "에이전트 ({{count}})",
+    "detail_link": "자세히 →",
+    "more_agents_other": "외 에이전트 {{count}}개"
+  },
+  "detail": {
+    "workspace_fallback": "워크스페이스",
+    "members_breadcrumb": "멤버",
+    "breadcrumb_fallback": "멤버",
+    "not_found_title": "멤버를 찾을 수 없습니다",
+    "not_found_description": "이 멤버가 워크스페이스를 떠났을 수 있습니다.",
+    "open": "{{name}} 상세 보기",
+    "manage": "{{name}} 관리",
+    "message": "메시지",
+    "tasks": "작업",
+    "agents": "에이전트",
+    "applications": "애플리케이션",
+    "membership": "워크스페이스 멤버 정보",
+    "no_agents": "표시할 수 있는 연결된 에이전트가 없습니다",
+    "applications_description": "이 멤버가 현재 워크스페이스에서 제공하는 서비스입니다.",
+    "no_applications": "추가 애플리케이션이 활성화되지 않았습니다",
+    "no_applications_hint": "워크스페이스 소유자 또는 관리자가 서비스를 설정할 수 있습니다.",
+    "unknown_status": "알 수 없는 상태"
+  },
+  "list": {
+    "title": "멤버",
+    "invitations": "수락 대기 중인 초대",
+    "search": "이름 또는 이메일 검색…",
+    "name": "이름",
+    "email": "이메일",
+    "role": "역할",
+    "all_roles": "모든 역할",
+    "joined": "가입 시간",
+    "sort": "멤버 정렬",
+    "loading": "멤버를 불러오는 중…",
+    "load_failed": "멤버를 불러올 수 없습니다",
+    "retry": "다시 시도",
+    "no_matches": "일치하는 멤버가 없습니다",
+    "no_invitations": "대기 중인 초대가 없습니다"
+  }
+}

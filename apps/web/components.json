@@ -13,11 +13,11 @@
   "iconLibrary": "lucide",
   "rtl": false,
   "aliases": {
-    "components": "@teamify/ui/components",
-    "utils": "@teamify/ui/lib/utils",
-    "ui": "@teamify/ui/components/ui",
-    "lib": "@teamify/ui/lib",
-    "hooks": "@teamify/ui/hooks"
+    "components": "@iteamify/ui/components",
+    "utils": "@iteamify/ui/lib/utils",
+    "ui": "@iteamify/ui/components/ui",
+    "lib": "@iteamify/ui/lib",
+    "hooks": "@iteamify/ui/hooks"
   },
   "menuColor": "default",
   "menuAccent": "subtle",

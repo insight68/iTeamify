@@ -1,8 +1,8 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { AgentDetailPage as SharedAgentDetailPage } from "@teamify/views/agents";
-import { useWorkspaceId } from "@teamify/core/hooks";
-import { agentListOptions } from "@teamify/core/workspace/queries";
+import { AgentDetailPage as SharedAgentDetailPage } from "@iteamify/views/agents";
+import { useWorkspaceId } from "@iteamify/core/hooks";
+import { agentListOptions } from "@iteamify/core/workspace/queries";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 
 export function AgentDetailPage() {

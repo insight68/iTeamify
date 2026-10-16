@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS assistant_operation_workspace_idempotency_uidx;

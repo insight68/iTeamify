@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY public_quote_contact_verification_pkey ON public_quote_contact_verification (id);

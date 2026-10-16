@@ -1,0 +1,171 @@
+{
+  "page": {
+    "title": "基础信息",
+    "eyebrow": "公司基础信息"
+  },
+  "status": {
+    "updated": "更新于 {{time}}",
+    "readonly": "只读",
+    "saving": "正在保存…"
+  },
+  "actions": {
+    "retry": "重试",
+    "manage": "管理公司",
+    "ai": "让 AI 帮我完善",
+    "manual": "手动填写",
+    "add_offer": "添加服务",
+    "add_audience": "添加理想客户",
+    "add_proof": "添加案例",
+    "add_source": "添加资料",
+    "add_persona": "添加决策人画像",
+    "delete": "删除",
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "正在保存…"
+  },
+  "metrics": {
+    "completeness": "资料完整度",
+    "offers": "服务",
+    "audiences": "理想客户",
+    "personas": "决策人画像",
+    "evidence": "案例与资料"
+  },
+  "sections": {
+    "foundation_title": "公司定位",
+    "foundation_description": "让团队成员和 AI 在介绍公司时，始终采用清晰一致的表达。",
+    "portfolio_title": "服务能力",
+    "portfolio_description": "说明客户可以买到什么、能获得什么结果，以及每项服务适合哪些客户。",
+    "market_title": "理想客户画像",
+    "market_description": "明确理想客户的行业、规模、地区、购买契机和排除条件。",
+    "buying_title": "购买决策链",
+    "buying_description": "明确谁提出需求、谁推动项目、谁参与评估、谁批准，以及谁最终使用。",
+    "evidence_title": "案例与信任依据",
+    "evidence_description": "用真实案例和可靠资料支撑业务主张。"
+  },
+  "fields": {
+    "business_name": "公司名称",
+    "brand_name": "对外品牌名",
+    "brand_name_placeholder": "仅当品牌名与公司名称不同时填写",
+    "website": "官网",
+    "summary": "公司做什么",
+    "positioning": "品牌定位",
+    "differentiators": "差异化优势",
+    "principles": "经营原则",
+    "exclusions": "业务边界 / 不做什么",
+    "one_per_line": "每行一项",
+    "offer_name": "服务名称",
+    "offer_summary": "客户价值",
+    "outcomes": "预期成果",
+    "deliverables": "交付物",
+    "timeline": "典型交付周期",
+    "pricing_note": "价格说明",
+    "fit_notes": "适用场景",
+    "matched_audiences": "适合的理想客户",
+    "audience_name": "理想客户名称",
+    "audience_description": "一句话定义",
+    "priority": "市场优先级",
+    "industries": "行业",
+    "company_sizes": "公司规模",
+    "geographies": "地区 / 市场",
+    "pain_points": "核心痛点",
+    "buying_triggers": "购买触发点",
+    "must_haves": "必要匹配信号",
+    "personas": "决策人画像",
+    "personas_hint": "会影响服务发现、评估、审批或使用的人。",
+    "persona": "决策人画像",
+    "persona_name": "画像名称",
+    "buying_role": "决策角色",
+    "persona_role": "角色说明",
+    "titles": "典型职位",
+    "goals": "目标",
+    "objections": "常见异议",
+    "channels": "常用触达渠道",
+    "proof_title": "案例或证明名称",
+    "proof_summary": "这份材料能证明什么",
+    "source_url": "来源链接",
+    "related_offers": "关联服务",
+    "source_title": "资料标题",
+    "source_notes": "希望 AI 从中了解的内容"
+  },
+  "charts": {
+    "completeness_title": "信息完整度",
+    "complete": "已完善",
+    "missing": "补充",
+    "matched_audiences": "个理想客户",
+    "matrix_title": "服务 × 理想客户匹配矩阵",
+    "matrix_description": "点击单元格，定义每类理想客户应该推荐哪些服务。",
+    "services_axis": "服务 / 理想客户",
+    "match": "匹配",
+    "no_match": "未设置",
+    "market_title": "客户特征覆盖",
+    "market_description": "查看哪些行业、规模或地区信号被多个理想客户共同使用。",
+    "icp_coverage": "理想客户覆盖数",
+    "priority_title": "市场优先级",
+    "priority_description": "让团队聚焦于最重要的目标市场。",
+    "evidence_title": "服务依据覆盖",
+    "evidence_description": "查看每项服务关联了多少案例与证明材料。"
+  },
+  "completion": {
+    "identity": "公司信息",
+    "positioning": "品牌定位",
+    "offers": "服务能力",
+    "audiences": "理想客户",
+    "evidence": "案例与依据"
+  },
+  "priorities": {
+    "core": "核心市场",
+    "secondary": "次级市场",
+    "explore": "探索市场"
+  },
+  "roles": {
+    "initiator": "需求发起者",
+    "champion": "内部推动者",
+    "influencer": "评估参与者",
+    "decision_maker": "决策者",
+    "user": "使用者"
+  },
+  "editor": {
+    "foundation_title": "编辑公司定位",
+    "offer_title": "编辑服务",
+    "audience_title": "编辑理想客户",
+    "proof_title": "编辑案例或证明",
+    "source_title": "编辑参考资料",
+    "description": "保存后会直接更新公司基础信息。"
+  },
+  "empty": {
+    "title": "完善公司基础信息",
+    "description": "你可以先向 AI 介绍公司情况，也可以手动填写。系统会把这些信息整理成团队共用的结构化公司资料。",
+    "summary": "点击补充一句清晰的公司业务介绍。",
+    "click_to_add": "点击补充",
+    "untitled_offer": "未命名服务",
+    "untitled_audience": "未命名理想客户",
+    "untitled_persona": "未命名决策人画像",
+    "untitled_proof": "未命名案例",
+    "untitled_source": "未命名资料",
+    "no_timeline": "未设置周期",
+    "add_offer": "添加第一项服务，让团队知道可以向客户推荐什么。",
+    "no_offers": "尚未添加服务。",
+    "matrix": "至少添加一项服务和一个理想客户后即可生成匹配矩阵。",
+    "market": "为理想客户添加行业、公司规模或地区信号。",
+    "personas": "在理想客户中添加决策人画像，即可形成购买决策链。",
+    "evidence": "添加案例、证明材料或参考资料，让业务表达更可信。"
+  },
+  "conversation": {
+    "start_prompt": "请通过访谈帮我建立公司的基础信息。一次只问一个关键问题，先总结你准备修改的内容，并且只有在我明确确认后才保存。",
+    "improve_prompt": "请读取当前公司的基础信息，优先完善最影响获客质量的缺口。一次只问一个关键问题，总结准备修改的具体内容，并且只有在我明确确认后才保存。"
+  },
+  "audit": {
+    "manual_update": "更新公司基础信息",
+    "item_removed": "从公司基础信息中删除一项内容",
+    "matrix_update": "更新服务与理想客户匹配关系"
+  },
+  "toast": {
+    "saved": "基础信息已保存",
+    "save_failed": "基础信息保存失败，请检查填写内容后重试。",
+    "conflict": "信息已在其他地方更新，已重新加载最新内容。"
+  },
+  "error": {
+    "title": "无法加载基础信息",
+    "description": "请检查连接后重试。"
+  }
+}

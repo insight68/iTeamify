@@ -11,7 +11,7 @@ import type { MentionItem } from "./mention-suggestion";
 
 type RecencyMap = Record<string, number>;
 
-const STORAGE_PREFIX = "teamify:mention-recency:";
+const STORAGE_PREFIX = "iteamify:mention-recency:";
 const MAX_ENTRIES = 200;
 
 function storageKey(workspaceId: string): string {
@@ -91,7 +91,7 @@ export function sortUserItemsByRecency(
   items: MentionItem[],
   recency: RecencyMap,
 ): MentionItem[] {
-  return [...items].sort((a, b) => {
+  return items.toSorted((a, b) => {
     const ra = recency[recencyKey(a)] ?? 0;
     const rb = recency[recencyKey(b)] ?? 0;
     if (ra !== rb) return rb - ra;

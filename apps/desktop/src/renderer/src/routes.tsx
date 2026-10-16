@@ -1,45 +1,81 @@
-import { useEffect } from "react";
-import {
-  createMemoryRouter,
-  Navigate,
-  Outlet,
-  useMatches,
-} from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { createMemoryRouter, Outlet, useMatches } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
 import { IssueDetailPage } from "./pages/issue-detail-page";
 import { ProjectDetailPage } from "./pages/project-detail-page";
 import { AutopilotDetailPage } from "./pages/autopilot-detail-page";
 import { SkillDetailPage } from "./pages/skill-detail-page";
 import { AgentDetailPage } from "./pages/agent-detail-page";
-import { RuntimeDetailPage } from "./pages/runtime-detail-page";
-import { ReconciliationDetailPage } from "./pages/reconciliation-detail-page";
-import { SupplyReconciliationDetailPage } from "./pages/supply-reconciliation-detail-page";
-import { IssuesPage } from "@teamify/views/issues/components";
-import { ProjectsPage } from "@teamify/views/projects/components";
-import { AutopilotsPage } from "@teamify/views/autopilots/components";
-import { ReconciliationPage } from "@teamify/views/reconciliation";
+import { MemberDetailPage } from "./pages/member-detail-page";
 import {
-  SupplyReconciliationBillsPage,
-  SupplyReconciliationPage,
-  SupplyReconciliationResultsPage,
-} from "@teamify/views/supply-reconciliation";
-import { InventoryMonitorPage, InventoryPage } from "@teamify/views/inventory";
-import { ProductCategoriesPage } from "@teamify/views/product-categories";
-import { OrgPage } from "@teamify/views/org";
-import { DataSourcesPage } from "@teamify/views/datasources";
-import { MyIssuesPage } from "@teamify/views/my-issues";
-import { SkillsPage } from "@teamify/views/skills";
+  RuntimeDetailPage,
+  RuntimeSettingsPage,
+} from "./pages/runtime-detail-page";
+import { AttachmentPreviewRoute } from "./pages/attachment-preview-page";
+
+
+
+import { IssuesPage } from "@iteamify/views/issues/components/issues-page";
+import { ProjectsPage } from "@iteamify/views/projects/components";
+import { DashboardPage } from "@iteamify/views/dashboard";
+
+import { AutopilotsPage } from "@iteamify/views/autopilots/components";
+import { MyIssuesPage } from "@iteamify/views/my-issues";
+import { SkillsPage } from "@iteamify/views/skills";
 import { DesktopRuntimesPage } from "./components/desktop-runtimes-page";
-import { AgentsPage } from "@teamify/views/agents";
-import { ChatPage } from "@teamify/views/chat";
-import { InboxPage } from "@teamify/views/inbox";
-import { SettingsPage } from "@teamify/views/settings";
-import { ErrorBoundary } from "@teamify/ui/components/common/error-boundary";
-import { Download, Server } from "lucide-react";
+import { DesktopAgentsPage } from "./components/desktop-agents-page";
+
+import { SquadsPage, SquadDetailPage as SquadDetailPageView } from "@iteamify/views/squads/components";
+import { InboxPage } from "@iteamify/views/inbox";
+import { ChatPage } from "@iteamify/views/chat";
+import { SettingsPage } from "@iteamify/views/settings";
+
+
+
+import { CompanyPage } from "@iteamify/views/company";
+
+import { useT } from "@iteamify/views/i18n";
+import { Download, LoaderCircle, Server } from "lucide-react";
 import { DaemonSettingsTab } from "./components/daemon-settings-tab";
 import { UpdatesSettingsTab } from "./components/updates-settings-tab";
 import { WorkspaceRouteLayout } from "./components/workspace-route-layout";
-import { OwnerGuard } from "@teamify/views/layout";
+import { DesktopRouteErrorPage } from "./components/route-error-page";
+
+const BillingPage = lazy(() => import("@iteamify/views/billing").then((m) => ({ default: m.BillingPage })));
+const KnowledgePage = lazy(() => import("@iteamify/views/knowledge").then((m) => ({ default: m.KnowledgePage })));
+const ApplicationsPage = lazy(() => import("@iteamify/views/applications").then((m) => ({ default: m.ApplicationsPage })));
+const MembersPage = lazy(() => import("@iteamify/views/members").then((m) => ({ default: m.MembersPage })));
+const ConnectionsPage = lazy(() => import("@iteamify/views/connections").then((m) => ({ default: m.ConnectionsPage })));
+const RedditPage = lazy(() => import("@iteamify/views/connections").then((m) => ({ default: m.RedditPage })));
+const AgentCreationStudio = lazy(() => import("@iteamify/views/agents").then((m) => ({ default: m.AgentCreationStudio })));
+
+/**
+ * Wraps `SettingsPage` so the desktop-only extra tabs can pull their labels
+ * from i18n. The route element has to be a component (not a literal JSX
+ * value) for `useT` to run.
+ */
+function DesktopSettingsRoute() {
+  const { t } = useT("settings");
+  return (
+    <SettingsPage
+      agentsContent={<DesktopAgentsPage />}
+      extraAccountTabs={[
+        {
+          value: "daemon",
+          label: "Daemon",
+          icon: Server,
+          content: <DaemonSettingsTab />,
+        },
+        {
+          value: "updates",
+          label: t(($) => $.desktop.tabs.updates),
+          icon: Download,
+          content: <UpdatesSettingsTab />,
+        },
+      ]}
+    />
+  );
+}
 
 /**
  * Sets document.title from the deepest matched route's handle.title.
@@ -61,12 +97,24 @@ function TitleSync() {
   return null;
 }
 
+function RouteLoading() {
+  const { t } = useT("common");
+  return (
+    <div className="flex flex-1 items-center justify-center text-muted-foreground" role="status">
+      <LoaderCircle className="size-5 animate-spin" aria-hidden="true" />
+      <span className="sr-only">{t(($) => $.loading)}</span>
+    </div>
+  );
+}
+
 /** Wrapper that renders route children + TitleSync */
 function PageShell() {
   return (
     <>
       <TitleSync />
-      <Outlet />
+      <Suspense fallback={<RouteLoading />}>
+        <Outlet />
+      </Suspense>
     </>
   );
 }
@@ -91,20 +139,17 @@ function PageShell() {
 export const appRoutes: RouteObject[] = [
   {
     element: <PageShell />,
+    errorElement: <DesktopRouteErrorPage />,
     children: [
       { index: true, element: null },
       {
         path: ":workspaceSlug",
         element: <WorkspaceRouteLayout />,
         children: [
-          { index: true, element: <Navigate to="issues" replace /> },
+          { index: true, element: <CompanyPage />, handle: { title: "Company" } },
           {
             path: "issues",
-            element: (
-              <ErrorBoundary>
-                <IssuesPage />
-              </ErrorBoundary>
-            ),
+            element: <IssuesPage />,
             handle: { title: "Issues" },
           },
           {
@@ -118,51 +163,6 @@ export const appRoutes: RouteObject[] = [
             handle: { title: "Projects" },
           },
           {
-            path: "reconciliation",
-            element: <ErrorBoundary><ReconciliationPage /></ErrorBoundary>,
-            handle: { title: "Reconciliation" },
-          },
-          {
-            path: "supply-reconciliation",
-            element: <ErrorBoundary><SupplyReconciliationPage /></ErrorBoundary>,
-            handle: { title: "Supply fee reconciliation" },
-          },
-          {
-            path: "supply-reconciliation/results",
-            element: <ErrorBoundary><SupplyReconciliationResultsPage /></ErrorBoundary>,
-            handle: { title: "Supply fee reconciliation results" },
-          },
-          {
-            path: "supply-reconciliation/bills",
-            element: <ErrorBoundary><SupplyReconciliationBillsPage /></ErrorBoundary>,
-            handle: { title: "Supply fee bill import" },
-          },
-          {
-            path: "supply-reconciliation/results/:resultId",
-            element: <ErrorBoundary><SupplyReconciliationDetailPage /></ErrorBoundary>,
-            handle: { title: "Supply fee reconciliation evidence" },
-          },
-          {
-            path: "inventory",
-            element: <ErrorBoundary><InventoryPage /></ErrorBoundary>,
-            handle: { title: "Inventory allocation" },
-          },
-          {
-            path: "inventory/monitor",
-            element: <ErrorBoundary><InventoryMonitorPage /></ErrorBoundary>,
-            handle: { title: "Inventory monitor" },
-          },
-          {
-            path: "product-categories",
-            element: <ErrorBoundary><ProductCategoriesPage /></ErrorBoundary>,
-            handle: { title: "Product categories" },
-          },
-          {
-            path: "reconciliation/:batchNo",
-            element: <ErrorBoundary><ReconciliationDetailPage /></ErrorBoundary>,
-            handle: { title: "Reconciliation" },
-          },
-          {
             path: "projects/:id",
             element: <ProjectDetailPage />,
             handle: { title: "Project" },
@@ -173,19 +173,21 @@ export const appRoutes: RouteObject[] = [
             handle: { title: "Autopilot" },
           },
           {
-            path: "org",
-            element: <OwnerGuard><OrgPage /></OwnerGuard>,
-            handle: { title: "Org" },
-          },
-          {
-            path: "datasources",
-            element: <OwnerGuard><DataSourcesPage /></OwnerGuard>,
-            handle: { title: "Data Sources" },
-          },
-          {
             path: "autopilots/:id",
             element: <AutopilotDetailPage />,
             handle: { title: "Autopilot" },
+          },
+          {
+            path: "knowledge",
+            element: <KnowledgePage />,
+            handle: { title: "Knowledge" },
+          },
+          {
+            path: "business",
+            // Safety net for a tab restored by an older client. Current tab
+            // state is normalized to the Company root before routing.
+            element: <CompanyPage />,
+            handle: { title: "Company" },
           },
           {
             path: "my-issues",
@@ -194,50 +196,72 @@ export const appRoutes: RouteObject[] = [
           },
           {
             path: "runtimes",
-            element: <OwnerGuard><DesktopRuntimesPage /></OwnerGuard>,
+            element: <DesktopRuntimesPage />,
             handle: { title: "Runtimes" },
           },
           {
             path: "runtimes/:id",
-            element: <OwnerGuard><RuntimeDetailPage /></OwnerGuard>,
+            element: <RuntimeDetailPage />,
+            handle: { title: "Machine" },
+          },
+          {
+            path: "runtimes/:id/runtime/:runtimeId",
+            element: <RuntimeSettingsPage />,
             handle: { title: "Runtime" },
           },
-          { path: "skills", element: <OwnerGuard><SkillsPage /></OwnerGuard>, handle: { title: "Skills" } },
+          { path: "applications", element: <ApplicationsPage />, handle: { title: "Applications" } },
+          { path: "members", element: <MembersPage />, handle: { title: "Members" } },
+          { path: "skills", element: <SkillsPage />, handle: { title: "Skills" } },
           {
             path: "skills/:id",
-            element: <OwnerGuard><SkillDetailPage /></OwnerGuard>,
+            element: <SkillDetailPage />,
             handle: { title: "Skill" },
           },
-          { path: "agents", element: <OwnerGuard><AgentsPage /></OwnerGuard>, handle: { title: "Agents" } },
-          { path: "chats", element: <ErrorBoundary><ChatPage /></ErrorBoundary>, handle: { title: "Chats" } },
+          { path: "agents", element: <DesktopAgentsPage />, handle: { title: "Agents" } },
+          { path: "agents/new", element: <AgentCreationStudio />, handle: { title: "Create Agent" } },
           {
             path: "agents/:id",
-            element: <OwnerGuard><AgentDetailPage /></OwnerGuard>,
+            element: <AgentDetailPage />,
             handle: { title: "Agent" },
           },
+          {
+            path: "members/:id",
+            element: <MemberDetailPage />,
+            handle: { title: "Member" },
+          },
+          { path: "squads", element: <SquadsPage />, handle: { title: "Squads" } },
+          {
+            path: "squads/:id",
+            element: <SquadDetailPageView />,
+            handle: { title: "Squad" },
+          },
           { path: "inbox", element: <InboxPage />, handle: { title: "Inbox" } },
+          { path: "chat", element: <ChatPage />, handle: { title: "Chat" } },
+          {
+            path: "attachments/:id/preview",
+            element: <AttachmentPreviewRoute />,
+            handle: { title: "Attachment" },
+          },
+          {
+            path: "usage",
+            element: <DashboardPage />,
+            handle: { title: "Usage" },
+          },
+          {
+            path: "billing",
+            element: <BillingPage />,
+            handle: { title: "Billing" },
+          },
           {
             path: "settings",
-            element: (
-              <SettingsPage
-                extraAccountTabs={[
-                  {
-                    value: "daemon",
-                    label: "Daemon",
-                    icon: Server,
-                    content: <DaemonSettingsTab />,
-                    ownerOnly: true,
-                  },
-                  {
-                    value: "updates",
-                    label: "Updates",
-                    icon: Download,
-                    content: <UpdatesSettingsTab />,
-                  },
-                ]}
-              />
-            ),
+            element: <DesktopSettingsRoute />,
             handle: { title: "Settings" },
+          },
+          { path: "connections/reddit", element: <RedditPage /> },
+          {
+            path: "connections",
+            element: <ConnectionsPage />,
+            handle: { title: "Connections" },
           },
         ],
       },
@@ -245,9 +269,13 @@ export const appRoutes: RouteObject[] = [
   },
 ];
 
-/** Create an independent memory router for a tab. */
-export function createTabRouter(initialPath: string) {
+/**
+ * Create THE app router (MUL-4741 single-router session architecture).
+ * There is exactly one instance, owned by the tab Coordinator; it projects
+ * the active tab session's URL and is never navigated by anything else.
+ */
+export function createAppRouter() {
   return createMemoryRouter(appRoutes, {
-    initialEntries: [initialPath],
+    initialEntries: ["/"],
   });
 }

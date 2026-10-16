@@ -1,19 +1,23 @@
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { renderWithI18n } from "../test/i18n";
 
 const longRepoUrl =
-  "https://github.com/teamify-ai/a-very-long-repository-name-that-needs-a-tooltip";
+  "https://github.com/iteamify-ai/a-very-long-repository-name-that-needs-a-tooltip";
+const apiRepoUrl = "https://github.com/iteamify-ai/api";
+const webRepoUrl = "https://github.com/iteamify-ai/web";
 
 vi.mock("@tanstack/react-query", () => ({
   useQuery: () => ({ data: [] }),
 }));
 
-vi.mock("@teamify/core/projects/mutations", () => ({
+vi.mock("@iteamify/core/projects/mutations", () => ({
   useCreateProject: () => ({ mutateAsync: vi.fn() }),
 }));
 
-vi.mock("@teamify/core/projects", () => ({
+vi.mock("@iteamify/core/projects", () => ({
   useProjectDraftStore: (selector: (state: unknown) => unknown) =>
     selector({
       draft: {
@@ -24,34 +28,39 @@ vi.mock("@teamify/core/projects", () => ({
         leadType: undefined,
         leadId: undefined,
         icon: undefined,
+        selectedRepos: [],
+        customRepoUrl: "",
+        sourceMode: "repos",
+        selectedLocalPath: null,
+        selectedLocalLabel: null,
       },
       setDraft: vi.fn(),
       clearDraft: vi.fn(),
     }),
 }));
 
-vi.mock("@teamify/core/hooks", () => ({
+vi.mock("@iteamify/core/hooks", () => ({
   useWorkspaceId: () => "workspace-1",
 }));
 
-vi.mock("@teamify/core/paths", () => ({
+vi.mock("@iteamify/core/paths", () => ({
   useCurrentWorkspace: () => ({
     id: "workspace-1",
     name: "Test Workspace",
     slug: "test-workspace",
-    repos: [{ url: longRepoUrl }],
+    repos: [{ url: longRepoUrl }, { url: apiRepoUrl }, { url: webRepoUrl }],
   }),
   useWorkspacePaths: () => ({
     projectDetail: (id: string) => `/test-workspace/projects/${id}`,
   }),
 }));
 
-vi.mock("@teamify/core/workspace/queries", () => ({
+vi.mock("@iteamify/core/workspace/queries", () => ({
   memberListOptions: () => ({ queryKey: ["members"], queryFn: vi.fn() }),
   agentListOptions: () => ({ queryKey: ["agents"], queryFn: vi.fn() }),
 }));
 
-vi.mock("@teamify/core/workspace/hooks", () => ({
+vi.mock("@iteamify/core/workspace/hooks", () => ({
   useActorName: () => ({ getActorName: vi.fn() }),
 }));
 
@@ -85,13 +94,24 @@ vi.mock("../common/actor-avatar", () => ({
   ActorAvatar: () => <span data-testid="actor-avatar" />,
 }));
 
-vi.mock("@teamify/ui/components/ui/dialog", () => ({
+// Stub the date pickers so this test doesn't pull the real Calendar (and its
+// buttonVariants import) into the modal's module graph; the pickers have their
+// own test. The stubs render the placeholder label so the pills are assertable.
+vi.mock("../projects/components/project-start-date-picker", () => ({
+  ProjectStartDatePicker: () => <button type="button">Start date</button>,
+}));
+
+vi.mock("../projects/components/project-due-date-picker", () => ({
+  ProjectDueDatePicker: () => <button type="button">Due date</button>,
+}));
+
+vi.mock("@iteamify/ui/components/ui/dialog", () => ({
   Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@teamify/ui/components/ui/dropdown-menu", () => ({
+vi.mock("@iteamify/ui/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DropdownMenuTrigger: ({ render }: { render: React.ReactNode }) => <>{render}</>,
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -108,13 +128,13 @@ vi.mock("@teamify/ui/components/ui/dropdown-menu", () => ({
   ),
 }));
 
-vi.mock("@teamify/ui/components/ui/popover", () => ({
+vi.mock("@iteamify/ui/components/ui/popover", () => ({
   Popover: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   PopoverTrigger: ({ render }: { render: React.ReactNode }) => <>{render}</>,
   PopoverContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@teamify/ui/components/ui/tooltip", () => ({
+vi.mock("@iteamify/ui/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ render }: { render: React.ReactNode }) => <>{render}</>,
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
@@ -122,7 +142,7 @@ vi.mock("@teamify/ui/components/ui/tooltip", () => ({
   ),
 }));
 
-vi.mock("@teamify/ui/components/ui/button", () => ({
+vi.mock("@iteamify/ui/components/ui/button", () => ({
   Button: ({
     children,
     disabled,
@@ -140,11 +160,11 @@ vi.mock("@teamify/ui/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@teamify/ui/components/common/emoji-picker", () => ({
+vi.mock("@iteamify/ui/components/common/emoji-picker", () => ({
   EmojiPicker: () => null,
 }));
 
-vi.mock("@teamify/ui/lib/utils", () => ({
+vi.mock("@iteamify/ui/lib/utils", () => ({
   cn: (...values: Array<string | false | null | undefined>) =>
     values.filter(Boolean).join(" "),
 }));
@@ -162,7 +182,49 @@ describe("CreateProjectModal", () => {
   it("exposes full repository URLs in the repository picker", () => {
     render(<CreateProjectModal onClose={vi.fn()} />);
 
-    expect(screen.getByTitle(longRepoUrl)).toHaveTextContent(longRepoUrl);
+    // The Tooltip is the single reveal mechanism. A native `title` carrying the
+    // same URL would stack a browser tooltip on top of it (MUL-4836).
     expect(screen.getByRole("tooltip", { name: longRepoUrl })).toBeInTheDocument();
+    expect(screen.queryByTitle(longRepoUrl)).toBeNull();
+  });
+
+  it("reveals the start/due date pickers from the ⋯ overflow menu", async () => {
+    const user = userEvent.setup();
+    renderWithI18n(<CreateProjectModal onClose={vi.fn()} />);
+
+    // Dates are collapsed behind the overflow by default (progressive disclosure).
+    expect(screen.queryByRole("button", { name: "Start date" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Due date" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Set start date/ }));
+    expect(screen.getByRole("button", { name: "Start date" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Set due date/ }));
+    expect(screen.getByRole("button", { name: "Due date" })).toBeInTheDocument();
+  });
+
+  it("filters workspace repositories by search text", async () => {
+    const user = userEvent.setup();
+
+    renderWithI18n(<CreateProjectModal onClose={vi.fn()} />);
+
+    const repoSearchInput = screen.getByRole("textbox", { name: "Search repositories..." });
+
+    await user.type(repoSearchInput, "api");
+
+    expect(
+      screen.getByRole("button", { name: (name) => name.includes(apiRepoUrl) }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: (name) => name.includes(webRepoUrl) }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: (name) => name.includes(longRepoUrl) }),
+    ).not.toBeInTheDocument();
+
+    await user.clear(repoSearchInput);
+    await user.type(repoSearchInput, "no-match");
+
+    expect(screen.getByText("No repositories match your search.")).toBeInTheDocument();
   });
 });

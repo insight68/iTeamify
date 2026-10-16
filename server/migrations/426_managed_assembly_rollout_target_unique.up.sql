@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX CONCURRENTLY managed_assembly_rollout_target_uidx ON managed_assembly_rollout_target (rollout_id, workspace_id);

@@ -1,4 +1,4 @@
-import type { IssueStatus } from "@teamify/core/types";
+import type { IssueStatus } from "@iteamify/core/types";
 import { StatusIcon } from "./status-icon";
 import { useT } from "../../i18n";
 

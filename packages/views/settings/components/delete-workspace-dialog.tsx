@@ -8,11 +8,11 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@teamify/ui/components/ui/dialog";
-import { Input } from "@teamify/ui/components/ui/input";
-import { Label } from "@teamify/ui/components/ui/label";
-import { Button } from "@teamify/ui/components/ui/button";
-import { isImeComposing } from "@teamify/core/utils";
+} from "@iteamify/ui/components/ui/dialog";
+import { Input } from "@iteamify/ui/components/ui/input";
+import { Label } from "@iteamify/ui/components/ui/label";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { isImeComposing } from "@iteamify/core/utils";
 import { useT } from "../../i18n";
 
 /**

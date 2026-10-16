@@ -2,20 +2,22 @@
 
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Input } from "@teamify/ui/components/ui/input";
-import { Label } from "@teamify/ui/components/ui/label";
-import { Button } from "@teamify/ui/components/ui/button";
-import { Card, CardContent } from "@teamify/ui/components/ui/card";
-import { useCreateWorkspace } from "@teamify/core/workspace/mutations";
-import type { Workspace } from "@teamify/core/types";
-import { isImeComposing } from "@teamify/core/utils";
+import { Input } from "@iteamify/ui/components/ui/input";
+import { Label } from "@iteamify/ui/components/ui/label";
+import { Button } from "@iteamify/ui/components/ui/button";
+import { Card, CardContent } from "@iteamify/ui/components/ui/card";
+import { useCreateWorkspace } from "@iteamify/core/workspace/mutations";
+import type { Workspace } from "@iteamify/core/types";
+import { isImeComposing } from "@iteamify/core/utils";
 import {
   WORKSPACE_SLUG_REGEX,
   isWorkspaceSlugConflict,
   nameToWorkspaceSlug,
 } from "./slug";
 import { useT } from "../i18n";
-import { isReservedSlug } from "@teamify/core/paths";
+import { isReservedSlug } from "@iteamify/core/paths";
+import { useConfigStore } from "@iteamify/core/config";
+import { workspaceUrlHost } from "@iteamify/core/workspace/workspace-url";
 
 export interface CreateWorkspaceFormProps {
   onSuccess: (workspace: Workspace) => void | Promise<void>;
@@ -24,6 +26,7 @@ export interface CreateWorkspaceFormProps {
 export function CreateWorkspaceForm({ onSuccess }: CreateWorkspaceFormProps) {
   const { t } = useT("workspace");
   const createWorkspace = useCreateWorkspace();
+  const urlHost = workspaceUrlHost(useConfigStore((s) => s.daemonAppUrl));
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugServerError, setSlugServerError] = useState<string | null>(null);
@@ -67,7 +70,11 @@ export function CreateWorkspaceForm({ onSuccess }: CreateWorkspaceFormProps) {
             toast.error(t(($) => $.create_form.errors.slug_conflict_toast));
             return;
           }
-          toast.error(t(($) => $.create_form.errors.create_failed));
+          toast.error(
+            error instanceof Error && error.message
+              ? error.message
+              : t(($) => $.create_form.errors.create_failed),
+          );
         },
       },
     );
@@ -94,9 +101,8 @@ export function CreateWorkspaceForm({ onSuccess }: CreateWorkspaceFormProps) {
         <div className="space-y-1.5">
           <Label htmlFor="ws-slug">{t(($) => $.create_form.url_label)}</Label>
           <div className="flex items-center gap-0 rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring">
-            {/* eslint-disable-next-line i18next/no-literal-string -- brand URL prefix, not translatable */}
             <span className="pl-3 text-sm text-muted-foreground select-none">
-              teamify.world/
+              {`${urlHost}/`}
             </span>
             <Input
               id="ws-slug"

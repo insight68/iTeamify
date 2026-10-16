@@ -17,9 +17,13 @@
   "new_page": {
     "back": "Back",
     "log_out": "Log out",
-    "title": "Welcome to Teamify",
-    "description": "One workspace where you and your AI teammates work side by side — 处理事项、发表评论、共享相同的上下文.",
+    "title": "Welcome to iteamify",
+    "description": "One workspace where you and your AI teammates work side by side — taking issues, leaving comments, sharing the same context.",
     "invite_hint": "You can invite teammates once your workspace is ready."
+  },
+  "creation_disabled": {
+    "title": "Workspace creation is disabled",
+    "description": "This iteamify instance does not allow new workspaces to be created. Ask your administrator for an invitation to an existing workspace."
   },
   "no_access": {
     "title": "Workspace not available",

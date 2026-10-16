@@ -1,5 +1,0 @@
-{
-  "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "turbo build --filter=@teamify/web",
-  "outputDirectory": "apps/web/.next"
-}

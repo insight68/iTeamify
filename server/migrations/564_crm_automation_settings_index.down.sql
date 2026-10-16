@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS idx_workspace_crm_automation_settings_workspace;

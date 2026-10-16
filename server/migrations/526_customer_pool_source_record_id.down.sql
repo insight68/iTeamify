@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS customer_pool_source_record_id_idx;

@@ -1,1 +1,0 @@
--- Forward-only retirement: restore by rolling forward with an explicitly reviewed migration.

@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX CONCURRENTLY new_workspace_provisioning_policy_key_uidx ON new_workspace_provisioning_policy (policy_key);

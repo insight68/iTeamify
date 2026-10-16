@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS agent_blueprint_origin_asset_uidx;

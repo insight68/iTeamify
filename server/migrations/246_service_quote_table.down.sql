@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS service_quote_workspace_status_created_idx;

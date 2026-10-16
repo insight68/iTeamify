@@ -1,1 +1,0 @@
-ALTER TABLE task_token_credit_rate_snapshot DROP CONSTRAINT IF EXISTS task_token_credit_rate_snapshot_pkey;

@@ -1,1 +1,0 @@
-ALTER TABLE workspace_credit_operation_outbox ADD CONSTRAINT workspace_credit_operation_outbox_primary_key PRIMARY KEY USING INDEX workspace_credit_operation_outbox_pkey;

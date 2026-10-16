@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS workspace_provisioning_operation_release_uidx;

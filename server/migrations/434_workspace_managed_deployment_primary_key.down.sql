@@ -1,1 +1,0 @@
-ALTER TABLE workspace_managed_deployment DROP CONSTRAINT IF EXISTS workspace_managed_deployment_pkey;

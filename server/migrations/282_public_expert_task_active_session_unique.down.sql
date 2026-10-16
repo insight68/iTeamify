@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS public_expert_task_active_session_uidx;

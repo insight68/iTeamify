@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS public_sales_runtime_instance_instance_id_uidx;

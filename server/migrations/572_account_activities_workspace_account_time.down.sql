@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS idx_account_activities_workspace_account_time;

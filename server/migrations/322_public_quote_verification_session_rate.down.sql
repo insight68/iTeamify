@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS public_quote_verification_session_rate_idx;

@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS public_sales_runtime_profile_seen_idx;

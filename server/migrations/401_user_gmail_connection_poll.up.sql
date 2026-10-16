@@ -1,1 +1,0 @@
-CREATE INDEX CONCURRENTLY user_gmail_connection_poll_idx ON user_gmail_connection (last_sync_at ASC NULLS FIRST) WHERE status IN ('active', 'attention') AND COALESCE(last_error_code, '') NOT IN ('gmail_auth_expired', 'gmail_permission_denied');

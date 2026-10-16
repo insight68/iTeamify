@@ -1,5 +1,0 @@
-ALTER TABLE user_gmail_connection ADD CONSTRAINT user_gmail_connection_pkey PRIMARY KEY USING INDEX user_gmail_connection_id_uidx;
-ALTER TABLE gmail_oauth_state ADD CONSTRAINT gmail_oauth_state_pkey PRIMARY KEY USING INDEX gmail_oauth_state_hash_uidx;
-ALTER TABLE gmail_analysis_binding ADD CONSTRAINT gmail_analysis_binding_pkey PRIMARY KEY USING INDEX gmail_analysis_binding_id_uidx;
-ALTER TABLE gmail_sync_job ADD CONSTRAINT gmail_sync_job_pkey PRIMARY KEY USING INDEX gmail_sync_job_connection_uidx;
-ALTER TABLE gmail_message ADD CONSTRAINT gmail_message_pkey PRIMARY KEY USING INDEX gmail_message_id_uidx;

@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX CONCURRENTLY workspace_managed_deployment_workspace_uidx ON workspace_managed_deployment (workspace_id);

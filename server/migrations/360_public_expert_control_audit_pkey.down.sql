@@ -1,1 +1,0 @@
-ALTER TABLE public_expert_control_audit DROP CONSTRAINT IF EXISTS public_expert_control_audit_pkey;

@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS agent_runtime_managed_daemon_assignment_idx;

@@ -1,2 +1,0 @@
-ALTER TABLE daily_opportunity_candidate ADD CONSTRAINT daily_opportunity_candidate_pkey PRIMARY KEY USING INDEX daily_opportunity_candidate_pkey;
-ALTER TABLE daily_opportunity_event ADD CONSTRAINT daily_opportunity_event_pkey PRIMARY KEY USING INDEX daily_opportunity_event_pkey;

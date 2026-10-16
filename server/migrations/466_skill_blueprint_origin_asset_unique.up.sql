@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX CONCURRENTLY skill_blueprint_origin_asset_uidx ON skill_blueprint_origin (workspace_id, blueprint_asset_key);

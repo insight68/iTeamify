@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX CONCURRENTLY public_expert_usage_reservation_pkey ON public_expert_usage_reservation (id);

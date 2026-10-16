@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS idx_lead_sources_workspace_type_key;

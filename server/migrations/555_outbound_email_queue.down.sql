@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY outbound_email_queue_idx;

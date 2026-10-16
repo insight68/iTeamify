@@ -1,8 +1,0 @@
-ALTER TABLE customer_pool_company DROP CONSTRAINT customer_pool_company_pkey;
-ALTER TABLE customer_pool_contact DROP CONSTRAINT customer_pool_contact_pkey;
-ALTER TABLE customer_pool_source DROP CONSTRAINT customer_pool_source_pkey;
-ALTER TABLE customer_pool_source_record DROP CONSTRAINT customer_pool_source_record_pkey;
-ALTER TABLE customer_pool_request DROP CONSTRAINT customer_pool_request_pkey;
-ALTER TABLE customer_pool_request_item DROP CONSTRAINT customer_pool_request_item_pkey;
-ALTER TABLE customer_pool_provider_call DROP CONSTRAINT customer_pool_provider_call_pkey;
-ALTER TABLE customer_pool_event DROP CONSTRAINT customer_pool_event_pkey;

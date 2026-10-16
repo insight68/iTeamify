@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS idx_prospect_leads_workspace_job;

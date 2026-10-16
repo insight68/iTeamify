@@ -1,1 +1,0 @@
-CREATE INDEX CONCURRENTLY workspace_provisioning_operation_claim_idx ON workspace_provisioning_operation (next_attempt_at, created_at, id) WHERE status IN ('pending', 'preparing_runtime', 'installing_assets', 'validating');

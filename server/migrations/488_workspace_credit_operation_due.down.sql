@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS workspace_credit_operation_due_idx;

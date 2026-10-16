@@ -1,2 +1,0 @@
-ALTER TABLE workspace_managed_deployment
-    ADD CONSTRAINT workspace_managed_deployment_pkey PRIMARY KEY USING INDEX workspace_managed_deployment_workspace_uidx;

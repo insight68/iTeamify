@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS gmail_analysis_binding_connection_workspace_uidx;

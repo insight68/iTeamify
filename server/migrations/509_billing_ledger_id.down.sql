@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS billing_ledger_id_idx;

@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY public_expert_billing_workspace_idx;

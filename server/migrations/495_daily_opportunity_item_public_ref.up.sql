@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX CONCURRENTLY daily_opportunity_item_public_ref_idx ON daily_opportunity_item (public_ref);

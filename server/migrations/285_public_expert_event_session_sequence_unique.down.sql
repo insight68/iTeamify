@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS public_expert_event_session_sequence_uidx;

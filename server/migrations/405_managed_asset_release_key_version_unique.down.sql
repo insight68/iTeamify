@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS managed_asset_release_key_version_uidx;

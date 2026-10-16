@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY user_password_user_unique;

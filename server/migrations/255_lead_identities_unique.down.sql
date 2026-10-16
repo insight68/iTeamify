@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS idx_lead_identities_workspace_type_value;

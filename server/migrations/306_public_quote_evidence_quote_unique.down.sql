@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS public_quote_acceptance_evidence_quote_uidx;

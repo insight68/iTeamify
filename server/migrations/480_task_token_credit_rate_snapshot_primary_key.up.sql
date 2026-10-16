@@ -1,2 +1,0 @@
-ALTER TABLE task_token_credit_rate_snapshot
-    ADD CONSTRAINT task_token_credit_rate_snapshot_pkey PRIMARY KEY USING INDEX task_token_credit_rate_snapshot_task_uidx;

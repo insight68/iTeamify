@@ -1,1 +1,0 @@
--- Forward-only cleanup: removed templates and operation history are not reconstructed.

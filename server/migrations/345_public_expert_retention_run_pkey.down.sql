@@ -1,1 +1,0 @@
-ALTER TABLE public_expert_retention_run DROP CONSTRAINT IF EXISTS public_expert_retention_run_pkey;

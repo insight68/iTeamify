@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS assistant_operation_task_time_idx;

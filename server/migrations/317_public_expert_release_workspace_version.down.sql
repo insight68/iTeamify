@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS public_expert_release_workspace_version_idx;

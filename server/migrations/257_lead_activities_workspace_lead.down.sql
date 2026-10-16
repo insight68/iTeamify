@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS idx_lead_activities_workspace_lead_time;

@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS new_workspace_provisioning_policy_key_uidx;

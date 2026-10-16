@@ -1,1 +1,0 @@
-ALTER TABLE public_sales_runtime_instance ADD CONSTRAINT public_sales_runtime_instance_pkey PRIMARY KEY USING INDEX public_sales_runtime_instance_instance_id_uidx;

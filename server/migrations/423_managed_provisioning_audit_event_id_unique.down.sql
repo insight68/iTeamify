@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS managed_provisioning_audit_event_id_uidx;

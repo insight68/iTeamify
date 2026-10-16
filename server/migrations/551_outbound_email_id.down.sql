@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS outbound_email_id_idx;

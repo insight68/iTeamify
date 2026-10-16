@@ -1,3 +1,0 @@
-ALTER TABLE workspace_provisioning_operation DROP CONSTRAINT IF EXISTS workspace_provisioning_operation_pkey;
-ALTER TABLE new_workspace_provisioning_policy DROP CONSTRAINT IF EXISTS new_workspace_provisioning_policy_pkey;
-ALTER TABLE managed_asset_release DROP CONSTRAINT IF EXISTS managed_asset_release_pkey;

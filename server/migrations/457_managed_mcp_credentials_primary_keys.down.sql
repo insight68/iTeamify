@@ -1,2 +1,0 @@
-ALTER TABLE workspace_managed_mcp_binding DROP CONSTRAINT IF EXISTS workspace_managed_mcp_binding_pkey;
-ALTER TABLE managed_mcp_credential_seed DROP CONSTRAINT IF EXISTS managed_mcp_credential_seed_pkey;

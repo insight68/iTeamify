@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS public_expert_session_event_created_at_idx;

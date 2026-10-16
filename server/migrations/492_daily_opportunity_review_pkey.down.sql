@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS daily_opportunity_review_pkey_idx;

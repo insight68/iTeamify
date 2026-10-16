@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX CONCURRENTLY managed_provisioning_audit_event_id_uidx ON managed_provisioning_audit_event (id);

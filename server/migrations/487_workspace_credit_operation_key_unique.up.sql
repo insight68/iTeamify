@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX CONCURRENTLY workspace_credit_operation_key_uidx ON workspace_credit_operation_outbox (operation_key);

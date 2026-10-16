@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS platform_openagent_config_id_unique;

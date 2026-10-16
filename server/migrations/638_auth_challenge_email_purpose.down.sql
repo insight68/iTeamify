@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY auth_challenge_email_purpose;

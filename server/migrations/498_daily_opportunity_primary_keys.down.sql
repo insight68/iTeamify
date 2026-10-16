@@ -1,3 +1,0 @@
-ALTER TABLE daily_opportunity_review DROP CONSTRAINT IF EXISTS daily_opportunity_review_pkey;
-ALTER TABLE daily_opportunity_item DROP CONSTRAINT IF EXISTS daily_opportunity_item_pkey;
-ALTER TABLE daily_opportunity_edition DROP CONSTRAINT IF EXISTS daily_opportunity_edition_pkey;

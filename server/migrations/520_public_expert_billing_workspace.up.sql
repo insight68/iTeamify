@@ -1,1 +1,0 @@
-CREATE INDEX CONCURRENTLY public_expert_billing_workspace_idx ON public_expert_billing (workspace_id);

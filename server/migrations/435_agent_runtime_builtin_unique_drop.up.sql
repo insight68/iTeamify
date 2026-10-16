@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS agent_runtime_workspace_daemon_provider_key;

@@ -1,3 +1,0 @@
-ALTER TABLE daily_opportunity_edition ADD CONSTRAINT daily_opportunity_edition_pkey PRIMARY KEY USING INDEX daily_opportunity_edition_pkey_idx;
-ALTER TABLE daily_opportunity_item ADD CONSTRAINT daily_opportunity_item_pkey PRIMARY KEY USING INDEX daily_opportunity_item_pkey_idx;
-ALTER TABLE daily_opportunity_review ADD CONSTRAINT daily_opportunity_review_pkey PRIMARY KEY USING INDEX daily_opportunity_review_pkey_idx;

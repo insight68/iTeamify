@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX CONCURRENTLY managed_asset_candidate_source_hash_uidx ON managed_asset_candidate (asset_type, source_workspace_id, source_entity_id, source_content_hash, submitted_by);

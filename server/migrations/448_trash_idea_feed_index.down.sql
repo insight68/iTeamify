@@ -1,1 +1,0 @@
-DROP INDEX CONCURRENTLY IF EXISTS trash_idea_feed_idx;

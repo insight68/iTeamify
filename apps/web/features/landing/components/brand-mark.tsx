@@ -5,15 +5,24 @@
 
 import { cn } from "@iteamify/ui/lib/utils";
 
-const ICON_SRC = "/brand/iteamify-icon.png";
+/**
+ * Bump the version string whenever the artwork changes.
+ *
+ * Browsers cache image and favicon responses far more stubbornly than the rest
+ * of the page, so a same-URL swap silently keeps serving the old mark. Keep
+ * this in step with the favicon `?v=` in `app/layout.tsx`.
+ */
+const BRAND_ASSET_VERSION = "20261016";
+
+const ICON_SRC = `/brand/iteamify-icon.png?v=${BRAND_ASSET_VERSION}`;
 
 type BrandMarkTone = "brand" | "mono";
 
 /**
  * Square brand glyph — the same artwork the favicon and the app icons use. The
- * mark is a teal-to-blue sweep, so it reads on both light and dark surfaces;
- * there is no per-surface colour variant. `tone="mono"` flattens it to a
- * silhouette for decorative watermarks.
+ * mark is a blue glyph with a deeper blue overlay where its limbs cross, so it
+ * reads on both light and dark surfaces; there is no per-surface colour
+ * variant. `tone="mono"` flattens it to a silhouette for decorative watermarks.
  */
 export function BrandMark({
   className,

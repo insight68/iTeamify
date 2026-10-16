@@ -68,11 +68,15 @@ export const metadata: Metadata = {
   icons: {
     // SVG first (crisp at every size), PNG after it so browsers without SVG
     // favicon support — Safari and older Android WebView — still get the mark.
+    // The `?v=` must change whenever the artwork does: favicons are cached
+    // harder than the rest of the page, so a same-URL swap keeps showing the
+    // old mark. Keep in step with `BRAND_ASSET_VERSION` in
+    // `features/landing/components/brand-mark.tsx`.
     icon: [
-      { url: "/favicon.svg?v=iteamify-brand", type: "image/svg+xml", sizes: "any" },
-      { url: "/icon-192.png?v=iteamify-brand", type: "image/png", sizes: "192x192" },
+      { url: "/favicon.svg?v=20261016", type: "image/svg+xml", sizes: "any" },
+      { url: "/icon-192.png?v=20261016", type: "image/png", sizes: "192x192" },
     ],
-    shortcut: ["/favicon.svg?v=iteamify-brand"],
+    shortcut: ["/favicon.svg?v=20261016"],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {

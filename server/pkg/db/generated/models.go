@@ -1155,6 +1155,19 @@ type ProjectResource struct {
 	CreatedBy    pgtype.UUID        `json:"created_by"`
 }
 
+type ProjectWorkflow struct {
+	ProjectID          pgtype.UUID        `json:"project_id"`
+	AcceptanceCriteria string             `json:"acceptance_criteria"`
+	CreatedBy          pgtype.UUID        `json:"created_by"`
+	ExecutionIssueID   pgtype.UUID        `json:"execution_issue_id"`
+	State              string             `json:"state"`
+	Result             string             `json:"result"`
+	ReviewNote         string             `json:"review_note"`
+	ReviewedBy         pgtype.UUID        `json:"reviewed_by"`
+	Version            int32              `json:"version"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
 type RedditConnection struct {
 	ID           pgtype.UUID        `json:"id"`
 	WorkspaceID  pgtype.UUID        `json:"workspace_id"`

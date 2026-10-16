@@ -62,7 +62,7 @@ func TestSessionApplicationPublicAccessAndAdminConfiguration(t *testing.T) {
 		t.Fatalf("member wrote config: %d", w.Code)
 	}
 	before := applicationTestList(t, peer, "")
-	if string(before["can_manage"]) != "false" || string(before["applications"]) != "[\"conversation\",\"contract_review\"]" {
+	if string(before["can_manage"]) != "false" || string(before["applications"]) != "[\"conversation\",\"contract_review\",\"projects\"]" {
 		t.Fatalf("catalog: %s", before)
 	}
 	w := applicationTestSave(t, testUserID, "", in)
@@ -173,7 +173,7 @@ func TestSessionApplicationRuntimeCapabilityDoesNotBlockOrdinaryConversation(t *
 			t.Fatalf("unsupported runtime enabled: %d %s", w.Code, w.Body.String())
 		}
 		got := applicationTestList(t, testUserID, "?target_kind=agent&target_id="+agentID)
-		if string(got["providers"]) != "[]" || string(got["applications"]) != "[\"conversation\",\"contract_review\"]" {
+		if string(got["providers"]) != "[]" || string(got["applications"]) != "[\"conversation\",\"contract_review\",\"projects\"]" {
 			t.Fatalf("ordinary conversation discovery changed: %s", got)
 		}
 		// A stale binding cannot bypass the submission capability check.

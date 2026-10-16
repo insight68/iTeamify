@@ -166,6 +166,9 @@ trap 'rm -f "$ALL_LIST" "$FILE_LIST" "$DB_LIST" "$UNTRACKED_LIST"' EXIT
 # up. Fall back to the directory when not in a git checkout (release tarball).
 if git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
   git -C "$ROOT" ls-files -- server/migrations/ 2>/dev/null \
+    | while IFS= read -r file; do
+        if [ -f "$ROOT/$file" ]; then printf '%s\n' "$file"; fi
+      done \
     | grep '\.up\.sql$' | sed 's#.*/##; s/\.up\.sql$//' | LC_ALL=C sort >"$FILE_LIST"
 fi
 if [ ! -s "$FILE_LIST" ]; then
@@ -224,13 +227,13 @@ else
 fi
 
 # NOT VALID constraints are how this repo adds a CHECK without taking a full
-# table lock (see migrations/413). They are intentional and stay unvalidated,
+# table scan during an incremental upgrade. They can stay unvalidated,
 # so this is informational, never a failure.
 NOTVALID="$("${PSQL[@]}" -c "
   select count(*) from pg_constraint
   where not convalidated and connamespace = 'public'::regnamespace;")"
 if [ "$NOTVALID" != "0" ]; then
-  note "$NOTVALID CHECK constraint(s) are NOT VALID (expected for 413-style adds, informational only)"
+  note "$NOTVALID CHECK constraint(s) are NOT VALID (informational only)"
 else
   ok "no unvalidated CHECK constraints"
 fi

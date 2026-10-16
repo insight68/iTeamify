@@ -136,7 +136,7 @@ func (h *Handler) ListSessionApplications(w http.ResponseWriter, r *http.Request
 			configs = append(configs, resp)
 		}
 	}
-	writeJSON(w, 200, map[string]any{"applications": []string{"conversation", "contract_review"}, "can_manage": admin, "providers": providers, "configurations": configs})
+	writeJSON(w, 200, map[string]any{"applications": []string{"conversation", "contract_review", "projects"}, "can_manage": admin, "providers": providers, "configurations": configs})
 }
 
 func (h *Handler) SaveSessionApplication(w http.ResponseWriter, r *http.Request) {

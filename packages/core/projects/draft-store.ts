@@ -2,6 +2,7 @@ import type { ProjectStatus, ProjectPriority } from "../types";
 import { createDraftStore } from "../drafts/create-draft-store";
 
 interface ProjectDraft {
+  acceptanceCriteria: string;
   title: string;
   description: string;
   status: ProjectStatus;
@@ -20,6 +21,7 @@ interface ProjectDraft {
 }
 
 const EMPTY_DRAFT: ProjectDraft = {
+  acceptanceCriteria: "",
   title: "",
   description: "",
   status: "planned",
@@ -39,5 +41,5 @@ const EMPTY_DRAFT: ProjectDraft = {
 export const useProjectDraftStore = createDraftStore<ProjectDraft>({
   storageKey: "iteamify_project_draft",
   emptyData: EMPTY_DRAFT,
-  hasMeaningful: (d) => !!(d.title || d.description || d.selectedRepos.length || d.customRepoUrl || d.selectedLocalPath),
+  hasMeaningful: (d) => !!(d.title || d.description || d.acceptanceCriteria || d.selectedRepos.length || d.customRepoUrl || d.selectedLocalPath),
 });

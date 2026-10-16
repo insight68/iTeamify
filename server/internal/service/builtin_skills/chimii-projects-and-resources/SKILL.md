@@ -9,7 +9,7 @@ allowed-tools: Bash(iteamify *)
 
 ## Quick start
 
-Projects are durable context containers. Resources attached to a project can affect future agent tasks.
+Projects use a simple initiation, assignment, execution, and human acceptance workflow in Applications → Projects. Projects also carry durable context; attached resources affect future agent tasks.
 
 ```bash
 iteamify project list --output json
@@ -31,6 +31,14 @@ Common resource types:
 - `github_repo` — durable GitHub repo context, with `resource_ref.url`, optional checkout `ref`, and optional prompt-only `default_branch_hint`;
 - `local_directory` — daemon-local path context, with `resource_ref.local_path`, `daemon_id`, and optional label.
 
+## Project delivery and acceptance
+
+The human-facing project application defines a goal and `acceptance_criteria`, then assigns one member or agent. Assignment atomically creates a linked execution issue. Agents should post the final deliverable as an issue comment and set that issue to `in_review` (a `done` issue also waits for acceptance). Only the project requester or a workspace administrator can accept the project through its workflow action. Lifecycle changes use the project application; generic project status updates are rejected. Do not use `project status ... completed` to bypass acceptance.
+
+A rejection requires review notes and resumes execution with the same assignee. Read those notes before revising the deliverable. Existing issue commands remain the execution interface; the project application owns initiation and acceptance. Queued/running/deferred tasks block duplicate dispatch and acceptance. A changed deliverable must be reviewed again.
+
+Project resources remain available under the project brief before assignment.
+
 ## CLI
 
 ```bash
@@ -41,7 +49,6 @@ iteamify project create --title "<title>" --start-date 2026-03-01 --due-date 202
 iteamify project update <project-id> --title "<title>" --output json
 iteamify project update <project-id> --due-date 2026-04-15 --output json
 iteamify project update <project-id> --start-date "" --output json   # clear the start date
-iteamify project status <project-id> in_progress --output json
 iteamify project resource list <project-id> --output json
 iteamify project resource add <project-id> --type github_repo --url <github-url> --output json
 iteamify project resource add <project-id> --type github_repo --url <github-url> --ref <branch-or-sha> --output json

@@ -1,230 +1,86 @@
-import React from "react";
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, screen } from "@testing-library/react";
 import { renderWithI18n } from "../test/i18n";
-
-const longRepoUrl =
-  "https://github.com/iteamify-ai/a-very-long-repository-name-that-needs-a-tooltip";
-const apiRepoUrl = "https://github.com/iteamify-ai/api";
-const webRepoUrl = "https://github.com/iteamify-ai/web";
-
-vi.mock("@tanstack/react-query", () => ({
-  useQuery: () => ({ data: [] }),
-}));
-
-vi.mock("@iteamify/core/projects/mutations", () => ({
-  useCreateProject: () => ({ mutateAsync: vi.fn() }),
-}));
-
-vi.mock("@iteamify/core/projects", () => ({
-  useProjectDraftStore: (selector: (state: unknown) => unknown) =>
-    selector({
-      draft: {
-        title: "",
-        description: "",
-        status: "planned",
-        priority: "medium",
-        leadType: undefined,
-        leadId: undefined,
-        icon: undefined,
-        selectedRepos: [],
-        customRepoUrl: "",
-        sourceMode: "repos",
-        selectedLocalPath: null,
-        selectedLocalLabel: null,
-      },
-      setDraft: vi.fn(),
-      clearDraft: vi.fn(),
-    }),
-}));
-
-vi.mock("@iteamify/core/hooks", () => ({
-  useWorkspaceId: () => "workspace-1",
-}));
-
-vi.mock("@iteamify/core/paths", () => ({
-  useCurrentWorkspace: () => ({
-    id: "workspace-1",
-    name: "Test Workspace",
-    slug: "test-workspace",
-    repos: [{ url: longRepoUrl }, { url: apiRepoUrl }, { url: webRepoUrl }],
-  }),
-  useWorkspacePaths: () => ({
-    projectDetail: (id: string) => `/test-workspace/projects/${id}`,
-  }),
-}));
-
-vi.mock("@iteamify/core/workspace/queries", () => ({
-  memberListOptions: () => ({ queryKey: ["members"], queryFn: vi.fn() }),
-  agentListOptions: () => ({ queryKey: ["agents"], queryFn: vi.fn() }),
-}));
-
-vi.mock("@iteamify/core/workspace/hooks", () => ({
-  useActorName: () => ({ getActorName: vi.fn() }),
-}));
-
-vi.mock("../navigation", () => ({
-  useNavigation: () => ({ push: vi.fn() }),
-}));
-
-vi.mock("../editor", () => {
-  const ContentEditor = React.forwardRef<HTMLTextAreaElement, { placeholder?: string }>(
-    ({ placeholder }, ref) => <textarea ref={ref} placeholder={placeholder} />,
-  );
-  ContentEditor.displayName = "ContentEditor";
-
-  return {
-    ContentEditor,
-    TitleEditor: ({
-      placeholder,
-      onChange,
-    }: {
-      placeholder?: string;
-      onChange?: (value: string) => void;
-    }) => <input placeholder={placeholder} onChange={(e) => onChange?.(e.target.value)} />,
-  };
-});
-
-vi.mock("../issues/components/priority-icon", () => ({
-  PriorityIcon: () => <span data-testid="priority-icon" />,
-}));
-
-vi.mock("../common/actor-avatar", () => ({
-  ActorAvatar: () => <span data-testid="actor-avatar" />,
-}));
-
-// Stub the date pickers so this test doesn't pull the real Calendar (and its
-// buttonVariants import) into the modal's module graph; the pickers have their
-// own test. The stubs render the placeholder label so the pills are assertable.
-vi.mock("../projects/components/project-start-date-picker", () => ({
-  ProjectStartDatePicker: () => <button type="button">Start date</button>,
-}));
-
-vi.mock("../projects/components/project-due-date-picker", () => ({
-  ProjectDueDatePicker: () => <button type="button">Due date</button>,
-}));
-
-vi.mock("@iteamify/ui/components/ui/dialog", () => ({
-  Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DialogTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@iteamify/ui/components/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DropdownMenuTrigger: ({ render }: { render: React.ReactNode }) => <>{render}</>,
-  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DropdownMenuItem: ({
-    children,
-    onClick,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-  }) => (
-    <button type="button" onClick={onClick}>
-      {children}
-    </button>
-  ),
-}));
-
-vi.mock("@iteamify/ui/components/ui/popover", () => ({
-  Popover: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  PopoverTrigger: ({ render }: { render: React.ReactNode }) => <>{render}</>,
-  PopoverContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@iteamify/ui/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  TooltipTrigger: ({ render }: { render: React.ReactNode }) => <>{render}</>,
-  TooltipContent: ({ children }: { children: React.ReactNode }) => (
-    <div role="tooltip">{children}</div>
-  ),
-}));
-
-vi.mock("@iteamify/ui/components/ui/button", () => ({
-  Button: ({
-    children,
-    disabled,
-    onClick,
-    type = "button",
-  }: {
-    children: React.ReactNode;
-    disabled?: boolean;
-    onClick?: () => void;
-    type?: "button" | "submit" | "reset";
-  }) => (
-    <button type={type} disabled={disabled} onClick={onClick}>
-      {children}
-    </button>
-  ),
-}));
-
-vi.mock("@iteamify/ui/components/common/emoji-picker", () => ({
-  EmojiPicker: () => null,
-}));
-
-vi.mock("@iteamify/ui/lib/utils", () => ({
-  cn: (...values: Array<string | false | null | undefined>) =>
-    values.filter(Boolean).join(" "),
-}));
-
-vi.mock("sonner", () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 import { CreateProjectModal } from "./create-project";
 
-describe("CreateProjectModal", () => {
-  it("exposes full repository URLs in the repository picker", () => {
-    render(<CreateProjectModal onClose={vi.fn()} />);
+const mocks = vi.hoisted(() => ({
+  mutate: vi.fn(),
+  clearDraft: vi.fn(),
+  setDraft: vi.fn(),
+  push: vi.fn(),
+  close: vi.fn(),
+}));
+vi.mock("@iteamify/core/projects", () => ({
+  useCreateProject: () => ({
+    mutate: mocks.mutate,
+    isPending: false,
+    isError: false,
+  }),
+  useProjectDraftStore: Object.assign(
+    (selector: (state: unknown) => unknown) =>
+      selector({
+        draft: { title: "", description: "", acceptanceCriteria: "" },
+        clearDraft: mocks.clearDraft,
+        setDraft: mocks.setDraft,
+      }),
+    { getState: () => ({}) },
+  ),
+}));
+vi.mock("@iteamify/core/paths", () => ({
+  useWorkspacePaths: () => ({
+    projectDetail: (id: string) => `/acme/projects/${id}`,
+  }),
+}));
+vi.mock("../navigation", () => ({
+  useNavigation: () => ({ push: mocks.push }),
+}));
 
-    // The Tooltip is the single reveal mechanism. A native `title` carrying the
-    // same URL would stack a browser tooltip on top of it (MUL-4836).
-    expect(screen.getByRole("tooltip", { name: longRepoUrl })).toBeInTheDocument();
-    expect(screen.queryByTitle(longRepoUrl)).toBeNull();
+beforeEach(() => vi.clearAllMocks());
+
+describe("Project initiation", () => {
+  it("requires acceptance criteria and waits for server confirmation before navigating", () => {
+    renderWithI18n(<CreateProjectModal onClose={mocks.close} />);
+    fireEvent.change(screen.getByLabelText("Project name"), {
+      target: { value: "Report" },
+    });
+    expect(
+      screen.getByRole("button", { name: "Create project" }),
+    ).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Goal and background"), {
+      target: { value: "Research market" },
+    });
+    fireEvent.change(screen.getByLabelText("Acceptance criteria"), {
+      target: { value: "Include sources" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create project" }));
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      {
+        title: "Report",
+        description: "Research market",
+        acceptance_criteria: "Include sources",
+      },
+      expect.any(Object),
+    );
+    expect(mocks.push).not.toHaveBeenCalled();
+    expect(mocks.clearDraft).not.toHaveBeenCalled();
+    mocks.mutate.mock.calls[0]![1].onSuccess({ id: "p1" });
+    expect(mocks.clearDraft).toHaveBeenCalled();
+    expect(mocks.close).toHaveBeenCalled();
+    expect(mocks.push).toHaveBeenCalledWith("/acme/projects/p1");
   });
 
-  it("reveals the start/due date pickers from the ⋯ overflow menu", async () => {
-    const user = userEvent.setup();
-    renderWithI18n(<CreateProjectModal onClose={vi.fn()} />);
-
-    // Dates are collapsed behind the overflow by default (progressive disclosure).
-    expect(screen.queryByRole("button", { name: "Start date" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Due date" })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /Set start date/ }));
-    expect(screen.getByRole("button", { name: "Start date" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /Set due date/ }));
-    expect(screen.getByRole("button", { name: "Due date" })).toBeInTheDocument();
-  });
-
-  it("filters workspace repositories by search text", async () => {
-    const user = userEvent.setup();
-
-    renderWithI18n(<CreateProjectModal onClose={vi.fn()} />);
-
-    const repoSearchInput = screen.getByRole("textbox", { name: "Search repositories..." });
-
-    await user.type(repoSearchInput, "api");
-
-    expect(
-      screen.getByRole("button", { name: (name) => name.includes(apiRepoUrl) }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: (name) => name.includes(webRepoUrl) }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: (name) => name.includes(longRepoUrl) }),
-    ).not.toBeInTheDocument();
-
-    await user.clear(repoSearchInput);
-    await user.type(repoSearchInput, "no-match");
-
-    expect(screen.getByText("No repositories match your search.")).toBeInTheDocument();
+  it("persists acceptance criteria in the draft", () => {
+    renderWithI18n(<CreateProjectModal onClose={mocks.close} />, {
+      locale: "zh-Hans",
+    });
+    fireEvent.change(screen.getByLabelText("验收标准"), {
+      target: { value: "包含数据来源" },
+    });
+    expect(mocks.setDraft).toHaveBeenLastCalledWith({
+      title: "",
+      description: "",
+      acceptanceCriteria: "包含数据来源",
+    });
+    expect(screen.queryByText("优先级")).not.toBeInTheDocument();
   });
 });

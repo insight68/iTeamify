@@ -1295,11 +1295,14 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 
 			// Projects
 			r.Route("/api/projects", func(r chi.Router) {
+				r.With(handler.RequireHumanActor).Get("/workflows", h.ListProjectWorkflows)
 				r.Get("/search", h.SearchProjects)
 				r.Get("/", h.ListProjects)
 				r.Post("/", h.CreateProject)
 				r.Route("/{id}", func(r chi.Router) {
 					r.Get("/", h.GetProject)
+					r.With(handler.RequireHumanActor).Get("/workflow", h.GetProjectWorkflow)
+					r.With(handler.RequireHumanActor).Post("/workflow", h.ProjectWorkflowAction)
 					r.Put("/", h.UpdateProject)
 					r.Delete("/", h.DeleteProject)
 					r.Get("/resources", h.ListProjectResources)

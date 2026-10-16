@@ -186,9 +186,6 @@ func (q questionnaireAnswers) sourceResolved() bool {
 func (q questionnaireAnswers) roleResolved() bool {
 	return q.Role != "" || q.RoleSkipped
 }
-func (q questionnaireAnswers) useCaseResolved() bool {
-	return len(q.UseCase) > 0 || q.UseCaseSkipped
-}
 
 // questionnaireSchemaVersion is the schema this handler understands.
 // `complete()` and the funnel events are scoped to this version so a
@@ -215,8 +212,7 @@ func (q questionnaireAnswers) complete() bool {
 // step the user is on lives in a client draft, separate from saved profile data.
 //
 // Emits `onboarding_questionnaire_submitted` exactly once per user:
-// the first PATCH that transitions role + use_case from "at least one
-// slot empty" to "both resolved". Emits `onboarding_source_submitted`
+// the first PATCH that resolves the role through an answer or explicit skip. Emits `onboarding_source_submitted`
 // exactly once on the source slot's own unresolved → resolved
 // transition, which normally happens later via the workspace backfill
 // prompt. Revisions past those points don't re-emit — the funnel

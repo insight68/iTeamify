@@ -44,8 +44,8 @@ func TestExecuteBackfillUpdatesOnlyEligibleCodexRowsAndRebuildsRollup(t *testing
 	}
 	t.Cleanup(pool.Close)
 
-	if err := testApplyMigrationsUpTo(ctx, pool, "102_task_usage_hourly_pipeline"); err != nil {
-		t.Fatalf("apply migrations to 102: %v", err)
+	if err := testApplyMigrations(ctx, pool); err != nil {
+		t.Fatalf("apply baseline: %v", err)
 	}
 
 	cutoff := time.Date(2026, 6, 13, 8, 0, 0, 0, time.UTC)
@@ -213,20 +213,11 @@ func seedBackfillTaskUsageFixture(t *testing.T, ctx context.Context, pool *pgxpo
 		t.Fatalf("seed agent: %v", err)
 	}
 	if err := pool.QueryRow(ctx, `
-		INSERT INTO agent_task_queue (
-			agent_id, runtime_id, status, payload
-		)
-		VALUES ($1, $2, 'queued', '{}'::jsonb)
+		INSERT INTO agent_task_queue (agent_id, runtime_id)
+		VALUES ($1, $2)
 		RETURNING id
 	`, agentID, runtimeID).Scan(&taskID); err != nil {
-		altErr := pool.QueryRow(ctx, `
-			INSERT INTO agent_task_queue (agent_id, runtime_id)
-			VALUES ($1, $2)
-			RETURNING id
-		`, agentID, runtimeID).Scan(&taskID)
-		if altErr != nil {
-			t.Fatalf("seed agent_task_queue: %v / %v", err, altErr)
-		}
+		t.Fatalf("seed agent_task_queue: %v", err)
 	}
 	return wsID, runtimeID, agentID, taskID
 }
@@ -290,7 +281,7 @@ func testReplaceDatabase(url, name string) string {
 	return url[:idx+1] + name + rest[q:]
 }
 
-func testApplyMigrationsUpTo(ctx context.Context, pool *pgxpool.Pool, lastVersion string) error {
+func testApplyMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 	dir, err := testResolveMigrationsDir()
 	if err != nil {
 		return err
@@ -324,9 +315,6 @@ func testApplyMigrationsUpTo(ctx context.Context, pool *pgxpool.Pool, lastVersio
 			v); err != nil {
 			return err
 		}
-		if v == lastVersion {
-			return nil
-		}
 	}
-	return fmt.Errorf("migration %q not found", lastVersion)
+	return nil
 }

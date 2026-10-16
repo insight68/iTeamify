@@ -80,16 +80,17 @@ func (h *Handler) loadProjectResourceCount(ctx context.Context, projectID pgtype
 }
 
 type CreateProjectRequest struct {
-	Title       string                                `json:"title"`
-	Description *string                               `json:"description"`
-	Icon        *string                               `json:"icon"`
-	Status      string                                `json:"status"`
-	Priority    string                                `json:"priority"`
-	LeadType    *string                               `json:"lead_type"`
-	LeadID      *string                               `json:"lead_id"`
-	StartDate   *string                               `json:"start_date"`
-	DueDate     *string                               `json:"due_date"`
-	Resources   []CreateProjectResourceRequestPayload `json:"resources,omitempty"`
+	AcceptanceCriteria string                                `json:"acceptance_criteria"`
+	Title              string                                `json:"title"`
+	Description        *string                               `json:"description"`
+	Icon               *string                               `json:"icon"`
+	Status             string                                `json:"status"`
+	Priority           string                                `json:"priority"`
+	LeadType           *string                               `json:"lead_type"`
+	LeadID             *string                               `json:"lead_id"`
+	StartDate          *string                               `json:"start_date"`
+	DueDate            *string                               `json:"due_date"`
+	Resources          []CreateProjectResourceRequestPayload `json:"resources,omitempty"`
 }
 
 // CreateProjectResourceRequestPayload mirrors CreateProjectResourceRequest but
@@ -237,7 +238,7 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	if req.Title == "" {
+	if strings.TrimSpace(req.Title) == "" {
 		writeError(w, http.StatusBadRequest, "title is required")
 		return
 	}
@@ -251,6 +252,10 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 		status = "planned"
 	}
 	if !validateProjectEnum(w, "status", status, validProjectStatuses) {
+		return
+	}
+	if status == "completed" {
+		writeError(w, http.StatusBadRequest, "create a project before submitting it for human acceptance")
 		return
 	}
 	priority := req.Priority
@@ -347,20 +352,7 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 		DueDate:     dueDate,
 	}
 
-	// Without resources, keep the simple non-tx path.
-	if len(req.Resources) == 0 {
-		project, err := h.Queries.CreateProject(r.Context(), createParams)
-		if err != nil {
-			h.writeProjectWriteError(w, r, err, "create")
-			return
-		}
-		resp := projectToResponse(project)
-		h.publish(protocol.EventProjectCreated, workspaceID, "member", userID, map[string]any{"project": resp})
-		writeJSON(w, http.StatusCreated, resp)
-		return
-	}
-
-	// Transactional path: project + all resources are atomic.
+	// Project, workflow and resources commit atomically.
 	tx, err := h.TxStarter.Begin(r.Context())
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to start transaction")
@@ -369,6 +361,10 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback(r.Context())
 	qtx := h.Queries.WithTx(tx)
 
+	if _, err := qtx.LockProjectWorkspace(r.Context(), wsUUID); err != nil {
+		writeError(w, http.StatusNotFound, "workspace not found")
+		return
+	}
 	project, err := qtx.CreateProject(r.Context(), createParams)
 	if err != nil {
 		h.writeProjectWriteError(w, r, err, "create")
@@ -376,6 +372,14 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	creator, _ := h.parseUserUUIDOrZero(userID)
+	workflowState := "planned"
+	if status == "cancelled" {
+		workflowState = status
+	}
+	if _, err := qtx.CreateProjectWorkflow(r.Context(), db.CreateProjectWorkflowParams{ProjectID: project.ID, AcceptanceCriteria: strings.TrimSpace(req.AcceptanceCriteria), CreatedBy: creator, State: workflowState}); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to create project workflow")
+		return
+	}
 	resourceRows := make([]db.ProjectResource, 0, len(req.Resources))
 	for i, res := range req.Resources {
 		var label pgtype.Text
@@ -552,6 +556,22 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 			params.DueDate = pgtype.Date{Valid: false} // explicit null = clear date
 		}
 	}
+	if flow, err := h.Queries.GetProjectWorkflow(r.Context(), prevProject.ID); err == nil {
+		userUUID, ok := parseUUIDOrBadRequest(w, userID, "user id")
+		if !ok {
+			return
+		}
+		actorType, _ := h.resolveActor(r, userID, workspaceID)
+		member, memberErr := h.Queries.GetMemberByUserAndWorkspace(r.Context(), db.GetMemberByUserAndWorkspaceParams{WorkspaceID: prevProject.WorkspaceID, UserID: userUUID})
+		if actorType != "member" || memberErr != nil || (flow.CreatedBy != member.UserID && !roleAllowed(member.Role, "owner", "admin")) {
+			writeError(w, http.StatusForbidden, "project changes require its requester or administrator")
+			return
+		}
+		if req.Status != nil || (flow.ExecutionIssueID.Valid && (req.Title != nil || req.Description != nil || req.LeadID != nil || req.LeadType != nil)) {
+			writeError(w, http.StatusConflict, "use project workflow actions to change execution or accept a project")
+			return
+		}
+	}
 	project, err := h.Queries.UpdateProject(r.Context(), params)
 	if err != nil {
 		h.writeProjectWriteError(w, r, err, "update")
@@ -611,6 +631,14 @@ func (h *Handler) DeleteProject(w http.ResponseWriter, r *http.Request) {
 		WorkspaceID: project.WorkspaceID,
 	}); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to clear project chat context")
+		return
+	}
+	if err := qtx.DeleteProjectWorkflow(r.Context(), project.ID); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to delete project workflow")
+		return
+	}
+	if err := qtx.UnlinkProjectIssues(r.Context(), db.UnlinkProjectIssuesParams{ProjectID: project.ID, WorkspaceID: project.WorkspaceID}); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to unlink project execution")
 		return
 	}
 	if err := qtx.DeleteProject(r.Context(), db.DeleteProjectParams{

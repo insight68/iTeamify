@@ -73,6 +73,26 @@ func TestProfileIndependentPatchesDoNotOverwriteEachOther(t *testing.T) {
 	}
 }
 
+func TestProfileFreeTextRoleKeepsHistoricalUseCase(t *testing.T) {
+	id := newTimezoneTestUser(t, "profile-free-role@iteamify.ai")
+	_, err := testPool.Exec(context.Background(), `UPDATE "user" SET onboarding_questionnaire='{"use_case":["manage_team"],"source":["search"]}'::jsonb WHERE id=$1`, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := httptest.NewRecorder()
+	testHandler.UpdateMe(w, newPatchMeRequest(id, `{"questionnaire":{"role":"other","role_other":"律师","role_skipped":false}}`))
+	if w.Code != 200 {
+		t.Fatalf("%d: %s", w.Code, w.Body.String())
+	}
+	q := savedQuestionnaire(t, id)
+	if q["role_other"] != "律师" || q["use_case"].([]any)[0] != "manage_team" || q["source"].([]any)[0] != "search" {
+		t.Fatalf("profile fields lost: %+v", q)
+	}
+	if !(questionnaireAnswers{Role: "other", RoleOther: "律师", Version: 2}).complete() {
+		t.Fatal("role-only profile must be complete without use cases")
+	}
+}
+
 func TestLegacyOnboardingPatchMergesQuestionnaire(t *testing.T) {
 	id := newTimezoneTestUser(t, "profile-legacy@iteamify.ai")
 	for _, body := range []string{`{"questionnaire":{"role":"founder","use_case":["manage_team"]}}`, `{"questionnaire":{"source":"search"}}`} {

@@ -838,6 +838,10 @@ func (h *Handler) DeleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		contractReviewError(w, err)
 		return
 	}
+	if err := qtx.DeleteWorkspaceProjectWorkflows(r.Context(), requester.WorkspaceID); err != nil {
+		writeError(w, 500, "failed to delete project workflows")
+		return
+	}
 	// At this point workspaceMember has resolved → workspaceID is a valid UUID
 	// (the lookup would have errored otherwise), so reuse the resolved value.
 	if err := qtx.DeleteWorkspace(r.Context(), requester.WorkspaceID); err != nil {

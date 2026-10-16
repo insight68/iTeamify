@@ -9,7 +9,7 @@ import { EMPTY_USER } from "../api/schemas";
 import { currentUserKey, registerCurrentUserCache, publishCurrentUser } from "./cache";
 import { useProfileForm } from "./use-profile-form";
 import { useProfileDraftStore } from "./draft";
-import { personalProfile, profilePatch, profileForAdvance } from "./model";
+import { personalProfile, profilePatch, profileForAdvance, profileValid } from "./model";
 import { updateCurrentUser } from "./queries";
 import { completeOnboarding } from "../onboarding/store";
 
@@ -40,6 +40,13 @@ describe("shared personal profile", () => {
     expect(profilePatch({ ...saved, role: "designer" }, saved)).toEqual({ questionnaire: { role: "designer", role_other: null, role_skipped: false, version: 2 } });
     expect(profilePatch(saved, saved)).toEqual({});
     expect(profileForAdvance(saved, saved, true).role).toBe("engineer");
+  });
+  it("saves a custom role without validating or overwriting historical use cases", () => {
+    const saved = personalProfile({ ...initial, onboarding_questionnaire: { role: "engineer", use_case: ["other"], use_case_other: null } });
+    const next = { ...saved, role: "other" as const, role_other: "律师" };
+    expect(profileValid(next)).toBe(true);
+    expect(profilePatch(next, saved)).toEqual({ questionnaire: { role: "other", role_other: "律师", role_skipped: false, version: 2 } });
+    expect(profileForAdvance(next, saved).role_other).toBe("律师");
   });
   it("shares edits across both forms and acknowledges one save without another GET", async () => {
     const first = renderHook(() => useProfileForm(), { wrapper });

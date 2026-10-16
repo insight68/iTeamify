@@ -61,9 +61,8 @@
     "eyebrow_about_you": "完善个人信息",
     "about_you": {
       "question": "简单介绍一下你自己。",
-      "description": "把任务交给 AI 智能体，在工作区查看进度。填写角色和使用目的，让助手提供适合你的建议；也可以稍后填写。",
-      "role_hint": "选择一个角色 · 选填",
-      "use_case_hint": "可以选择多个使用目的 · 选填"
+      "description": "把任务交给 AI 智能体，在工作区查看进度。介绍一下你的角色，让助手更了解你；也可以稍后填写。",
+      "role_hint": "例如“独立开发者”“律师”。"
     },
     "source": {
       "question": "你是从哪里了解到 iteamify 的？",

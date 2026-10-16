@@ -245,8 +245,8 @@
   "applications": {
     "title": "Applications",
     "eyebrow": "Workspace applications",
-    "heading": "Choose a service. Start with the right person.",
-    "description": "Everyone can open applications. A configured person or AI provides the service; you do not need to own the application to send a request.",
+    "heading": "Choose an application and start working.",
+    "description": "Manage projects and service applications here. Assign people or agents, then review their results.",
     "system_default": "System default",
     "conversation_description": "Ordinary conversations are available with every person or AI you can contact. No application configuration is needed.",
     "contract_description": "Submit contract files and review requirements to a configured person or AI, then follow the review and results in one session.",

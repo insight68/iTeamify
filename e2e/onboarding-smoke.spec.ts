@@ -22,18 +22,17 @@ test("onboarding — profile answers → workspace", async ({ page }) => {
   await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
   await waitForPageText(page, "Tell us a bit about you.");
 
-  // Step 1 combines the introduction and both optional profile questions.
+  // Step 1 introduces the product and asks for an optional free-text role.
   await expect(page.getByRole("heading", { name: "Tell us a bit about you." })).toBeVisible({ timeout: 15000 });
-  await expect(page.getByText("Which best describes you?")).toBeVisible();
-  await expect(page.getByText("What do you want to use iteamify for?")).toBeVisible();
+  await expect(page.getByText("What is your role?")).toBeVisible();
+  await expect(page.getByText("What do you want to use iteamify for?")).toHaveCount(0);
   await expect(page.getByText(/Step 1 of 4/)).toBeVisible();
   await expect(page.getByText("How did you hear about iteamify?")).toHaveCount(0);
   await page.waitForTimeout(500);
   await page.screenshot({ path: `${SHOTS_DIR}/01-profile.png` });
 
-  // Answer both groups, then Continue → workspace step.
-  await page.getByRole("radio", { name: /Engineer \/ developer/i }).click();
-  await page.getByRole("checkbox", { name: /Ship code with AI agents/i }).click();
+  // Describe a role, then Continue → workspace step.
+  await page.getByLabel("What is your role?").fill("Independent developer");
   await page.getByRole("button", { name: "Continue" }).click();
 
   // Step 2 sets up the workspace.
@@ -52,7 +51,7 @@ test("onboarding — profile can be filled in later", async ({ page }) => {
   await waitForPageText(page, "Tell us a bit about you.");
   await expect(page.getByText("Tell us a bit about you.")).toBeVisible({ timeout: 10000 });
 
-  // Both optional groups can be skipped together.
+  // The profile can be filled in later.
   await page.getByRole("button", { name: "Fill in later" }).click();
   await expect(page.getByRole("heading", { name: /Give your work a name/i })).toBeVisible({ timeout: 10000 });
   await page.screenshot({ path: `${SHOTS_DIR}/03-after-skip.png` });

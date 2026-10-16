@@ -24,6 +24,7 @@ export interface Project {
 }
 
 export interface CreateProjectRequest {
+  acceptance_criteria?: string;
   title: string;
   description?: string;
   icon?: string;

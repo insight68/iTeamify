@@ -247,10 +247,19 @@ describe("hidden workspace routes", () => {
 });
 
 describe("navigation groups", () => {
-  it("keeps project navigation and workspace search available", () => {
+  it("places projects under Applications and keeps workspace search available", () => {
     const { container } = render(<AppSidebar searchSlot={<button data-testid="search-trigger">Search</button>} />);
-    expect(container.querySelector('button[data-href="/acme/projects"]')).not.toBeNull();
+    expect(container.querySelector('button[data-href="/acme/projects"]')).toBeNull();
+    expect(container.querySelector('button[data-href="/acme/applications"]')).not.toBeNull();
     expect(screen.getByTestId("search-trigger")).toBeInTheDocument();
+  });
+
+  it("keeps Applications active while viewing a project", () => {
+
+    navigation.current.pathname = "/acme/projects/project-1";
+    const { container } = render(<AppSidebar />);
+    expect(container.querySelector('button[data-href="/acme/applications"]')).toHaveAttribute("data-active", "true");
+    navigation.current.pathname = "/acme/issues";
   });
 });
 
@@ -300,7 +309,7 @@ describe("PinRow", () => {
     // Issues nav is hidden by default now; assert against a still-visible
     // workspace nav item to keep checking that an active pin does not also
     // light up the workspace nav group.
-    expect(container.querySelector('button[data-href="/acme/projects"]')).not.toHaveAttribute("data-active");
+    expect(container.querySelector('button[data-href="/acme/applications"]')).not.toHaveAttribute("data-active");
   });
 });
 

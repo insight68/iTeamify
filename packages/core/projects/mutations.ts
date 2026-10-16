@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
+import { projectWorkflowKeys } from "./workflow";
 import { projectKeys } from "./queries";
 import { useWorkspaceId } from "../hooks";
 import { useRecentContextStore } from "../chat/recent-context-store";
@@ -21,6 +22,7 @@ export function useCreateProject() {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: projectKeys.list(wsId) });
+      qc.invalidateQueries({ queryKey: projectWorkflowKeys.all(wsId) });
     },
   });
 }
@@ -50,6 +52,7 @@ export function useUpdateProject() {
     onSettled: (_data, _err, vars) => {
       qc.invalidateQueries({ queryKey: projectKeys.detail(wsId, vars.id) });
       qc.invalidateQueries({ queryKey: projectKeys.list(wsId) });
+      qc.invalidateQueries({ queryKey: projectWorkflowKeys.all(wsId) });
     },
   });
 }
@@ -77,6 +80,7 @@ export function useDeleteProject() {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: projectKeys.list(wsId) });
+      qc.invalidateQueries({ queryKey: projectWorkflowKeys.all(wsId) });
     },
   });
 }

@@ -80,7 +80,7 @@ import { useT } from "../i18n";
 // strict equality elsewhere — a pinned project shouldn't highlight on
 // sub-pages of itself.
 function isNavActive(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(href + "/");
+  return pathname === href || pathname.startsWith(href + "/") || (href.endsWith("/applications") && /\/projects(?:\/|$)/.test(pathname));
 }
 
 // Stable empty arrays for query defaults. Using an inline `= []` default on
@@ -130,7 +130,6 @@ type NavLabelKey =
 // Page icons are derived from each destination path at render time.
 // Settings-tab shortcuts use the same icon as the corresponding tab.
 const workspaceNav: { key: NavKey; labelKey: NavLabelKey }[] = [
-  { key: "projects", labelKey: "projects" },
   { key: "autopilots", labelKey: "autopilots" },
 ];
 
@@ -734,8 +733,23 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
         </SidebarContent>
 
         <SidebarFooter className="p-2">
-          <div className="flex justify-end">
-            <HelpLauncher />
+          <div className="flex items-center gap-2 px-2">
+            {user && (
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <ActorAvatar
+                  name={user.name || user.email}
+                  initials={(user.name || user.email || "U").charAt(0).toUpperCase()}
+                  avatarUrl={resolvePublicFileUrl(user.avatar_url)}
+                  size="md"
+                />
+                <span className="truncate text-sm font-medium" title={user.name || user.email}>
+                  {user.name || user.email}
+                </span>
+              </div>
+            )}
+            <div className="ml-auto shrink-0">
+              <HelpLauncher />
+            </div>
           </div>
         </SidebarFooter>
         <SidebarRail />

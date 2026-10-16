@@ -11,89 +11,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/iteamify-ai/iteamify/server/internal/attributionbackfill"
 	"github.com/iteamify-ai/iteamify/server/internal/logger"
 	"github.com/iteamify-ai/iteamify/server/internal/migrations"
-
-	"github.com/iteamify-ai/iteamify/server/internal/taskusagebackfill"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-// preMigrationHook runs work that must happen before a specific
-// migration is applied during `migrate up`. Hooks are idempotent and
-// must not depend on the migration loop's session-pinned advisory lock
-// — they run on the pool, not on the loop's pinned conn, so they can
-// safely acquire other session-level locks (e.g. advisory lock 4246
-// for the task_usage hourly rollup).
-//
-// Returning an error aborts the migration run. The corresponding
-// migration is NOT recorded in schema_migrations, so the next run will
-// retry the hook + migration.
-type preMigrationHook func(ctx context.Context, pool *pgxpool.Pool) error
-
-// preMigrationHooks wires migration version → hook. The version key is
-// the file basename without the `.up.sql` suffix, matching what
-// `migrations.ExtractVersion` returns.
-//
-// MUL-2957: the v0.3.4 → current direct-upgrade path needs the hourly
-// rollup seeded BEFORE migration 103 evaluates its fail-closed lag
-// guard, because at `cmd/migrate up` time the server has not yet
-// started so neither the legacy pg_cron job nor the new app scheduler
-// can advance the watermark. The hook runs the same idempotent
-// monthly-slice backfill that
-// `cmd/backfill_task_usage_hourly` exposes to operators.
-//
-// MUL-4897 / GH #5544: migration 198 VALIDATEs the strict attribution
-// constraint installed by 197, which drops migration 190's
-// originator_source IS NULL exemption. Self-hosted databases never ran the
-// out-of-band backfill that iTeamify's cloud did, so their legacy rows make
-// 198 fail closed and the backend refuses to start. The hook reconciles
-// those rows (accountable_user_id := originator_user_id) idempotently BEFORE
-// VALIDATE, so a stuck-at-197 instance auto-heals on `migrate up` with no
-// manual SQL. A higher-numbered migration cannot help — the instance never
-// reaches a version above the failing 198.
-var preMigrationHooks = map[string]preMigrationHook{
-	"103_drop_legacy_daily_rollups":                         runTaskUsageHourlyHook,
-	"198_agent_task_attribution_strict_constraint_validate": runAttributionStrictHook,
-}
-
-func runTaskUsageHourlyHook(ctx context.Context, pool *pgxpool.Pool) error {
-	res, err := taskusagebackfill.Hook(ctx, pool, taskusagebackfill.HookOptions{})
-	if err != nil {
-		return fmt.Errorf("task_usage_hourly pre-103 hook: %w", err)
-	}
-	if res.Skipped != "" {
-		slog.Info("task_usage hourly rollup hook: skipped",
-			"reason", res.Skipped,
-			"watermark_stamped", res.WatermarkStamped)
-		return nil
-	}
-	slog.Info("task_usage hourly rollup hook: backfill complete",
-		"slices", res.SlicesProcessed,
-		"rows_touched", res.RowsTouched,
-		"from", res.From.Format("2006-01-02T15:04:05Z07:00"),
-		"to", res.To.Format("2006-01-02T15:04:05Z07:00"))
-	return nil
-}
-
-// runAttributionStrictHook backfills accountable_user_id from
-// originator_user_id before migration 198 validates the strict attribution
-// constraint, so self-hosted upgrades that never ran the out-of-band
-// backfill recover automatically (GH #5544 / MUL-4897).
-func runAttributionStrictHook(ctx context.Context, pool *pgxpool.Pool) error {
-	res, err := attributionbackfill.Hook(ctx, pool, attributionbackfill.HookOptions{})
-	if err != nil {
-		return fmt.Errorf("attribution strict-constraint pre-198 hook: %w", err)
-	}
-	slog.Info("attribution backfill hook: complete",
-		"rows_backfilled", res.RowsBackfilled,
-		"batches", res.Batches,
-		"mismatch_normalized", res.MismatchNormalized)
-	return nil
-}
 
 // migrationAdvisoryLockKey is the int64 identifier used with Postgres
 // pg_advisory_lock to serialize the migration loop across concurrent
@@ -152,12 +76,6 @@ type runOptions struct {
 	// StatementTimeout bounds each migration statement. Zero uses
 	// defaultMigrationStatementTimeout.
 	StatementTimeout time.Duration
-	// Hooks maps migration version → pre-migration hook. The hook
-	// receives the pool (not the loop's pinned conn) so it can take
-	// its own session-level locks. nil or missing entries mean "no
-	// hook" and the migration runs straight through. Production main()
-	// passes preMigrationHooks; tests leave this nil.
-	Hooks map[string]preMigrationHook
 }
 
 func main() {
@@ -226,7 +144,6 @@ func main() {
 	if err := runMigrations(ctx, pool, runOptions{
 		Direction:           direction,
 		Files:               files,
-		Hooks:               preMigrationHooks,
 		AdvisoryLockTimeout: advisoryLockTimeout,
 		LockTimeout:         lockTimeout,
 		StatementTimeout:    statementTimeout,
@@ -424,21 +341,6 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool, opts runOptions) err
 				}
 			} else if storedChecksum.String != checksum {
 				return checksumMismatchError(version, storedChecksum.String, checksum)
-			}
-		}
-
-		// Run any pre-migration hook before the SQL file. Hooks
-		// receive the *pgxpool.Pool (not the loop's pinned conn), so
-		// they can acquire other session-level locks without
-		// colliding with migrationAdvisoryLockKey. Hook failures
-		// abort the run before schema_migrations is updated, so the
-		// same version retries cleanly on the next invocation.
-		if opts.Direction == "up" {
-			if hook, ok := opts.Hooks[version]; ok && hook != nil {
-				slog.Info("running pre-migration hook", "version", version)
-				if err := hook(ctx, pool); err != nil {
-					return fmt.Errorf("pre-migration hook for %q: %w", version, err)
-				}
 			}
 		}
 

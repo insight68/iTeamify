@@ -1,3 +1,5 @@
+import { projectWorkflowSchema, projectWorkflowListSchema, type ProjectWorkflow, type ProjectWorkflowAction } from "../projects/workflow-schemas";
+import { ProjectSchema } from "./schemas";
 import type { WorkspaceOpenAgentConfig, WorkspaceOpenAgentConfigInput, WorkspaceOpenAgentConnectionTestResult } from "../types/openagent";
 import { WorkspaceOpenAgentConfigSchema, WorkspaceOpenAgentConnectionTestSchema } from "./schemas";
 import { contractReviewSchema, type ContractReview, type CreateContractReviewInput, type ContractActionInput } from "../session-containers/schemas";
@@ -2447,6 +2449,30 @@ export class ApiClient {
     }
   }
 
+  async listProjectWorkflows(): Promise<ProjectWorkflow[]> {
+    const endpoint = "/api/projects/workflows";
+    const raw = await this.fetch<unknown>(endpoint);
+    const result = parseWithFallback<ProjectWorkflow[] | null>(raw, projectWorkflowListSchema, null, { endpoint, redactReceived: true });
+    if (!result) throw new ApiError("Invalid project list response", 502, "Bad Gateway");
+    return result;
+  }
+
+  async getProjectWorkflow(id: string): Promise<ProjectWorkflow> {
+    const endpoint = `/api/projects/${encodeURIComponent(id)}/workflow`;
+    const raw = await this.fetch<unknown>(endpoint);
+    const result = parseWithFallback<ProjectWorkflow | null>(raw, projectWorkflowSchema, null, { endpoint, redactReceived: true });
+    if (!result) throw new ApiError("Invalid project response", 502, "Bad Gateway");
+    return result;
+  }
+
+  async projectWorkflowAction(id: string, input: ProjectWorkflowAction): Promise<ProjectWorkflow> {
+    const endpoint = `/api/projects/${encodeURIComponent(id)}/workflow`;
+    const raw = await this.fetch<unknown>(endpoint, { method: "POST", body: JSON.stringify(input) });
+    const result = parseWithFallback<ProjectWorkflow | null>(raw, projectWorkflowSchema, null, { endpoint, redactReceived: true });
+    if (!result) throw new ApiError("Invalid project action receipt", 502, "Bad Gateway");
+    return result;
+  }
+
   // Projects
   async listProjects(params?: { status?: string }): Promise<ListProjectsResponse> {
     const search = new URLSearchParams();
@@ -2459,10 +2485,10 @@ export class ApiClient {
   }
 
   async createProject(data: CreateProjectRequest): Promise<Project> {
-    return this.fetch("/api/projects", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    const raw = await this.fetch<unknown>("/api/projects", { method: "POST", body: JSON.stringify(data) });
+    const result = parseWithFallback<Project | null>(raw, ProjectSchema, null, { endpoint: "/api/projects", redactReceived: true });
+    if (!result) throw new ApiError("Invalid project create receipt", 502, "Bad Gateway");
+    return result;
   }
 
   async updateProject(id: string, data: UpdateProjectRequest): Promise<Project> {

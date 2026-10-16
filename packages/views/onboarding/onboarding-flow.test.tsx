@@ -60,17 +60,17 @@ describe("four-step onboarding", () => {
     useProfileDraftStore.getState().setDraft({ ownerId: "other-user", edits: { role: "engineer" } });
     show();
     await screen.findByRole("heading", { name: "Tell us a bit about you." });
-    expect(screen.getByRole("radio", { name: /engineer/i })).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByLabelText(en.questions.role.question)).toHaveValue("");
     expect(useOnboardingDraftStore.getState().draft.taskTitle).toBe("");
     expect(useOnboardingDraftStore.getState().draft.ownerId).toBe(mocks.user.id);
   });
   it("keeps input and the current step when profile saving fails, then retries", async () => {
     mocks.save.mockRejectedValueOnce(new Error("offline"));
     const { user } = show();
-    await user.click(await screen.findByRole("radio", { name: /engineer/i }));
+    await user.type(await screen.findByLabelText(en.questions.role.question), "Independent developer");
     await user.click(screen.getByRole("button", { name: /^continue$/i }));
     expect(await screen.findByRole("alert")).toHaveTextContent("offline");
-    expect(screen.getByRole("radio", { name: /engineer/i })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByLabelText(en.questions.role.question)).toHaveValue("Independent developer");
     await user.click(screen.getByRole("button", { name: /^continue$/i }));
     expect(await screen.findByRole("heading", { name: "Workspace setup" })).toBeInTheDocument();
     expect(mocks.save).toHaveBeenCalledTimes(2);
@@ -129,11 +129,11 @@ describe("four-step onboarding", () => {
   it("restores previous answers on browser back without a route transition race", async () => {
     const onStepChange = vi.fn();
     const view = show({ requestedStep: "profile", onStepChange });
-    await view.user.click(await screen.findByRole("radio", { name: /designer/i }));
+    await view.user.type(await screen.findByLabelText(en.questions.role.question), "Lawyer");
     await view.user.click(screen.getByRole("button", { name: /^continue$/i }));
     await screen.findByRole("heading", { name: "Workspace setup" });
     await act(async () => view.reroute({ requestedStep: "workspace", onStepChange }));
     await act(async () => view.reroute({ requestedStep: "profile", onStepChange }));
-    expect(screen.getByRole("radio", { name: /designer/i })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByLabelText(en.questions.role.question)).toHaveValue("Lawyer");
   });
 });

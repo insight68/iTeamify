@@ -42,22 +42,24 @@ it("shows settings edits in onboarding after saving and remounting", async () =>
   const user = userEvent.setup();
   const view = render(tree(<AccountTab />));
   expect(screen.getByLabelText("Name")).toHaveValue("Alex");
-  await user.click(screen.getByRole("radio", { name: /designer/i }));
+  await user.clear(screen.getByLabelText(onboarding.questions.role.question));
+  await user.type(screen.getByLabelText(onboarding.questions.role.question), "Lawyer");
   await user.type(screen.getByLabelText("Additional introduction"), "Prefer concise answers");
   await waitFor(() => expect(store.getState().user?.profile_description).toBe("Prefer concise answers"), { timeout: 2500 });
-  expect(store.getState().user?.onboarding_questionnaire.role).toBe("designer");
+  expect(store.getState().user?.onboarding_questionnaire.role_other).toBe("Lawyer");
   view.unmount();
   render(tree(<OnboardingFlow requestedStep="profile" onComplete={vi.fn()} />));
   expect(await screen.findByLabelText("Name")).toHaveValue("Alex");
-  expect(screen.getByRole("radio", { name: /designer/i })).toHaveAttribute("aria-checked", "true");
+  expect(screen.getByLabelText(onboarding.questions.role.question)).toHaveValue("Lawyer");
+  expect(screen.queryByText(onboarding.questions.use_case.question)).not.toBeInTheDocument();
   expect(screen.getByLabelText("Additional introduction")).toHaveValue("Prefer concise answers");
   expect(mocks.getMe).not.toHaveBeenCalled();
-  expect(mocks.updateMe.mock.calls.every(([input]) => input.questionnaire?.source === undefined)).toBe(true);
+  expect(mocks.updateMe.mock.calls.every(([input]) => input.questionnaire?.source === undefined && input.questionnaire?.use_case === undefined)).toBe(true);
 });
 
 it("renders the profile while workspace loading is still pending", async () => {
   mocks.listWorkspaces.mockReturnValue(new Promise(() => {}));
   render(tree(<OnboardingFlow requestedStep="profile" onComplete={vi.fn()} />));
   expect(await screen.findByLabelText("Name")).toHaveValue("Alex");
-  expect(screen.getByRole("radio", { name: /engineer/i })).toHaveAttribute("aria-checked", "true");
+  expect(screen.getByLabelText(onboarding.questions.role.question)).toHaveValue(onboarding.questions.role.engineer);
 });

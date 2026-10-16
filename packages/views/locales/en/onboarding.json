@@ -61,9 +61,8 @@
     "eyebrow_about_you": "Complete your profile",
     "about_you": {
       "question": "Tell us a bit about you.",
-      "description": "Delegate tasks to AI agents and follow progress in your workspace. Tell us your role and goals for tailored suggestions, or fill this in later.",
-      "role_hint": "Choose one role · optional",
-      "use_case_hint": "Choose one or more uses · optional"
+      "description": "Delegate tasks to AI agents and follow progress in your workspace. Describe your role to help your assistant understand you, or fill this in later.",
+      "role_hint": "For example, “independent developer” or “lawyer”."
     },
     "source": {
       "question": "How did you hear about iteamify?",
@@ -83,7 +82,7 @@
       "other_placeholder": "e.g. a podcast I listen to"
     },
     "role": {
-      "question": "Which best describes you?",
+      "question": "What is your role?",
       "engineer": "Engineer / developer",
       "product": "Product manager",
       "designer": "Designer",

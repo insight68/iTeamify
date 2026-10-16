@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, MessageSquare, Plus, ArrowRight, Bot, User, Loader2 } from "lucide-react";
+import { FileText, FolderKanban, MessageSquare, Plus, ArrowRight, Bot, User, Loader2 } from "lucide-react";
 import { useWorkspaceId } from "@iteamify/core/hooks";
 import { useAuthStore } from "@iteamify/core/auth";
 import { useWorkspacePaths } from "@iteamify/core/paths";
@@ -19,6 +19,7 @@ import { useT } from "../i18n";
 
 export function ApplicationsPage() {
   const { t } = useT("chat");
+  const { t: tp } = useT("projects");
   const wsId = useWorkspaceId();
   const userId = useAuthStore((s) => s.user?.id ?? "");
   const paths = useWorkspacePaths();
@@ -37,6 +38,7 @@ export function ApplicationsPage() {
     <PageHeader><h1 className="text-sm font-semibold">{t(($) => $.applications.title)}</h1></PageHeader>
     <div className="min-h-0 flex-1 overflow-y-auto"><div className="mx-auto max-w-5xl space-y-8 p-4 sm:p-8">
       <div><p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{t(($) => $.applications.eyebrow)}</p><h2 className="mt-3 text-2xl font-semibold tracking-tight">{t(($) => $.applications.heading)}</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">{t(($) => $.applications.description)}</p></div>
+      <section className="flex flex-wrap items-start gap-4 rounded-xl border p-5"><FolderKanban className="mt-1 size-5 shrink-0 text-primary" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-3"><h3 className="font-medium">{tp(($) => $.page.title)}</h3><span className="rounded-md bg-muted px-2 py-1 text-xs">{t(($) => $.applications.system_default)}</span></div><p className="mt-2 text-sm leading-6 text-muted-foreground">{tp(($) => $.workflow.app_description)}</p><p className="mt-3 text-xs text-muted-foreground">{tp(($) => $.workflow.flow)}</p></div><AppLink href={paths.projects()} className="inline-flex h-8 items-center gap-2 rounded-md border px-3 text-xs font-medium hover:bg-muted">{tp(($) => $.workflow.open_app)}<ArrowRight className="size-3" /></AppLink></section>
       <section className="flex items-start gap-4 rounded-xl border p-5"><MessageSquare className="mt-1 size-5 shrink-0 text-muted-foreground" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-3"><h3 className="font-medium">{t(($) => $.containers.conversation)}</h3><span className="rounded-md bg-muted px-2 py-1 text-xs">{t(($) => $.applications.system_default)}</span></div><p className="mt-2 text-sm leading-6 text-muted-foreground">{t(($) => $.applications.conversation_description)}</p></div></section>
       <section className="overflow-hidden rounded-xl border">
         <div className="space-y-4 border-b bg-muted/20 p-5 sm:p-6"><div className="flex items-center gap-3"><FileText className="size-5 text-primary" /><h3 className="text-lg font-semibold">{t(($) => $.containers.contract_review)}</h3></div><p className="max-w-2xl text-sm leading-6 text-muted-foreground">{t(($) => $.applications.contract_description)}</p><ol className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground"><li>{1}{" · "}{t(($) => $.applications.choose_provider)}</li><li>{2}{" · "}{t(($) => $.applications.contact)}</li><li>{3}{" · "}{t(($) => $.applications.new_contract)}</li></ol></div>

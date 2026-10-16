@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -58,17 +59,34 @@ func fixture(t *testing.T) *redditFixture {
 	if _, err = pool.Exec(ctx, `CREATE TABLE workspace(id uuid DEFAULT gen_random_uuid());CREATE TABLE member(workspace_id uuid,user_id uuid,role text);`); err != nil {
 		t.Fatal(err)
 	}
-	for n := 593; n <= 601; n++ {
-		paths, _ := filepath.Glob(fmt.Sprintf("../../../migrations/%d_*.up.sql", n))
-		if len(paths) != 1 {
-			t.Fatalf("migration %d missing", n)
+	// Install the current Reddit tables and indexes from the squashed baseline.
+	baseline, err := os.ReadFile("../../../migrations/001_init.up.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tables := regexp.MustCompile(`(?s)CREATE TABLE public\.reddit_[a-z_]+ \(.*?\n\);`).FindAllString(string(baseline), -1)
+	if len(tables) != 4 {
+		t.Fatalf("expected four Reddit tables in baseline, got %d", len(tables))
+	}
+	for _, sql := range tables {
+		if _, err := pool.Exec(ctx, strings.ReplaceAll(sql, "public.", "")); err != nil {
+			t.Fatal(err)
 		}
-		b, e := os.ReadFile(paths[0])
-		if e != nil {
-			t.Fatal(e)
+	}
+	paths, err := filepath.Glob("../../../migrations/*.up.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range paths {
+		body, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
 		}
-		if _, e = pool.Exec(ctx, string(b)); e != nil {
-			t.Fatalf("migration %d: %v", n, e)
+		if !strings.Contains(string(body), "ON public.reddit_") {
+			continue
+		}
+		if _, err := pool.Exec(ctx, strings.ReplaceAll(string(body), "public.", "")); err != nil {
+			t.Fatalf("index %s: %v", path, err)
 		}
 	}
 	box, _ := secretbox.New(make([]byte, 32))

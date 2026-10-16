@@ -242,8 +242,8 @@
   "applications": {
     "title": "应用",
     "eyebrow": "工作区应用",
-    "heading": "找到合适的人，开始一项业务。",
-    "description": "所有成员都能打开应用。已配置的真人或 AI 提供服务，发起申请无需自己拥有该应用。",
+    "heading": "选择应用，开始协作。",
+    "description": "在这里管理项目和服务应用，指派真人或智能体执行，并审核交付结果。",
     "system_default": "系统默认",
     "conversation_description": "与所有有权沟通的真人或 AI 都可以进行普通对话，无需单独配置。",
     "contract_description": "向已配置的真人或 AI 提交合同文件和审查要求，在同一个 session 中跟进审阅、补充材料与结果。",

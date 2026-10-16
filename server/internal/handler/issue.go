@@ -2733,6 +2733,18 @@ func (h *Handler) UpdateIssue(w http.ResponseWriter, r *http.Request) {
 	var rawFields map[string]json.RawMessage
 	json.Unmarshal(bodyBytes, &rawFields)
 
+	if _, assignee := rawFields["assignee_id"]; assignee || rawFields["assignee_type"] != nil || rawFields["project_id"] != nil {
+		protected, err := h.Queries.IsProjectWorkflowExecution(r.Context(), prevIssue.ID)
+		if err != nil {
+			writeError(w, 500, "failed to check project execution")
+			return
+		}
+		if protected {
+			writeError(w, http.StatusConflict, "project execution assignment is managed by its project")
+			return
+		}
+	}
+
 	// Pre-fill nullable fields (bare sqlc.narg) with current values
 	params := db.UpdateIssueParams{
 		ID:            prevIssue.ID,
@@ -3186,6 +3198,16 @@ func (h *Handler) DeleteIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	protected, err := h.Queries.IsProjectWorkflowExecution(r.Context(), issue.ID)
+	if err != nil {
+		writeError(w, 500, "failed to check project execution")
+		return
+	}
+	if protected {
+		writeError(w, http.StatusConflict, "project execution belongs to its project and cannot be deleted separately")
+		return
+	}
+
 	h.TaskService.CancelTasksForIssue(r.Context(), issue.ID)
 	// Fail any linked autopilot runs before delete (ON DELETE SET NULL clears issue_id).
 	h.Queries.FailAutopilotRunsByIssue(r.Context(), issue.ID)
@@ -3193,7 +3215,7 @@ func (h *Handler) DeleteIssue(w http.ResponseWriter, r *http.Request) {
 	// Collect all attachment URLs (issue-level + comment-level) before CASCADE delete.
 	attachmentURLs, _ := h.Queries.ListAttachmentURLsByIssueOrComments(r.Context(), issue.ID)
 
-	err := h.Queries.DeleteIssue(r.Context(), db.DeleteIssueParams{
+	err = h.Queries.DeleteIssue(r.Context(), db.DeleteIssueParams{
 		ID:          issue.ID,
 		WorkspaceID: issue.WorkspaceID,
 	})
@@ -3311,6 +3333,13 @@ func (h *Handler) BatchUpdateIssues(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			continue
+		}
+
+		if rawUpdates["assignee_id"] != nil || rawUpdates["assignee_type"] != nil || rawUpdates["project_id"] != nil {
+			protected, err := h.Queries.IsProjectWorkflowExecution(r.Context(), prevIssue.ID)
+			if err != nil || protected {
+				continue
+			}
 		}
 
 		params := db.UpdateIssueParams{
@@ -3559,6 +3588,10 @@ func (h *Handler) BatchDeleteIssues(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		protected, err := h.Queries.IsProjectWorkflowExecution(r.Context(), issue.ID)
+		if err != nil || protected {
+			continue
+		}
 		h.TaskService.CancelTasksForIssue(r.Context(), issue.ID)
 		h.Queries.FailAutopilotRunsByIssue(r.Context(), issue.ID)
 

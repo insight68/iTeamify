@@ -55,7 +55,7 @@ ORDER BY 1;
 
 \echo '--- NOT VALID CHECK constraints (informational, NOT a failure) ---'
 \echo '    This repo intentionally adds CHECKs with NOT VALID to avoid a full'
-\echo '    table lock (see migrations/413) and never validates them afterwards.'
+\echo '    table scan during an incremental upgrade; these may stay unvalidated.'
 SELECT conrelid::regclass AS table_name, conname
 FROM pg_constraint
 WHERE NOT convalidated
@@ -63,42 +63,29 @@ WHERE NOT convalidated
 ORDER BY 1, 2;
 
 \echo '--- key business objects (want: all true) ---'
-\echo '    Indexes are built with CREATE [UNIQUE] INDEX CONCURRENTLY by repo'
-\echo '    policy, so they live in pg_indexes, NOT pg_constraint. Looking for'
-\echo '    uq_service_quote_proposal_current in pg_constraint finds nothing'
-\echo '    even on a perfectly healthy database.'
 SELECT probe, ok, detail FROM (
-    SELECT 'service_proposal table' AS probe,
-           (to_regclass('public.service_proposal') IS NOT NULL) AS ok,
-           coalesce(to_regclass('public.service_proposal')::text, 'missing') AS detail
+    SELECT 'workspace table' AS probe,
+           to_regclass('public.workspace') IS NOT NULL AS ok,
+           'workspace identity' AS detail
   UNION ALL
-    SELECT 'service_quote.proposal_id column',
-           (SELECT count(*) = 1 FROM information_schema.columns
-             WHERE table_name = 'service_quote' AND column_name = 'proposal_id'),
-           'links a CRM quote to its proposal'
+    SELECT 'issue table', to_regclass('public.issue') IS NOT NULL,
+           'shared tasks'
   UNION ALL
-    SELECT 'service_quote.expires_at column',
-           (SELECT count(*) = 1 FROM information_schema.columns
-             WHERE table_name = 'service_quote' AND column_name = 'expires_at'),
-           'draft quotes may legitimately have no expiry'
+    SELECT 'chat_session table', to_regclass('public.chat_session') IS NOT NULL,
+           'agent and direct conversations'
   UNION ALL
-    SELECT 'uq_service_quote_proposal_current index',
-           (SELECT count(*) = 1 FROM pg_indexes
-             WHERE tablename = 'service_quote'
-               AND indexname = 'uq_service_quote_proposal_current'),
-           'exactly one live quote per proposal'
+    SELECT 'workspace_openagent_config table',
+           to_regclass('public.workspace_openagent_config') IS NOT NULL,
+           'workspace-owned execution configuration'
   UNION ALL
-    SELECT 'service_quote status allows draft',
-           (SELECT EXISTS (SELECT 1 FROM pg_constraint
-             WHERE conname = 'service_quote_status_check'
-               AND pg_get_constraintdef(oid) ILIKE '%draft%')),
-           'an unpriced draft must be legal'
+    SELECT 'user_password table', to_regclass('public.user_password') IS NOT NULL,
+           'password authentication'
   UNION ALL
-    SELECT 'service_order accepts crm source',
-           (SELECT count(*) > 0 FROM pg_constraint
-             WHERE conrelid = 'service_order'::regclass
-               AND pg_get_constraintdef(oid) ILIKE '%crm%'),
-           'order source enum includes crm'
+    SELECT 'chat_message sequence index',
+           EXISTS (SELECT 1 FROM pg_indexes
+             WHERE schemaname='public' AND tablename='chat_message'
+               AND indexname='idx_chat_message_sequence'),
+           'one message per direct conversation sequence'
 ) probes
 ORDER BY probe;
 
